@@ -5,6 +5,7 @@ import { db } from '../../shared/api/firebase.js'
 import { FedaPayButton } from '../../shared/components/FedaPayButton.jsx'
 import { useApiGet } from '../../shared/hooks/useApi.js'
 import { Card, CardHeader, CardBody } from '../../shared/ui/Card.jsx'
+import Button from '../../shared/ui/Button.jsx'
 import Badge from '../../shared/ui/Badge.jsx'
 import Spinner from '../../shared/ui/Spinner.jsx'
 import EmptyState from '../../shared/ui/EmptyState.jsx'
@@ -51,19 +52,17 @@ export default function ParentPortal() {
 
       {!children.loading && children.data?.length > 0 && (
         <>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-3">
             {children.data.map((child) => (
-              <button
+              <Button
                 key={child.id}
                 onClick={() => setSelectedId(child.id)}
-                className={`rounded-control px-4 py-2 text-sm font-medium transition ${
-                  (selectedChild?.id ?? children.data[0].id) === child.id
-                    ? 'bg-primary-600 text-white'
-                    : 'bg-primary-50 text-primary-700 hover:bg-primary-100'
-                }`}
+                variant={(selectedChild?.id ?? children.data[0].id) === child.id ? 'primary' : 'secondary'}
+                size="md"
+                className="rounded-full shadow-sm"
               >
                 {child.first_name} {child.last_name}
-              </button>
+              </Button>
             ))}
           </div>
 
@@ -247,7 +246,7 @@ function SchoolPaymentButton({ schoolId, invoice, parent }) {
         schoolId: schoolId,
         studentMatricule: parent.matricule
       }}
-      className="rounded-md bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-indigo-500"
+      className="inline-flex items-center justify-center gap-2 rounded-control px-4 py-2 text-sm font-medium transition-all duration-200 ease-out active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 disabled:cursor-not-allowed disabled:opacity-50 disabled:active:scale-100 bg-primary-600 text-white hover:bg-primary-700 hover:shadow-md shadow-sm border border-transparent focus-visible:ring-primary-500/30"
       onComplete={async (tx) => {
         try {
           // Import api here to avoid circular dependency if any, or use the global one if imported
