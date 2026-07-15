@@ -71,8 +71,12 @@ export function AuthProvider({ children }) {
 
           // 3. Establish Django session using the Firebase ID token and role
           const token = await firebaseUser.getIdToken()
-          await primeCsrf()
-          await api.post('/api/auth/firebase-login/', { token, role, schoolId })
+          try {
+            await primeCsrf()
+            await api.post('/api/auth/firebase-login/', { token, role, schoolId })
+          } catch (djangoErr) {
+            console.warn("Django backend login failed (ignoring for frontend-only mode):", djangoErr)
+          }
           
           setUser({
             uid: firebaseUser.uid,
@@ -84,8 +88,8 @@ export function AuthProvider({ children }) {
           })
           setStatus('authenticated')
         } catch (error) {
-          console.error("Error fetching user profile:", error)
-          // Fallback to mock DB if Firestore rules block access during testing
+          console.error("Critical auth error:", error)
+          // Fallback if everything completely fails
           const { mockDb } = await import('../api/mockDb.js')
           const mockUser = Object.values(mockDb.users).find(u => u.email === firebaseUser.email)
           
