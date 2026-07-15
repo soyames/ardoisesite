@@ -12,6 +12,7 @@ export default function ApiIntegrations({ schoolId }) {
   const [msg, setMsg] = useState('')
   
   const [config, setConfig] = useState({
+    backendUrl: '',
     fedaPayPublicKey: '',
     fedaPaySecretKey: '',
     whatsappToken: '',
@@ -25,8 +26,10 @@ export default function ApiIntegrations({ schoolId }) {
         // Fetch public data
         const schoolDoc = await getDoc(doc(db, 'schools', String(schoolId)))
         let pubKey = ''
+        let backendUrl = ''
         if (schoolDoc.exists()) {
           pubKey = schoolDoc.data().fedaPayPublicKey || ''
+          backendUrl = schoolDoc.data().backendUrl || ''
         }
 
         // Fetch private data
@@ -37,6 +40,7 @@ export default function ApiIntegrations({ schoolId }) {
         }
 
         setConfig({
+          backendUrl,
           fedaPayPublicKey: pubKey,
           fedaPaySecretKey: privConfig.fedaPaySecretKey || '',
           whatsappToken: privConfig.whatsappToken || '',
@@ -56,8 +60,12 @@ export default function ApiIntegrations({ schoolId }) {
     setSaving(true)
     setMsg('')
     try {
-      // 1. Sauvegarder la clé publique dans le document principal (public)
+      // 1. Sauvegarder l'URL du backend + la clé publique dans le document principal (public) --
+      // backendUrl n'est pas un secret, c'est ce qui permet a n'importe quel
+      // utilisateur de cette ecole d'etre route vers le bon serveur apres connexion
+      // (voir AuthContext.jsx: resolveSchoolBackendUrl).
       await setDoc(doc(db, 'schools', String(schoolId)), {
+        backendUrl: config.backendUrl.trim().replace(/\/+$/, ''), // pas de slash final
         fedaPayPublicKey: config.fedaPayPublicKey
       }, { merge: true })
 
@@ -88,6 +96,33 @@ export default function ApiIntegrations({ schoolId }) {
       <CardHeader title="Intégrations API (Paiements & WhatsApp)" subtitle="Configurez vos propres clés pour recevoir directement l'argent et envoyer des messages WhatsApp." />
       <CardBody>
         <form onSubmit={handleSave} className="space-y-6">
+          <div className="bg-amber-50 p-4 rounded-lg ring-1 ring-amber-200">
+            <h3 className="font-bold text-slate-900 mb-2">Adresse de votre serveur (obligatoire)</h3>
+            <p className="text-sm text-slate-600 mb-4">
+              L'adresse a laquelle votre instance Ardoise est joignable depuis internet.
+              Sans elle, personne de votre école (caissier, enseignant, parent) ne peut
+              se connecter à votre portail — voir le guide d'installation pour les 3 façons
+              d'obtenir cette adresse selon votre situation (ordinateur seul, serveur local,
+              serveur avec nom de domaine).
+            </p>
+            <div>
+              <label className="block text-sm font-medium text-slate-700">URL du backend</label>
+              <input
+                type="url"
+                name="backendUrl"
+                value={config.backendUrl}
+                onChange={handleChange}
+                placeholder="https://laliberte.exemple.com  ou  https://12.34.56.78:8000"
+                className="mt-1 block w-full rounded-md border-0 py-2 px-3 text-slate-900 ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-indigo-600 sm:text-sm"
+              />
+              <p className="text-xs text-slate-500 mt-1">
+                Doit être accessible en HTTPS pour un serveur avec nom de domaine (voir le guide).
+                Pour un ordinateur unique sans domaine, utilisez l'adresse IP locale de l'école
+                (ex. http://192.168.1.50:8000) — seuls les appareils du même réseau Wi-Fi y auront accès.
+              </p>
+            </div>
+          </div>
+
           <div className="bg-slate-50 p-4 rounded-lg ring-1 ring-slate-200">
             <h3 className="font-bold text-slate-900 mb-4">Configuration FedaPay</h3>
             <div className="space-y-4">

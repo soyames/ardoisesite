@@ -5,8 +5,17 @@ import { usePwaInstall } from '../hooks/usePwaInstall.js'
 
 export default function PublicLayout() {
   const { user, logout } = useAuth()
-  const { isInstallable, promptInstall } = usePwaInstall()
+  const { promptInstall, isIOS, canOfferInstall } = usePwaInstall()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [showIosInstructions, setShowIosInstructions] = useState(false)
+
+  const handleInstallClick = () => {
+    if (isIOS) {
+      setShowIosInstructions((v) => !v)
+    } else {
+      promptInstall()
+    }
+  }
 
   return (
     <div className="flex min-h-svh flex-col bg-slate-50 font-sans text-slate-900">
@@ -31,15 +40,31 @@ export default function PublicLayout() {
           </nav>
         </div>
 
-        <div className="flex items-center gap-4">
-          {/* PWA Install Button (Visible if prompt is available) */}
-          {isInstallable && (
+        <div className="relative flex items-center gap-4">
+          {/* PWA Install Button -- native prompt on Chromium, tap-to-reveal instructions on iOS (which never fires beforeinstallprompt) */}
+          {canOfferInstall && (
             <button
-              onClick={promptInstall}
+              onClick={handleInstallClick}
               className="hidden md:block rounded-lg bg-indigo-50 px-4 py-2 text-sm font-bold text-indigo-700 ring-1 ring-inset ring-indigo-200 transition hover:bg-indigo-100"
             >
               Installer l'App
             </button>
+          )}
+          {showIosInstructions && (
+            <div className="absolute right-0 top-full z-50 mt-2 w-72 rounded-xl bg-white p-4 text-sm text-slate-700 shadow-xl ring-1 ring-slate-200">
+              <p className="mb-2 font-semibold text-slate-900">Installer sur iPhone/iPad</p>
+              <ol className="list-decimal space-y-1 pl-4">
+                <li>Appuyez sur l'icône Partager <span aria-hidden>⬆️</span> en bas de Safari</li>
+                <li>Choisissez « Sur l'écran d'accueil »</li>
+                <li>Appuyez sur « Ajouter »</li>
+              </ol>
+              <button
+                onClick={() => setShowIosInstructions(false)}
+                className="mt-3 text-xs font-semibold text-indigo-600 hover:text-indigo-500"
+              >
+                Fermer
+              </button>
+            </div>
           )}
 
           {user ? (
@@ -99,13 +124,19 @@ export default function PublicLayout() {
       {/* Mobile Menu Dropdown */}
       {mobileMenuOpen && (
         <div className="md:hidden border-b border-slate-200 bg-white px-6 py-4 space-y-4 shadow-sm">
-          {isInstallable && (
+          {canOfferInstall && !isIOS && (
             <button
               onClick={promptInstall}
               className="w-full rounded-lg bg-indigo-50 px-4 py-3 text-sm font-bold text-indigo-700 ring-1 ring-inset ring-indigo-200 transition hover:bg-indigo-100"
             >
               Installer l'Application
             </button>
+          )}
+          {canOfferInstall && isIOS && (
+            <div className="rounded-lg bg-indigo-50 p-3 text-xs text-indigo-900 ring-1 ring-inset ring-indigo-200">
+              <p className="mb-1 font-bold">Installer sur iPhone/iPad :</p>
+              <p>Appuyez sur Partager <span aria-hidden>⬆️</span> puis « Sur l'écran d'accueil ».</p>
+            </div>
           )}
           
           <nav className="flex flex-col gap-4 pt-2">

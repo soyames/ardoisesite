@@ -1,8 +1,6 @@
 import { useState } from 'react'
 import { Navigate, Link } from 'react-router-dom'
 import { useAuth } from './AuthContext.jsx'
-import { setApiBaseUrl } from '../../config/env.js'
-import { primeCsrf } from '../api/client.js'
 
 export default function LoginPage() {
   const { login, status, user } = useAuth()
@@ -10,13 +8,12 @@ export default function LoginPage() {
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [submitting, setSubmitting] = useState(false)
+  const [resetMessage, setResetMessage] = useState('')
 
   if (status === 'authenticated') {
     if (user?.role === 'teacher') return <Navigate to="/teacher-dashboard" replace />
     return <Navigate to="/portal" replace />
   }
-
-  const [resetMessage, setResetMessage] = useState('')
 
   async function handleResetPassword() {
     if (!username) {
