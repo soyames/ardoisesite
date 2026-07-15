@@ -1,4 +1,5 @@
 import { useMemo, useState, useEffect } from 'react'
+import { Link } from 'react-router-dom'
 import { useAuth } from '../../shared/auth/AuthContext.jsx'
 import { doc, getDoc } from 'firebase/firestore'
 import { db } from '../../shared/api/firebase.js'
@@ -71,6 +72,38 @@ export default function ParentPortal() {
           )}
         </>
       )}
+
+      {/* Explore Marketplace Section */}
+      <div className="mt-12 pt-8 border-t border-border">
+        <h2 className="text-lg font-bold text-ink mb-6">Explorer les services Ardoise</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <Card className="hover:-translate-y-1 transition-all hover:shadow-elevated border border-border bg-surface-raised">
+            <CardBody className="text-center p-8 flex flex-col items-center">
+              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary-50 text-3xl mb-4">🏫</div>
+              <h3 className="text-lg font-bold text-ink mb-2">Trouver une école</h3>
+              <p className="text-sm text-ink-muted mb-6 flex-1">
+                Découvrez les meilleures écoles partenaires sur Ardoise et inscrivez vos enfants.
+              </p>
+              <Link to="/schools" className="rounded-control bg-primary-50 px-5 py-2.5 text-sm font-semibold text-primary-700 hover:bg-primary-100 transition ring-1 ring-inset ring-primary-200">
+                Parcourir les écoles
+              </Link>
+            </CardBody>
+          </Card>
+
+          <Card className="hover:-translate-y-1 transition-all hover:shadow-elevated border border-border bg-surface-raised">
+            <CardBody className="text-center p-8 flex flex-col items-center">
+              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary-50 text-3xl mb-4">👨‍🏫</div>
+              <h3 className="text-lg font-bold text-ink mb-2">Trouver un tuteur</h3>
+              <p className="text-sm text-ink-muted mb-6 flex-1">
+                Besoin de soutien scolaire à domicile ? Trouvez un tuteur qualifié près de chez vous.
+              </p>
+              <Link to="/teachers" className="rounded-control bg-primary-50 px-5 py-2.5 text-sm font-semibold text-primary-700 hover:bg-primary-100 transition ring-1 ring-inset ring-primary-200">
+                Parcourir les tuteurs
+              </Link>
+            </CardBody>
+          </Card>
+        </div>
+      </div>
     </div>
   )
 }
