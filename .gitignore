@@ -29,3 +29,6 @@ vite.test.config.js
 
 .claude/
 claude
+
+!readme.md
+*.md
