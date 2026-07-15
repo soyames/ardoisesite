@@ -5,34 +5,7 @@ import { doc, setDoc } from 'firebase/firestore'
 import { auth, db } from '../api/firebase.js'
 import { useAuth } from './AuthContext.jsx'
 
-const WEST_AFRICA_DATA = {
-  'Benin': [
-    'Abomey', 'Abomey-Calavi', 'Adja-Ouèrè', 'Adjarra', 'Adjohoun', 'Agbangnizoun', 'Aguégués',
-    'Akpro-Missérété', 'Allada', 'Aplahoué', 'Athiémé', 'Avrankou', 'Banikoara', 'Bantè', 'Bassila',
-    'Bembéréké', 'Bohicon', 'Bonou', 'Bopa', 'Boukoumbé', 'Cobly', 'Comè', 'Copargo', 'Cotonou', 'Covè',
-    'Dangbo', 'Dassa-Zoumè', 'Djakotomey', 'Djidja', 'Djougou', 'Dogbo', 'Glazoué', 'Gogounou',
-    'Grand-Popo', 'Houéyogbé', 'Ifangni', 'Kalalé', 'Kandi', 'Karimama', 'Kérou', 'Kétou', 'Klouékanmè',
-    'Kouandé', 'Kpomassè', 'Lalo', 'Lokossa', 'Malanville', 'Matéri', "N'Dali", 'Natitingou', 'Nikki',
-    'Ouaké', 'Ouèssè', 'Ouidah', 'Ouinhi', 'Parakou', 'Pèrèrè', 'Péhunco', 'Pobè', 'Porto-Novo', 'Sakété',
-    'Savalou', 'Savè', 'Segbana', 'Sèmè-Kpodji', 'Sinendé', 'Sô-Ava', 'Tanguiéta', 'Tchaourou', 'Toffo',
-    'Tori-Bossito', 'Toucountouna', 'Toviklin', 'Za-Kpota', 'Zagnanado', 'Zè', 'Zogbodomey',
-  ],
-  'Burkina Faso': ['Ouagadougou', 'Bobo-Dioulasso', 'Koudougou', 'Banfora'],
-  'Cap-Vert': ['Praia', 'Mindelo', 'Santa Maria'],
-  'Côte d\'Ivoire': ['Abidjan', 'Bouaké', 'Yamoussoukro', 'San-Pédro', 'Daloa'],
-  'Gambie': ['Banjul', 'Serekunda', 'Brikama'],
-  'Ghana': ['Accra', 'Kumasi', 'Tamale', 'Takoradi'],
-  'Guinée': ['Conakry', 'Nzérékoré', 'Kankan', 'Kindia'],
-  'Guinée-Bissau': ['Bissau', 'Bafatá', 'Gabú'],
-  'Liberia': ['Monrovia', 'Gbarnga', 'Buchanan'],
-  'Mali': ['Bamako', 'Sikasso', 'Mopti', 'Koutiala'],
-  'Mauritanie': ['Nouakchott', 'Nouadhibou', 'Rosso'],
-  'Niger': ['Niamey', 'Zinder', 'Maradi', 'Agadez'],
-  'Nigeria': ['Lagos', 'Kano', 'Ibadan', 'Abuja', 'Port Harcourt'],
-  'Sénégal': ['Dakar', 'Thiès', 'Rufisque', 'Saint-Louis', 'Touba'],
-  'Sierra Leone': ['Freetown', 'Bo', 'Kenema', 'Makeni'],
-  'Togo': ['Lomé', 'Sokodé', 'Kara', 'Kpalimé']
-}
+import { FRANCOPHONE_AFRICA_DATA as WEST_AFRICA_DATA } from '../constants/locations.js'
 
 export default function RegisterPage() {
   const navigate = useNavigate()
