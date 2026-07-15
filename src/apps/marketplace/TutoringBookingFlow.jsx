@@ -26,13 +26,13 @@ export default function TutoringBookingFlow() {
   if (status === 'anonymous' || !user || user.role !== 'parent') {
     return (
       <div className="py-32 px-4 text-center">
-        <h2 className="text-2xl font-bold text-slate-900 mb-4">Connexion Requise</h2>
-        <p className="text-slate-600 mb-8">Vous devez être connecté en tant que parent pour réserver un tuteur.</p>
+        <h2 className="text-2xl font-bold text-ink mb-4">Connexion Requise</h2>
+        <p className="text-ink-muted mb-8">Vous devez être connecté en tant que parent pour réserver un tuteur.</p>
         <div className="flex justify-center gap-4">
-          <Link to="/login" className="rounded-xl bg-indigo-600 px-6 py-3 text-sm font-bold text-white hover:bg-indigo-500">
+          <Link to="/login" className="rounded-control bg-primary-600 px-6 py-3 text-sm font-bold text-white hover:bg-primary-700">
             Se connecter
           </Link>
-          <Link to="/register" className="rounded-xl bg-slate-200 px-6 py-3 text-sm font-bold text-slate-900 hover:bg-slate-300">
+          <Link to="/register" className="rounded-control bg-primary-100 px-6 py-3 text-sm font-bold text-primary-700 hover:bg-primary-200">
             S'inscrire
           </Link>
         </div>
@@ -53,25 +53,25 @@ export default function TutoringBookingFlow() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 py-12">
+    <div className="min-h-screen bg-surface py-12">
       <div className="mx-auto max-w-3xl px-6 lg:px-8">
-        
+
         <div className="mb-8 flex items-center gap-4">
-          <img src={teacher.image} alt={teacher.name} className="h-16 w-16 rounded-full object-cover ring-2 ring-indigo-500/20" />
+          <img src={teacher.image} alt={teacher.name} className="h-16 w-16 rounded-full object-cover ring-2 ring-accent-500/20" />
           <div>
-            <h1 className="text-2xl font-bold text-slate-900">Réservation : {teacher.name}</h1>
-            <p className="text-slate-500">{teacher.subject}</p>
+            <h1 className="text-2xl font-bold text-ink">Réservation : {teacher.name}</h1>
+            <p className="text-ink-muted">{teacher.subject}</p>
           </div>
         </div>
 
-        <div className="bg-white rounded-2xl shadow-sm ring-1 ring-slate-200 overflow-hidden">
-          
+        <div className="bg-surface-raised rounded-card shadow-card ring-1 ring-border overflow-hidden">
+
           {/* Stepper */}
-          <div className="flex border-b border-slate-100 bg-slate-50/50">
-            <div className={`flex-1 p-4 text-center text-sm font-semibold ${step === 1 ? 'text-indigo-600 border-b-2 border-indigo-600' : 'text-slate-400'}`}>
+          <div className="flex border-b border-border bg-surface/50">
+            <div className={`flex-1 p-4 text-center text-sm font-semibold ${step === 1 ? 'text-primary-600 border-b-2 border-primary-600' : 'text-ink-muted'}`}>
               1. Modalités
             </div>
-            <div className={`flex-1 p-4 text-center text-sm font-semibold ${step === 2 ? 'text-indigo-600 border-b-2 border-indigo-600' : 'text-slate-400'}`}>
+            <div className={`flex-1 p-4 text-center text-sm font-semibold ${step === 2 ? 'text-primary-600 border-b-2 border-primary-600' : 'text-ink-muted'}`}>
               2. Contrat & Paiement
             </div>
           </div>
@@ -80,20 +80,20 @@ export default function TutoringBookingFlow() {
             {step === 1 && (
               <div className="space-y-6">
                 <div>
-                  <label className="block text-sm font-medium text-slate-700">Date de début souhaitée</label>
-                  <input 
-                    type="date" 
+                  <label className="block text-sm font-medium text-ink">Date de début souhaitée</label>
+                  <input
+                    type="date"
                     value={startDate}
                     onChange={(e) => setStartDate(e.target.value)}
-                    className="mt-2 block w-full rounded-xl border-0 py-2.5 px-3 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-indigo-600 sm:text-sm" 
+                    className="mt-2 block w-full rounded-control border-0 py-2.5 px-3 text-ink shadow-sm ring-1 ring-inset ring-border focus:ring-2 focus:ring-primary-500 sm:text-sm"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700">Volume horaire (heures/semaine)</label>
-                  <select 
+                  <label className="block text-sm font-medium text-ink">Volume horaire (heures/semaine)</label>
+                  <select
                     value={hoursPerWeek}
                     onChange={(e) => setHoursPerWeek(e.target.value)}
-                    className="mt-2 block w-full rounded-xl border-0 py-2.5 px-3 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-indigo-600 sm:text-sm"
+                    className="mt-2 block w-full rounded-control border-0 py-2.5 px-3 text-ink shadow-sm ring-1 ring-inset ring-border focus:ring-2 focus:ring-primary-500 sm:text-sm"
                   >
                     <option value="2">2 heures</option>
                     <option value="4">4 heures</option>
@@ -102,21 +102,21 @@ export default function TutoringBookingFlow() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700">Tarif Mensuel Négocié (FCFA)</label>
-                  <p className="text-xs text-slate-500 mb-2">Le tarif indicatif est de {teacher.defaultPrice} F. Modifiez-le si vous avez convenu d'un autre montant avec le tuteur.</p>
-                  <input 
-                    type="number" 
+                  <label className="block text-sm font-medium text-ink">Tarif Mensuel Négocié (FCFA)</label>
+                  <p className="text-xs text-ink-muted mb-2">Le tarif indicatif est de {teacher.defaultPrice} F. Modifiez-le si vous avez convenu d'un autre montant avec le tuteur.</p>
+                  <input
+                    type="number"
                     value={proposedPrice}
                     onChange={(e) => setProposedPrice(e.target.value)}
-                    className="block w-full rounded-xl border-0 py-2.5 px-3 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-indigo-600 sm:text-sm" 
+                    className="block w-full rounded-control border-0 py-2.5 px-3 text-ink shadow-sm ring-1 ring-inset ring-border focus:ring-2 focus:ring-primary-500 sm:text-sm"
                   />
                 </div>
 
                 <div className="pt-6">
-                  <button 
+                  <button
                     onClick={() => setStep(2)}
                     disabled={!startDate || !proposedPrice}
-                    className="w-full rounded-xl bg-indigo-600 px-4 py-3 text-sm font-bold text-white shadow-md hover:bg-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full rounded-control bg-accent-500 px-4 py-3 text-sm font-bold text-primary-950 shadow-card hover:bg-accent-400 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     Continuer vers le contrat
                   </button>
@@ -126,21 +126,21 @@ export default function TutoringBookingFlow() {
 
             {step === 2 && (
               <div className="space-y-6">
-                <div className="rounded-xl bg-slate-50 p-6 ring-1 ring-slate-200">
-                  <h3 className="text-lg font-bold text-slate-900 mb-4">Contrat d'Engagement</h3>
-                  <div className="space-y-4 text-sm text-slate-600">
+                <div className="rounded-card bg-surface p-6 ring-1 ring-border">
+                  <h3 className="text-lg font-bold text-ink mb-4">Contrat d'Engagement</h3>
+                  <div className="space-y-4 text-sm text-ink-muted">
                     <p><strong>Parties :</strong> Ce contrat lie le Parent et M./Mme {teacher.name}.</p>
                     <p><strong>Durée :</strong> Engagement minimum obligatoire de <strong>6 mois</strong> à compter du {startDate || '...'}.</p>
-                    <p className="text-red-600 font-medium"><strong>Interdiction de Paiement Direct :</strong> Le parent s'engage formellement à <strong>ne jamais payer le tuteur de la main à la main</strong>. Tous les paiements doivent obligatoirement transiter par la plateforme Ardoise, qui se charge de rémunérer l'enseignant.</p>
+                    <p className="text-danger-600 font-medium"><strong>Interdiction de Paiement Direct :</strong> Le parent s'engage formellement à <strong>ne jamais payer le tuteur de la main à la main</strong>. Tous les paiements doivent obligatoirement transiter par la plateforme Ardoise, qui se charge de rémunérer l'enseignant.</p>
                   </div>
 
-                  <div className="mt-6 pt-6 border-t border-slate-200">
-                    <label className="block text-sm font-bold text-slate-900 mb-2">Jour du prélèvement mensuel</label>
-                    <p className="text-xs text-slate-500 mb-3">Choisissez la date à laquelle vous serez prélevé chaque mois. Vous recevrez un rappel par email avant chaque prélèvement automatique.</p>
-                    <select 
+                  <div className="mt-6 pt-6 border-t border-border">
+                    <label className="block text-sm font-bold text-ink mb-2">Jour du prélèvement mensuel</label>
+                    <p className="text-xs text-ink-muted mb-3">Choisissez la date à laquelle vous serez prélevé chaque mois. Vous recevrez un rappel par email avant chaque prélèvement automatique.</p>
+                    <select
                       value={paymentDate}
                       onChange={(e) => setPaymentDate(e.target.value)}
-                      className="block w-full max-w-xs rounded-xl border-0 py-2.5 px-3 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-indigo-600 sm:text-sm"
+                      className="block w-full max-w-xs rounded-control border-0 py-2.5 px-3 text-ink shadow-sm ring-1 ring-inset ring-border focus:ring-2 focus:ring-primary-500 sm:text-sm"
                     >
                       <option value="1">Le 1er du mois</option>
                       <option value="5">Le 5 du mois</option>
@@ -149,43 +149,43 @@ export default function TutoringBookingFlow() {
                       <option value="25">Le 25 du mois</option>
                     </select>
                   </div>
-                  
-                  <div className="mt-6 flex items-start bg-white p-4 rounded-lg ring-1 ring-slate-200">
-                    <input 
-                      id="terms" 
-                      type="checkbox" 
+
+                  <div className="mt-6 flex items-start bg-surface-raised p-4 rounded-control ring-1 ring-border">
+                    <input
+                      id="terms"
+                      type="checkbox"
                       checked={agreedToTerms}
                       onChange={(e) => setAgreedToTerms(e.target.checked)}
-                      className="mt-1 h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-600" 
+                      className="mt-1 h-4 w-4 rounded border-border text-primary-600 focus:ring-primary-500"
                     />
-                    <label htmlFor="terms" className="ml-3 text-sm text-slate-700">
+                    <label htmlFor="terms" className="ml-3 text-sm text-ink">
                       J'accepte les termes du contrat, la durée minimum de 6 mois, et j'autorise Ardoise à prélever automatiquement le montant total chaque mois le {paymentDate}.
                     </label>
                   </div>
                 </div>
 
-                <div className="rounded-xl border border-slate-200 p-6">
-                  <h3 className="text-lg font-bold text-slate-900 mb-4">Détail du paiement (Mensuel)</h3>
-                  <dl className="space-y-3 text-sm text-slate-600">
+                <div className="rounded-card border border-border p-6">
+                  <h3 className="text-lg font-bold text-ink mb-4">Détail du paiement (Mensuel)</h3>
+                  <dl className="space-y-3 text-sm text-ink-muted">
                     <div className="flex justify-between">
                       <dt>Rémunération du tuteur</dt>
-                      <dd className="font-semibold text-slate-900">{Number(proposedPrice).toLocaleString()} F</dd>
+                      <dd className="font-semibold text-ink">{Number(proposedPrice).toLocaleString()} F</dd>
                     </div>
                     <div className="flex justify-between">
                       <dt>Frais de plateforme (10%)</dt>
-                      <dd className="font-semibold text-slate-900">{commission.toLocaleString()} F</dd>
+                      <dd className="font-semibold text-ink">{commission.toLocaleString()} F</dd>
                     </div>
-                    <div className="flex justify-between border-t border-slate-200 pt-3 text-base">
-                      <dt className="font-bold text-slate-900">Prélèvement Mensuel</dt>
-                      <dd className="font-bold text-indigo-600">{total.toLocaleString()} F</dd>
+                    <div className="flex justify-between border-t border-border pt-3 text-base">
+                      <dt className="font-bold text-ink">Prélèvement Mensuel</dt>
+                      <dd className="font-bold text-primary-600">{total.toLocaleString()} F</dd>
                     </div>
                   </dl>
                 </div>
 
                 <div className="flex gap-4 pt-6">
-                  <button 
+                  <button
                     onClick={() => setStep(1)}
-                    className="w-1/3 rounded-xl bg-white px-4 py-3 text-sm font-bold text-slate-700 ring-1 ring-slate-300 hover:bg-slate-50"
+                    className="w-1/3 rounded-control bg-surface-raised px-4 py-3 text-sm font-bold text-ink ring-1 ring-border hover:bg-surface"
                   >
                     Retour
                   </button>
@@ -205,14 +205,14 @@ export default function TutoringBookingFlow() {
                         console.log("Paiement FedaPay complété !", tx)
                         setStep(3)
                       }}
-                      className={`w-2/3 rounded-xl px-4 py-3 text-sm font-bold text-white shadow-md ${agreedToTerms ? 'bg-indigo-600 hover:bg-indigo-500' : 'bg-slate-300 cursor-not-allowed'}`}
+                      className={`w-2/3 rounded-control px-4 py-3 text-sm font-bold shadow-card ${agreedToTerms ? 'bg-accent-500 text-primary-950 hover:bg-accent-400' : 'bg-primary-400 text-white cursor-not-allowed'}`}
                     >
                       Signer et Payer {total.toLocaleString('fr-FR')} F
                     </FedaPayButton>
                   ) : (
-                    <Link 
+                    <Link
                       to="/register"
-                      className="flex w-2/3 items-center justify-center rounded-xl bg-indigo-600 px-4 py-3 text-sm font-bold text-white shadow-md hover:bg-indigo-500"
+                      className="flex w-2/3 items-center justify-center rounded-control bg-accent-500 px-4 py-3 text-sm font-bold text-primary-950 shadow-card hover:bg-accent-400"
                     >
                       S'inscrire ou se connecter pour payer
                     </Link>
@@ -223,18 +223,18 @@ export default function TutoringBookingFlow() {
             
             {step === 3 && (
               <div className="text-center py-10">
-                <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-green-100 mb-6">
-                  <svg className="h-8 w-8 text-green-600" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor">
+                <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-success-50 mb-6">
+                  <svg className="h-8 w-8 text-success-600" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                   </svg>
                 </div>
-                <h2 className="text-2xl font-bold text-slate-900 mb-2">Paiement Réussi !</h2>
-                <p className="text-slate-600 mb-8 max-w-md mx-auto">
+                <h2 className="text-2xl font-bold text-ink mb-2">Paiement Réussi !</h2>
+                <p className="text-ink-muted mb-8 max-w-md mx-auto">
                   Votre abonnement pour {teacher.name} est confirmé. Vous recevrez très bientôt un email avec les détails de la première séance.
                 </p>
                 <Link
                   to="/marketplace"
-                  className="inline-flex justify-center rounded-xl bg-indigo-600 px-6 py-3 text-sm font-bold text-white shadow-sm hover:bg-indigo-500"
+                  className="inline-flex justify-center rounded-control bg-accent-500 px-6 py-3 text-sm font-bold text-primary-950 shadow-card hover:bg-accent-400"
                 >
                   Retour à l'accueil
                 </Link>

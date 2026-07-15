@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
+import EmptyState from '../../shared/ui/EmptyState.jsx'
 
 const TEACHERS_DATA = [
   { id: 1, name: 'Dr. Jean Dupont', subject: 'Mathématiques', city: 'Cotonou', rating: 4.9, price: '15 000 F / mois', image: 'https://images.unsplash.com/photo-1568602471122-7832951cc4c5?w=400&q=80', description: 'Docteur en mathématiques appliquées, 10 ans d\'expérience.' },
@@ -19,14 +20,14 @@ export default function TeacherList() {
   })
 
   return (
-    <div className="min-h-screen bg-slate-50 py-12">
+    <div className="min-h-screen bg-surface py-12">
       <div className="mx-auto max-w-7xl px-6 lg:px-8">
         <div className="md:flex md:items-center md:justify-between">
           <div className="min-w-0 flex-1">
-            <h2 className="text-4xl font-extrabold tracking-tight text-slate-900 sm:text-5xl">
+            <h2 className="text-4xl font-extrabold tracking-tight text-ink sm:text-5xl">
               Tuteurs à Domicile
             </h2>
-            <p className="mt-3 max-w-2xl text-xl text-slate-500">
+            <p className="mt-3 max-w-2xl text-xl text-ink-muted">
               Des professeurs certifiés et évalués par les parents pour accompagner votre enfant vers la réussite.
             </p>
           </div>
@@ -38,12 +39,12 @@ export default function TeacherList() {
             placeholder="Rechercher par nom ou ville..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full sm:max-w-md rounded-xl border-0 px-4 py-3 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm"
+            className="w-full sm:max-w-md rounded-control border-0 px-4 py-3 text-ink shadow-sm ring-1 ring-inset ring-border placeholder:text-ink-muted focus:ring-2 focus:ring-inset focus:ring-primary-500 sm:text-sm"
           />
           <select
             value={subjectFilter}
             onChange={(e) => setSubjectFilter(e.target.value)}
-            className="w-full sm:max-w-xs rounded-xl border-0 px-4 py-3 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm"
+            className="w-full sm:max-w-xs rounded-control border-0 px-4 py-3 text-ink shadow-sm ring-1 ring-inset ring-border focus:ring-2 focus:ring-inset focus:ring-primary-500 sm:text-sm"
           >
             <option value="Toutes">Toutes les matières</option>
             <option value="Mathématiques">Mathématiques</option>
@@ -55,36 +56,36 @@ export default function TeacherList() {
 
         <div className="mt-12 grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4">
           {filteredTeachers.map((teacher) => (
-            <Link key={teacher.id} to={`/teachers/${teacher.id}`} className="group relative flex flex-col overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-slate-200 transition-all hover:shadow-xl hover:-translate-y-1 hover:ring-indigo-200">
-              <div className="aspect-[4/3] w-full overflow-hidden bg-slate-200">
+            <Link key={teacher.id} to={`/teachers/${teacher.id}`} className="group relative flex flex-col overflow-hidden rounded-card bg-surface-raised shadow-card ring-1 ring-border transition-all hover:shadow-elevated hover:-translate-y-1 hover:ring-primary-200">
+              <div className="aspect-[4/3] w-full overflow-hidden bg-primary-100">
                 <img src={teacher.image} alt={teacher.name} className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
               </div>
               <div className="flex flex-1 flex-col justify-between p-6">
                 <div>
                   <div className="flex items-center justify-between">
-                    <p className="text-sm font-medium text-indigo-600">{teacher.subject}</p>
-                    <div className="flex items-center gap-1 text-sm font-semibold text-slate-700">
-                      <span className="text-yellow-400">★</span> {teacher.rating}
+                    <p className="text-sm font-medium text-primary-600">{teacher.subject}</p>
+                    <div className="flex items-center gap-1 text-sm font-semibold text-ink">
+                      <span className="text-accent-400">★</span> {teacher.rating}
                     </div>
                   </div>
-                  <h3 className="mt-2 text-xl font-bold text-slate-900 group-hover:text-indigo-600 transition-colors">
+                  <h3 className="mt-2 text-xl font-bold text-ink group-hover:text-primary-600 transition-colors">
                     {teacher.name}
                   </h3>
-                  <p className="mt-1 text-xs text-slate-500">{teacher.city}</p>
-                  <p className="mt-3 text-sm text-slate-600 line-clamp-2">{teacher.description}</p>
+                  <p className="mt-1 text-xs text-ink-muted">{teacher.city}</p>
+                  <p className="mt-3 text-sm text-ink-muted line-clamp-2">{teacher.description}</p>
                 </div>
-                <div className="mt-6 flex items-center justify-between border-t border-slate-100 pt-4">
-                  <div className="text-sm font-bold text-slate-900">
+                <div className="mt-6 flex items-center justify-between border-t border-border pt-4">
+                  <div className="text-sm font-bold text-ink">
                     {teacher.price}
                   </div>
-                  <span className="text-sm font-semibold text-indigo-600 group-hover:text-indigo-500">Profil &rarr;</span>
+                  <span className="text-sm font-semibold text-primary-600 group-hover:text-primary-500">Profil &rarr;</span>
                 </div>
               </div>
             </Link>
           ))}
           {filteredTeachers.length === 0 && (
-            <div className="col-span-full py-20 text-center">
-              <p className="text-lg text-slate-500">Aucun tuteur ne correspond à vos critères.</p>
+            <div className="col-span-full py-20">
+              <EmptyState title="Aucun tuteur ne correspond à vos critères." />
             </div>
           )}
         </div>
