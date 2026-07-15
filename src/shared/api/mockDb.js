@@ -27,7 +27,7 @@ export const mockDb = {
       username: 'founder',
       role: 'founder',
       name: 'M. le Directeur',
-      email: 'directeur@laliberte.com',
+      email: 'founder@ardoise.com',
       phone: '+229 95 00 00 00',
       schoolId: 1 // Link to the first school
     }
