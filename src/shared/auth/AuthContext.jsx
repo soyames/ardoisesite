@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useState, useCallback } from 'rea
 import { signInWithEmailAndPassword, signOut as firebaseSignOut, onAuthStateChanged, sendPasswordResetEmail } from 'firebase/auth'
 import { doc, getDoc } from 'firebase/firestore'
 import { auth, db } from '../api/firebase.js'
+import { api, primeCsrf } from '../api/client.js'
 
 const AuthContext = createContext(null)
 
@@ -13,7 +14,12 @@ export function AuthProvider({ children }) {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
         try {
-          // Fetch user profile from Firestore
+          // 1. Establish Django session using the Firebase ID token
+          const token = await firebaseUser.getIdToken()
+          await primeCsrf()
+          await api.post('/api/auth/firebase-login/', { token })
+          
+          // 2. Fetch user profile from Firestore
           const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid))
           if (userDoc.exists()) {
             const userData = userDoc.data()
