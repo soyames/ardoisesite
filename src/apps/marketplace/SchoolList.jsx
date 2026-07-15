@@ -1,22 +1,25 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import EmptyState from '../../shared/ui/EmptyState.jsx'
+import { FRANCOPHONE_AFRICA_DATA } from '../../shared/constants/locations.js'
 
 const SCHOOLS_DATA = [
-  { id: 1, name: 'Complexe Scolaire La Liberté', city: 'Abomey-Calavi', cycle: 'Primaire & Secondaire', successRate: 98, internalRate: 95, image: 'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=800&q=80', description: 'Une école d\'excellence reconnue pour sa rigueur et ses résultats aux examens nationaux.' },
-  { id: 2, name: 'Collège Catholique Père Aupiais', city: 'Cotonou', cycle: 'Secondaire', successRate: 95, internalRate: 92, image: 'https://images.unsplash.com/photo-1541829070764-84a7d30dd3f3?w=800&q=80', description: 'Un cadre d\'apprentissage prestigieux au cœur de Cotonou.' },
-  { id: 3, name: 'Lycée Béhanzin', city: 'Porto-Novo', cycle: 'Secondaire', successRate: 92, internalRate: 88, image: 'https://images.unsplash.com/photo-1592280771190-3e2e4d571952?w=800&q=80', description: 'Lycée historique de la capitale offrant une formation solide.' },
-  { id: 4, name: 'École Primaire Montaigne', city: 'Cotonou', cycle: 'Primaire', successRate: 100, internalRate: 98, image: 'https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=800&q=80', description: 'L\'école primaire de référence pour un début de scolarité réussi.' },
+  { id: 1, name: 'Complexe Scolaire La Liberté', country: 'Benin', city: 'Abomey-Calavi', cycle: 'Primaire & Secondaire', successRate: 98, internalRate: 95, image: 'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=800&q=80', description: 'Une école d\'excellence reconnue pour sa rigueur et ses résultats aux examens nationaux.' },
+  { id: 2, name: 'Collège Catholique Père Aupiais', country: 'Benin', city: 'Cotonou', cycle: 'Secondaire', successRate: 95, internalRate: 92, image: 'https://images.unsplash.com/photo-1541829070764-84a7d30dd3f3?w=800&q=80', description: 'Un cadre d\'apprentissage prestigieux au cœur de Cotonou.' },
+  { id: 3, name: 'Lycée Béhanzin', country: 'Benin', city: 'Porto-Novo', cycle: 'Secondaire', successRate: 92, internalRate: 88, image: 'https://images.unsplash.com/photo-1592280771190-3e2e4d571952?w=800&q=80', description: 'Lycée historique de la capitale offrant une formation solide.' },
+  { id: 4, name: 'École Primaire Montaigne', country: 'Benin', city: 'Cotonou', cycle: 'Primaire', successRate: 100, internalRate: 98, image: 'https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=800&q=80', description: 'L\'école primaire de référence pour un début de scolarité réussi.' },
 ]
 
 export default function SchoolList() {
   const [search, setSearch] = useState('')
+  const [countryFilter, setCountryFilter] = useState('Tous')
   const [cityFilter, setCityFilter] = useState('Toutes')
 
   const filteredSchools = SCHOOLS_DATA.filter(school => {
     const matchesSearch = school.name.toLowerCase().includes(search.toLowerCase())
+    const matchesCountry = countryFilter === 'Tous' || school.country === countryFilter
     const matchesCity = cityFilter === 'Toutes' || school.city === cityFilter
-    return matchesSearch && matchesCity
+    return matchesSearch && matchesCountry && matchesCity
   })
 
   return (
@@ -44,14 +47,28 @@ export default function SchoolList() {
             className="w-full sm:max-w-xs rounded-control border-0 bg-surface-raised px-4 py-3 text-ink shadow-sm ring-1 ring-inset ring-border placeholder:text-ink-muted focus:ring-2 focus:ring-inset focus:ring-primary-500 sm:text-sm sm:leading-6"
           />
           <select
+            value={countryFilter}
+            onChange={(e) => {
+              setCountryFilter(e.target.value)
+              setCityFilter('Toutes')
+            }}
+            className="w-full sm:max-w-[200px] rounded-control border-0 bg-surface-raised px-4 py-3 text-ink shadow-sm ring-1 ring-inset ring-border focus:ring-2 focus:ring-inset focus:ring-primary-500 sm:text-sm sm:leading-6"
+          >
+            <option value="Tous">Tous les pays</option>
+            {Object.keys(FRANCOPHONE_AFRICA_DATA).map(country => (
+              <option key={country} value={country}>{country}</option>
+            ))}
+          </select>
+          <select
             value={cityFilter}
             onChange={(e) => setCityFilter(e.target.value)}
-            className="w-full sm:max-w-xs rounded-control border-0 bg-surface-raised px-4 py-3 text-ink shadow-sm ring-1 ring-inset ring-border focus:ring-2 focus:ring-inset focus:ring-primary-500 sm:text-sm sm:leading-6"
+            disabled={countryFilter === 'Tous'}
+            className="w-full sm:max-w-[200px] rounded-control border-0 bg-surface-raised px-4 py-3 text-ink shadow-sm ring-1 ring-inset ring-border focus:ring-2 focus:ring-inset focus:ring-primary-500 sm:text-sm sm:leading-6 disabled:opacity-50"
           >
             <option value="Toutes">Toutes les villes</option>
-            <option value="Cotonou">Cotonou</option>
-            <option value="Abomey-Calavi">Abomey-Calavi</option>
-            <option value="Porto-Novo">Porto-Novo</option>
+            {countryFilter !== 'Tous' && FRANCOPHONE_AFRICA_DATA[countryFilter].map(city => (
+              <option key={city} value={city}>{city}</option>
+            ))}
           </select>
         </div>
 
@@ -65,7 +82,7 @@ export default function SchoolList() {
               <div className="flex flex-1 flex-col justify-between p-6">
                 <div>
                   <div className="flex items-center justify-between">
-                    <p className="text-sm font-medium text-primary-600">{school.city}</p>
+                    <p className="text-sm font-medium text-primary-600">{school.city}, {school.country}</p>
                     <p className="text-xs font-semibold text-ink-muted">{school.cycle}</p>
                   </div>
                   <h3 className="mt-2 text-xl font-bold text-ink group-hover:text-primary-600 transition-colors">
@@ -94,7 +111,7 @@ export default function SchoolList() {
               description="Essayez une autre ville ou un autre terme de recherche."
               action={
                 <button
-                  onClick={() => { setSearch(''); setCityFilter('Toutes') }}
+                  onClick={() => { setSearch(''); setCountryFilter('Tous'); setCityFilter('Toutes') }}
                   className="text-sm font-semibold text-primary-600 hover:text-primary-500"
                 >
                   Réinitialiser les filtres

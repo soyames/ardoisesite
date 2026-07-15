@@ -1,0 +1,37 @@
+export const FRANCOPHONE_AFRICA_DATA = {
+  'Benin': [
+    'Abomey', 'Abomey-Calavi', 'Adja-Ouèrè', 'Adjarra', 'Adjohoun', 'Agbangnizoun', 'Aguégués',
+    'Akpro-Missérété', 'Allada', 'Aplahoué', 'Athiémé', 'Avrankou', 'Banikoara', 'Bantè', 'Bassila',
+    'Bembéréké', 'Bohicon', 'Bonou', 'Bopa', 'Boukoumbé', 'Cobly', 'Comè', 'Copargo', 'Cotonou', 'Covè',
+    'Dangbo', 'Dassa-Zoumè', 'Djakotomey', 'Djidja', 'Djougou', 'Dogbo', 'Glazoué', 'Gogounou',
+    'Grand-Popo', 'Houéyogbé', 'Ifangni', 'Kalalé', 'Kandi', 'Karimama', 'Kérou', 'Kétou', 'Klouékanmè',
+    'Kouandé', 'Kpomassè', 'Lalo', 'Lokossa', 'Malanville', 'Matéri', "N'Dali", 'Natitingou', 'Nikki',
+    'Ouaké', 'Ouèssè', 'Ouidah', 'Ouinhi', 'Parakou', 'Pèrèrè', 'Péhunco', 'Pobè', 'Porto-Novo', 'Sakété',
+    'Savalou', 'Savè', 'Segbana', 'Sèmè-Kpodji', 'Sinendé', 'Sô-Ava', 'Tanguiéta', 'Tchaourou', 'Toffo',
+    'Tori-Bossito', 'Toucountouna', 'Toviklin', 'Za-Kpota', 'Zagnanado', 'Zè', 'Zogbodomey',
+  ],
+  'Burkina Faso': ['Ouagadougou', 'Bobo-Dioulasso', 'Koudougou', 'Banfora', 'Ouahigouya', 'Kaya', 'Tenkodogo', 'Fada N\'Gourma', 'Dédougou', 'Dori'],
+  'Cameroun': ['Yaoundé', 'Douala', 'Garoua', 'Bamenda', 'Maroua', 'Bafoussam', 'Ngaoundéré', 'Bertoua', 'Loum', 'Edéa', 'Kumba', 'Nkongsamba', 'Mbouda', 'Dschang', 'Foumban', 'Ebolowa', 'Guider', 'Yagoua', 'Mokolo'],
+  'Cap-Vert': ['Praia', 'Mindelo', 'Santa Maria', 'Assomada', 'Tarrafal'],
+  'Congo-Brazzaville': ['Brazzaville', 'Pointe-Noire', 'Dolisie', 'Nkayi', 'Ouesso', 'Madingou', 'Owando', 'Sibiti', 'Impfondo', 'Ewo'],
+  'Côte d\'Ivoire': ['Abidjan', 'Bouaké', 'Daloa', 'Yamoussoukro', 'San-Pédro', 'Korhogo', 'Man', 'Divo', 'Gagnoa', 'Abengourou', 'Anyama', 'Soubré', 'Agboville', 'Dabou', 'Grand-Bassam', 'Bouaflé', 'Sinfra', 'Katiola'],
+  'Gabon': ['Libreville', 'Port-Gentil', 'Franceville', 'Oyem', 'Moanda', 'Mouila', 'Lambaréné', 'Tchibanga', 'Koulamoutou', 'Makokou'],
+  'Gambie': ['Banjul', 'Serekunda', 'Brikama', 'Bakau', 'Farafenni'],
+  'Ghana': ['Accra', 'Kumasi', 'Tamale', 'Takoradi', 'Ashaiman', 'Cape Coast', 'Obuasi', 'Teshie', 'Tema', 'Madina'],
+  'Guinée': ['Conakry', 'Nzérékoré', 'Kankan', 'Kindia', 'Siguiri', 'Boké', 'Macenta', 'Labé', 'Faranah', 'Kissidougou', 'Guéckédou', 'Mamou'],
+  'Guinée-Bissau': ['Bissau', 'Bafatá', 'Gabú', 'Bissorã', 'Bolama'],
+  'Liberia': ['Monrovia', 'Ganta', 'Buchanan', 'Gbarnga', 'Kakata', 'Voinjama'],
+  'Mali': ['Bamako', 'Sikasso', 'Mopti', 'Koutiala', 'Kayes', 'Ségou', 'Gao', 'Kati', 'Bougouni', 'Tombouctou'],
+  'Mauritanie': ['Nouakchott', 'Nouadhibou', 'Rosso', 'Kaédi', 'Boghé', 'Zouérat', 'Kiffa'],
+  'Niger': ['Niamey', 'Zinder', 'Maradi', 'Agadez', 'Tahoua', 'Arlit', 'Dosso', 'Dogondoutchi'],
+  'Nigeria': ['Lagos', 'Kano', 'Ibadan', 'Abuja', 'Port Harcourt', 'Benin City', 'Maiduguri', 'Zaria', 'Aba', 'Jos', 'Ilorin', 'Oyo', 'Enugu', 'Abeokuta', 'Onitsha'],
+  'Rép. Démocratique du Congo': [
+    'Kinshasa', 'Lubumbashi', 'Mbuji-Mayi', 'Kisangani', 'Kananga', 'Bukavu', 'Goma', 'Likasi', 
+    'Kolwezi', 'Tshikapa', 'Kikwit', 'Uvira', 'Bunia', 'Mbandaka', 'Matadi', 'Kabinda', 'Butembo', 
+    'Mwene-Ditu', 'Isiro', 'Kindu', 'Boma', 'Kamina', 'Gandajika', 'Bandundu', 'Gemena', 'Kipushi', 
+    'Bumba', 'Mbanza-Ngungu', 'Beni', 'Kalemie', 'Muanda', 'Tshimbulu', 'Lisala', 'Inongo'
+  ],
+  'Sénégal': ['Dakar', 'Thiès', 'Rufisque', 'Saint-Louis', 'Touba', 'Ziguinchor', 'Diourbel', 'Mbour', 'Kaolack', 'Kolda', 'Louga', 'Tambacounda'],
+  'Sierra Leone': ['Freetown', 'Bo', 'Kenema', 'Makeni', 'Koidu Town'],
+  'Togo': ['Lomé', 'Sokodé', 'Kara', 'Kpalimé', 'Atakpamé', 'Bassar', 'Tsévié', 'Aného', 'Mango', 'Dapaong']
+}

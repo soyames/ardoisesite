@@ -1,22 +1,27 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import EmptyState from '../../shared/ui/EmptyState.jsx'
+import { FRANCOPHONE_AFRICA_DATA } from '../../shared/constants/locations.js'
 
 const TEACHERS_DATA = [
-  { id: 1, name: 'Dr. Jean Dupont', subject: 'Mathématiques', city: 'Cotonou', rating: 4.9, price: '15 000 F / mois', image: 'https://images.unsplash.com/photo-1568602471122-7832951cc4c5?w=400&q=80', description: 'Docteur en mathématiques appliquées, 10 ans d\'expérience.' },
-  { id: 2, name: 'Marie Mensah', subject: 'SVT', city: 'Abomey-Calavi', rating: 4.8, price: '12 000 F / mois', image: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400&q=80', description: 'Professeur certifiée, excellente approche pédagogique.' },
-  { id: 3, name: 'Paul Kossi', subject: 'Philosophie', city: 'Porto-Novo', rating: 5.0, price: '10 000 F / mois', image: 'https://images.unsplash.com/photo-1531427186611-ecfd6d936c79?w=400&q=80', description: 'Spécialiste de la préparation au Baccalauréat.' },
-  { id: 4, name: 'Amina Diallo', subject: 'Physique-Chimie', city: 'Cotonou', rating: 4.7, price: '13 000 F / mois', image: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=400&q=80', description: 'Rend les sciences accessibles avec des exemples concrets.' },
+  { id: 1, name: 'Dr. Jean Dupont', subject: 'Mathématiques', country: 'Benin', city: 'Cotonou', rating: 4.9, price: '15 000 F / mois', image: 'https://images.unsplash.com/photo-1568602471122-7832951cc4c5?w=400&q=80', description: 'Docteur en mathématiques appliquées, 10 ans d\'expérience.' },
+  { id: 2, name: 'Marie Mensah', subject: 'SVT', country: 'Benin', city: 'Abomey-Calavi', rating: 4.8, price: '12 000 F / mois', image: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400&q=80', description: 'Professeur certifiée, excellente approche pédagogique.' },
+  { id: 3, name: 'Paul Kossi', subject: 'Philosophie', country: 'Benin', city: 'Porto-Novo', rating: 5.0, price: '10 000 F / mois', image: 'https://images.unsplash.com/photo-1531427186611-ecfd6d936c79?w=400&q=80', description: 'Spécialiste de la préparation au Baccalauréat.' },
+  { id: 4, name: 'Amina Diallo', subject: 'Physique-Chimie', country: 'Benin', city: 'Cotonou', rating: 4.7, price: '13 000 F / mois', image: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=400&q=80', description: 'Rend les sciences accessibles avec des exemples concrets.' },
 ]
 
 export default function TeacherList() {
   const [search, setSearch] = useState('')
+  const [countryFilter, setCountryFilter] = useState('Tous')
+  const [cityFilter, setCityFilter] = useState('Toutes')
   const [subjectFilter, setSubjectFilter] = useState('Toutes')
 
   const filteredTeachers = TEACHERS_DATA.filter(teacher => {
-    const matchesSearch = teacher.name.toLowerCase().includes(search.toLowerCase()) || teacher.city.toLowerCase().includes(search.toLowerCase())
+    const matchesSearch = teacher.name.toLowerCase().includes(search.toLowerCase())
+    const matchesCountry = countryFilter === 'Tous' || teacher.country === countryFilter
+    const matchesCity = cityFilter === 'Toutes' || teacher.city === cityFilter
     const matchesSubject = subjectFilter === 'Toutes' || teacher.subject === subjectFilter
-    return matchesSearch && matchesSubject
+    return matchesSearch && matchesCountry && matchesCity && matchesSubject
   })
 
   return (
@@ -33,18 +38,42 @@ export default function TeacherList() {
           </div>
         </div>
 
-        <div className="mt-10 flex flex-col sm:flex-row gap-4">
+        <div className="mt-10 flex flex-col sm:flex-row gap-4 flex-wrap">
           <input
             type="text"
-            placeholder="Rechercher par nom ou ville..."
+            placeholder="Rechercher par nom..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full sm:max-w-md rounded-control border-0 px-4 py-3 text-ink shadow-sm ring-1 ring-inset ring-border placeholder:text-ink-muted focus:ring-2 focus:ring-inset focus:ring-primary-500 sm:text-sm"
+            className="w-full sm:flex-1 sm:min-w-[200px] rounded-control border-0 bg-surface-raised px-4 py-3 text-ink shadow-sm ring-1 ring-inset ring-border placeholder:text-ink-muted focus:ring-2 focus:ring-inset focus:ring-primary-500 sm:text-sm"
           />
+          <select
+            value={countryFilter}
+            onChange={(e) => {
+              setCountryFilter(e.target.value)
+              setCityFilter('Toutes')
+            }}
+            className="w-full sm:max-w-[180px] rounded-control border-0 bg-surface-raised px-4 py-3 text-ink shadow-sm ring-1 ring-inset ring-border focus:ring-2 focus:ring-inset focus:ring-primary-500 sm:text-sm"
+          >
+            <option value="Tous">Tous les pays</option>
+            {Object.keys(FRANCOPHONE_AFRICA_DATA).map(country => (
+              <option key={country} value={country}>{country}</option>
+            ))}
+          </select>
+          <select
+            value={cityFilter}
+            onChange={(e) => setCityFilter(e.target.value)}
+            disabled={countryFilter === 'Tous'}
+            className="w-full sm:max-w-[180px] rounded-control border-0 bg-surface-raised px-4 py-3 text-ink shadow-sm ring-1 ring-inset ring-border focus:ring-2 focus:ring-inset focus:ring-primary-500 sm:text-sm disabled:opacity-50"
+          >
+            <option value="Toutes">Toutes les villes</option>
+            {countryFilter !== 'Tous' && FRANCOPHONE_AFRICA_DATA[countryFilter].map(city => (
+              <option key={city} value={city}>{city}</option>
+            ))}
+          </select>
           <select
             value={subjectFilter}
             onChange={(e) => setSubjectFilter(e.target.value)}
-            className="w-full sm:max-w-xs rounded-control border-0 px-4 py-3 text-ink shadow-sm ring-1 ring-inset ring-border focus:ring-2 focus:ring-inset focus:ring-primary-500 sm:text-sm"
+            className="w-full sm:max-w-[180px] rounded-control border-0 bg-surface-raised px-4 py-3 text-ink shadow-sm ring-1 ring-inset ring-border focus:ring-2 focus:ring-inset focus:ring-primary-500 sm:text-sm"
           >
             <option value="Toutes">Toutes les matières</option>
             <option value="Mathématiques">Mathématiques</option>
@@ -71,7 +100,7 @@ export default function TeacherList() {
                   <h3 className="mt-2 text-xl font-bold text-ink group-hover:text-primary-600 transition-colors">
                     {teacher.name}
                   </h3>
-                  <p className="mt-1 text-xs text-ink-muted">{teacher.city}</p>
+                  <p className="mt-1 text-xs text-ink-muted">{teacher.city}, {teacher.country}</p>
                   <p className="mt-3 text-sm text-ink-muted line-clamp-2">{teacher.description}</p>
                 </div>
                 <div className="mt-6 flex items-center justify-between border-t border-border pt-4">
