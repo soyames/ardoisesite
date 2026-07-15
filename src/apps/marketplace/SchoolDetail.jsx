@@ -1,5 +1,6 @@
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import { mockApi } from '../../shared/api/mockDb.js'
+import EmptyState from '../../shared/ui/EmptyState.jsx'
 
 export default function SchoolDetail() {
   const { id } = useParams()
@@ -9,19 +10,19 @@ export default function SchoolDetail() {
 
   if (!school) {
     return (
-      <div className="py-32 text-center text-slate-500">
-        <h2 className="text-2xl font-bold">École introuvable</h2>
-        <Link to="/schools" className="mt-4 inline-block text-indigo-600 hover:underline">Retour à l'annuaire</Link>
+      <div className="mx-auto max-w-2xl px-6 py-32">
+        <EmptyState title="École introuvable" />
+        <Link to="/schools" className="mt-4 inline-block text-primary-600 hover:underline">Retour à l'annuaire</Link>
       </div>
     )
   }
 
   return (
-    <div className="bg-slate-50 min-h-screen pb-20">
+    <div className="bg-surface min-h-screen pb-20">
       {/* Hero */}
       <div className="relative h-80 w-full md:h-96">
         <img src={school.image} alt={school.name} className="h-full w-full object-cover" />
-        <div className="absolute inset-0 bg-gradient-to-t from-slate-900/90 via-slate-900/40 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-primary-950/90 via-primary-950/40 to-transparent" />
         <div className="absolute bottom-0 left-0 w-full p-6 md:p-12 lg:px-24">
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
             <div>
@@ -31,10 +32,10 @@ export default function SchoolDetail() {
               </div>
               <h1 className="text-4xl font-extrabold text-white sm:text-5xl">{school.name}</h1>
             </div>
-            <button 
+            <button
               onClick={() => navigate(`/schools/${school.id}/enroll`)}
               disabled={school.isFull}
-              className={`whitespace-nowrap rounded-xl px-8 py-4 text-sm font-bold text-white shadow-lg transition ${school.isFull ? 'bg-slate-500 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-500 hover:scale-105'}`}
+              className={`whitespace-nowrap rounded-control px-8 py-4 text-sm font-bold shadow-elevated transition ${school.isFull ? 'bg-primary-400 text-white cursor-not-allowed' : 'bg-accent-500 text-primary-950 hover:bg-accent-400 hover:scale-105'}`}
             >
               {school.isFull ? 'Capacité Atteinte (Complet)' : 'Demander l\'inscription'}
             </button>
@@ -46,24 +47,24 @@ export default function SchoolDetail() {
         {/* Main Content */}
         <div className="lg:col-span-2 space-y-12">
           <section>
-            <h2 className="text-2xl font-bold text-slate-900">À propos</h2>
-            <p className="mt-4 text-lg text-slate-600 leading-relaxed">{school.description}</p>
+            <h2 className="text-2xl font-bold text-ink">À propos</h2>
+            <p className="mt-4 text-lg text-ink-muted leading-relaxed">{school.description}</p>
           </section>
 
           <section>
-            <h2 className="text-2xl font-bold text-slate-900">Offres d'emploi</h2>
+            <h2 className="text-2xl font-bold text-ink">Offres d'emploi</h2>
             <div className="mt-6 space-y-4">
               {jobs.map(job => (
-                <div key={job.id} className="flex items-center justify-between rounded-xl bg-white p-6 shadow-sm ring-1 ring-slate-200 transition hover:shadow-md">
+                <div key={job.id} className="flex items-center justify-between rounded-card bg-surface-raised p-6 shadow-card ring-1 ring-border transition hover:shadow-elevated">
                   <div>
-                    <h3 className="font-bold text-slate-900">{job.title}</h3>
-                    <div className="mt-1 flex items-center gap-4 text-sm text-slate-500">
+                    <h3 className="font-bold text-ink">{job.title}</h3>
+                    <div className="mt-1 flex items-center gap-4 text-sm text-ink-muted">
                       <span>{job.type}</span>
                       <span>&bull;</span>
                       <span>{job.posted}</span>
                     </div>
                   </div>
-                  <button onClick={() => navigate(`/jobs/${job.id}/apply`)} className="text-sm font-semibold text-indigo-600 hover:text-indigo-500">Postuler &rarr;</button>
+                  <button onClick={() => navigate(`/jobs/${job.id}/apply`)} className="text-sm font-semibold text-primary-600 hover:text-primary-500">Postuler &rarr;</button>
                 </div>
               ))}
             </div>
@@ -72,30 +73,30 @@ export default function SchoolDetail() {
 
         {/* Sidebar Stats */}
         <div className="space-y-6">
-          <div className="rounded-2xl bg-white p-8 shadow-sm ring-1 ring-slate-200">
-            <h3 className="font-bold text-slate-900 text-xl mb-6">Performance</h3>
+          <div className="rounded-card bg-surface-raised p-8 shadow-card ring-1 ring-border">
+            <h3 className="font-bold text-ink text-xl mb-6">Performance</h3>
             <div className="space-y-6">
               <div>
-                <p className="text-sm font-medium text-slate-500 mb-1">Examen National</p>
+                <p className="text-sm font-medium text-ink-muted mb-1">Examen National</p>
                 <div className="flex items-end gap-2">
-                  <span className="text-4xl font-extrabold text-green-600">{school.successRate}%</span>
-                  <span className="text-sm text-slate-500 mb-1">de réussite</span>
+                  <span className="text-4xl font-extrabold text-success-600">{school.successRate}%</span>
+                  <span className="text-sm text-ink-muted mb-1">de réussite</span>
                 </div>
               </div>
-              <div className="h-px bg-slate-100" />
+              <div className="h-px bg-border" />
               <div>
-                <p className="text-sm font-medium text-slate-500 mb-1">Passage en classe supérieure (Interne)</p>
+                <p className="text-sm font-medium text-ink-muted mb-1">Passage en classe supérieure (Interne)</p>
                 <div className="flex items-end gap-2">
-                  <span className="text-4xl font-extrabold text-slate-900">{school.internalRate}%</span>
-                  <span className="text-sm text-slate-500 mb-1">de réussite</span>
+                  <span className="text-4xl font-extrabold text-ink">{school.internalRate}%</span>
+                  <span className="text-sm text-ink-muted mb-1">de réussite</span>
                 </div>
               </div>
             </div>
           </div>
 
-          <div className="rounded-2xl bg-slate-900 p-8 shadow-sm">
+          <div className="rounded-card bg-primary-900 p-8 shadow-card">
             <h3 className="font-bold text-white text-xl mb-6">En chiffres</h3>
-            <dl className="space-y-4 text-sm text-slate-300">
+            <dl className="space-y-4 text-sm text-primary-300">
               <div className="flex justify-between border-b border-white/10 pb-4">
                 <dt>Élèves inscrits</dt>
                 <dd className="font-bold text-white">{school.students}</dd>

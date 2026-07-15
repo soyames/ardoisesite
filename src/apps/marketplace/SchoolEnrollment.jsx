@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../../shared/auth/AuthContext.jsx'
 import { mockApi } from '../../shared/api/mockDb.js'
+import EmptyState from '../../shared/ui/EmptyState.jsx'
 
 export default function SchoolEnrollment() {
   const { id } = useParams()
@@ -17,8 +18,8 @@ export default function SchoolEnrollment() {
 
   if (!school) {
     return (
-      <div className="py-32 text-center">
-        <h2 className="text-2xl font-bold">École introuvable</h2>
+      <div className="mx-auto max-w-2xl px-6 py-32">
+        <EmptyState title="École introuvable" />
       </div>
     )
   }
@@ -28,13 +29,13 @@ export default function SchoolEnrollment() {
   if (status === 'anonymous' || !user || user.role !== 'parent') {
     return (
       <div className="py-32 px-4 text-center">
-        <h2 className="text-2xl font-bold text-slate-900 mb-4">Connexion Requise</h2>
-        <p className="text-slate-600 mb-8">Vous devez être connecté en tant que parent pour faire une demande d'inscription.</p>
+        <h2 className="text-2xl font-bold text-ink mb-4">Connexion Requise</h2>
+        <p className="text-ink-muted mb-8">Vous devez être connecté en tant que parent pour faire une demande d'inscription.</p>
         <div className="flex justify-center gap-4">
-          <Link to="/login" className="rounded-xl bg-indigo-600 px-6 py-3 text-sm font-bold text-white hover:bg-indigo-500">
+          <Link to="/login" className="rounded-control bg-primary-600 px-6 py-3 text-sm font-bold text-white hover:bg-primary-700">
             Se connecter
           </Link>
-          <Link to="/register" className="rounded-xl bg-slate-200 px-6 py-3 text-sm font-bold text-slate-900 hover:bg-slate-300">
+          <Link to="/register" className="rounded-control bg-primary-100 px-6 py-3 text-sm font-bold text-primary-700 hover:bg-primary-200">
             S'inscrire
           </Link>
         </div>
@@ -61,44 +62,44 @@ export default function SchoolEnrollment() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-2xl mx-auto bg-white p-8 rounded-2xl shadow-sm ring-1 ring-slate-200">
-        <div className="mb-8 border-b border-slate-100 pb-6">
-          <h1 className="text-2xl font-bold text-slate-900">Demande d'inscription</h1>
-          <p className="text-slate-500 mt-1">Pour l'établissement : <span className="font-semibold text-slate-900">{school.name}</span></p>
+    <div className="min-h-screen bg-surface py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-2xl mx-auto bg-surface-raised p-8 rounded-card shadow-card ring-1 ring-border">
+        <div className="mb-8 border-b border-border pb-6">
+          <h1 className="text-2xl font-bold text-ink">Demande d'inscription</h1>
+          <p className="text-ink-muted mt-1">Pour l'établissement : <span className="font-semibold text-ink">{school.name}</span></p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">
-            <h3 className="text-sm font-semibold text-slate-900 mb-3">Informations du Parent (Pré-remplies)</h3>
-            <div className="grid grid-cols-2 gap-4 text-sm text-slate-600">
-              <div><span className="block text-xs text-slate-400">Nom Complet</span>{user.name}</div>
-              <div><span className="block text-xs text-slate-400">Téléphone</span>{user.phone}</div>
-              <div className="col-span-2"><span className="block text-xs text-slate-400">Email</span>{user.email}</div>
+          <div className="bg-surface p-4 rounded-control border border-border">
+            <h3 className="text-sm font-semibold text-ink mb-3">Informations du Parent (Pré-remplies)</h3>
+            <div className="grid grid-cols-2 gap-4 text-sm text-ink-muted">
+              <div><span className="block text-xs text-ink-muted">Nom Complet</span>{user.name}</div>
+              <div><span className="block text-xs text-ink-muted">Téléphone</span>{user.phone}</div>
+              <div className="col-span-2"><span className="block text-xs text-ink-muted">Email</span>{user.email}</div>
             </div>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Nom complet de l'enfant</label>
-            <input 
+            <label className="block text-sm font-medium text-ink mb-1">Nom complet de l'enfant</label>
+            <input
               type="text" required value={childName} onChange={e => setChildName(e.target.value)}
-              className="w-full rounded-xl border border-slate-200 px-4 py-2 text-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20"
+              className="w-full rounded-control border border-border px-4 py-2 text-sm focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
             />
           </div>
 
           <div className="grid grid-cols-2 gap-6">
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Âge de l'enfant</label>
-              <input 
+              <label className="block text-sm font-medium text-ink mb-1">Âge de l'enfant</label>
+              <input
                 type="number" required min="3" max="20" value={childAge} onChange={e => setChildAge(e.target.value)}
-                className="w-full rounded-xl border border-slate-200 px-4 py-2 text-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20"
+                className="w-full rounded-control border border-border px-4 py-2 text-sm focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Classe demandée</label>
-              <select 
+              <label className="block text-sm font-medium text-ink mb-1">Classe demandée</label>
+              <select
                 value={childClass} onChange={e => setChildClass(e.target.value)}
-                className="w-full rounded-xl border border-slate-200 px-4 py-2 text-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20"
+                className="w-full rounded-control border border-border px-4 py-2 text-sm focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
               >
                 <option value="6ème">6ème</option>
                 <option value="5ème">5ème</option>
@@ -111,9 +112,9 @@ export default function SchoolEnrollment() {
             </div>
           </div>
 
-          <button 
+          <button
             type="submit" disabled={submitting}
-            className="w-full rounded-xl bg-indigo-600 px-4 py-3 text-sm font-bold text-white transition hover:bg-indigo-500 disabled:opacity-50"
+            className="w-full rounded-control bg-accent-500 px-4 py-3 text-sm font-bold text-primary-950 transition hover:bg-accent-400 disabled:opacity-50"
           >
             {submitting ? 'Envoi en cours...' : 'Envoyer la demande'}
           </button>

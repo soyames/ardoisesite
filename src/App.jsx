@@ -25,6 +25,8 @@ import TeacherMarketplaceDashboard from './apps/marketplace/TeacherMarketplaceDa
 import Privacy from './apps/marketplace/Privacy.jsx'
 import Terms from './apps/marketplace/Terms.jsx'
 import InstallGuide from './apps/marketplace/InstallGuide.jsx'
+import ContactForm from './apps/marketplace/ContactForm.jsx'
+import HowItWorks from './apps/marketplace/HowItWorks.jsx'
 
 const NAV_BY_ROLE = {
   founder: [{ to: '/portal', label: 'Tableau de bord', end: true }],
@@ -88,6 +90,8 @@ export default function App() {
           <Route path="privacy" element={<Privacy />} />
           <Route path="terms" element={<Terms />} />
           <Route path="install" element={<InstallGuide />} />
+          <Route path="contact" element={<ContactForm />} />
+          <Route path="how-it-works" element={<HowItWorks />} />
         </Route>
 
         {/* Private School Portal Routes */}
