@@ -1,9 +1,30 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 
+const WEST_AFRICA_DATA = {
+  'Benin': ['Cotonou', 'Porto-Novo', 'Parakou', 'Abomey-Calavi', 'Ouidah', 'Bohicon', 'Natitingou'],
+  'Burkina Faso': ['Ouagadougou', 'Bobo-Dioulasso', 'Koudougou', 'Banfora'],
+  'Cap-Vert': ['Praia', 'Mindelo', 'Santa Maria'],
+  'Côte d\'Ivoire': ['Abidjan', 'Bouaké', 'Yamoussoukro', 'San-Pédro', 'Daloa'],
+  'Gambie': ['Banjul', 'Serekunda', 'Brikama'],
+  'Ghana': ['Accra', 'Kumasi', 'Tamale', 'Takoradi'],
+  'Guinée': ['Conakry', 'Nzérékoré', 'Kankan', 'Kindia'],
+  'Guinée-Bissau': ['Bissau', 'Bafatá', 'Gabú'],
+  'Liberia': ['Monrovia', 'Gbarnga', 'Buchanan'],
+  'Mali': ['Bamako', 'Sikasso', 'Mopti', 'Koutiala'],
+  'Mauritanie': ['Nouakchott', 'Nouadhibou', 'Rosso'],
+  'Niger': ['Niamey', 'Zinder', 'Maradi', 'Agadez'],
+  'Nigeria': ['Lagos', 'Kano', 'Ibadan', 'Abuja', 'Port Harcourt'],
+  'Sénégal': ['Dakar', 'Thiès', 'Rufisque', 'Saint-Louis', 'Touba'],
+  'Sierra Leone': ['Freetown', 'Bo', 'Kenema', 'Makeni'],
+  'Togo': ['Lomé', 'Sokodé', 'Kara', 'Kpalimé']
+}
+
 export default function RegisterPage() {
   const navigate = useNavigate()
   const [role, setRole] = useState('parent')
+  const [country, setCountry] = useState('Benin')
+  const [city, setCity] = useState(WEST_AFRICA_DATA['Benin'][0])
 
   const handleRegister = (e) => {
     e.preventDefault()
@@ -23,7 +44,7 @@ export default function RegisterPage() {
       <div className="w-full max-w-md space-y-8">
         <div className="mb-8 text-center">
           <Link to="/" className="mx-auto mb-4 flex justify-center">
-            <img src="/images/ardoise_lockup_horizontal.png" alt="Ardoise Logo" className="h-12 w-auto" />
+            <img src="/images/ardoise_lockup_horizontal.png" alt="Ardoise Logo" className="h-12 w-auto mix-blend-multiply" />
           </Link>
           <h2 className="text-3xl font-bold tracking-tight text-slate-900">
             Inscription
@@ -93,6 +114,34 @@ export default function RegisterPage() {
                 className="relative block w-full rounded-md border-0 py-2.5 px-3 text-slate-900 ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:z-10 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
                 placeholder="Mot de passe"
               />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">Pays</label>
+              <select
+                value={country}
+                onChange={(e) => {
+                  setCountry(e.target.value)
+                  setCity(WEST_AFRICA_DATA[e.target.value][0])
+                }}
+                className="relative block w-full rounded-md border-0 py-2.5 px-3 text-slate-900 ring-1 ring-inset ring-slate-300 focus:z-10 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+              >
+                {Object.keys(WEST_AFRICA_DATA).map(c => (
+                  <option key={c} value={c}>{c}</option>
+                ))}
+              </select>
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">Ville</label>
+              <select
+                value={city}
+                onChange={(e) => setCity(e.target.value)}
+                className="relative block w-full rounded-md border-0 py-2.5 px-3 text-slate-900 ring-1 ring-inset ring-slate-300 focus:z-10 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+              >
+                {WEST_AFRICA_DATA[country].map(c => (
+                  <option key={c} value={c}>{c}</option>
+                ))}
+              </select>
             </div>
           </div>
 

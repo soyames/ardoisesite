@@ -47,7 +47,7 @@ export default function LoginPage() {
       <div className="w-full max-w-sm">
         <div className="mb-8 text-center">
           <Link to="/" className="mx-auto mb-4 flex justify-center">
-            <img src="/images/ardoise_lockup_horizontal.png" alt="Ardoise Logo" className="h-12 w-auto brightness-0 invert" />
+            <img src="/images/ardoise_lockup_horizontal.png" alt="Ardoise Logo" className="h-12 w-auto brightness-0 invert mix-blend-screen" />
           </Link>
           <h1 className="text-2xl font-semibold text-white">Connexion</h1>
           <p className="mt-1 text-sm text-slate-400">Accédez à votre espace</p>
