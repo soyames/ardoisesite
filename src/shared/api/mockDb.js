@@ -34,9 +34,9 @@ export const mockDb = {
   },
 
   schools: {
-    1: { id: 1, name: 'Complexe Scolaire La Liberté', city: 'Abomey-Calavi', cycle: 'Primaire & Secondaire', successRate: 98, internalRate: 95, image: 'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=1200&q=80', description: 'Une école d\'excellence reconnue pour sa rigueur et ses résultats aux examens nationaux.', students: 1200, teachers: 85, established: 2005, isFull: false },
-    2: { id: 2, name: 'Collège Catholique Père Aupiais', city: 'Cotonou', cycle: 'Secondaire', successRate: 95, internalRate: 92, image: 'https://images.unsplash.com/photo-1541829070764-84a7d30dd3f3?w=1200&q=80', description: 'Un cadre d\'apprentissage prestigieux au cœur de Cotonou.', students: 2500, teachers: 150, established: 1960, isFull: false },
-    3: { id: 3, name: 'Lycée Béhanzin', city: 'Porto-Novo', cycle: 'Secondaire', successRate: 92, internalRate: 88, image: 'https://images.unsplash.com/photo-1592280771190-3e2e4d571952?w=1200&q=80', description: 'Lycée historique de la capitale offrant une formation solide.', students: 3000, teachers: 200, established: 1950, isFull: true },
+    1: { id: 1, name: 'Complexe Scolaire La Liberté', city: 'Abomey-Calavi', cycle: 'Primaire & Secondaire', successRate: 98, internalRate: 95, image: 'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=1200&q=80', description: 'Une école d\'excellence reconnue pour sa rigueur et ses résultats aux examens nationaux.', students: 1200, teachers: 85, established: 2005, isFull: false, backendUrl: 'http://localhost:8000' },
+    2: { id: 2, name: 'Collège Catholique Père Aupiais', city: 'Cotonou', cycle: 'Secondaire', successRate: 95, internalRate: 92, image: 'https://images.unsplash.com/photo-1541829070764-84a7d30dd3f3?w=1200&q=80', description: 'Un cadre d\'apprentissage prestigieux au cœur de Cotonou.', students: 2500, teachers: 150, established: 1960, isFull: false, backendUrl: 'http://localhost:8000' },
+    3: { id: 3, name: 'Lycée Béhanzin', city: 'Porto-Novo', cycle: 'Secondaire', successRate: 92, internalRate: 88, image: 'https://images.unsplash.com/photo-1592280771190-3e2e4d571952?w=1200&q=80', description: 'Lycée historique de la capitale offrant une formation solide.', students: 3000, teachers: 200, established: 1950, isFull: true, backendUrl: 'http://localhost:8000' },
   },
 
   jobs: [
