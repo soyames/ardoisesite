@@ -3,6 +3,28 @@ import { signInWithEmailAndPassword, signOut as firebaseSignOut, onAuthStateChan
 import { doc, getDoc } from 'firebase/firestore'
 import { auth, db } from '../api/firebase.js'
 import { api, primeCsrf } from '../api/client.js'
+import { setApiBaseUrl } from '../../config/env.js'
+
+/**
+ * Every school self-hosts its own Django backend at its own URL (see
+ * PROJECT_BRIEF.md's hosting model) -- this shared frontend has no
+ * way to know which backend belongs to the logged-in user's school
+ * except by looking it up. schools/{schoolId}.backendUrl in Firestore
+ * (set by the Founder in ApiIntegrations.jsx after their Docker
+ * install is running) is that lookup. Without this, every API call
+ * silently falls back to the default in config/env.js and the portal
+ * never actually reaches the school's own data.
+ */
+async function resolveSchoolBackendUrl(schoolId) {
+  if (!schoolId) return
+  try {
+    const schoolDoc = await getDoc(doc(db, 'schools', String(schoolId)))
+    const backendUrl = schoolDoc.exists() ? schoolDoc.data().backendUrl : null
+    setApiBaseUrl(backendUrl || null) // null clears back to the shared default if unset
+  } catch (err) {
+    console.error('Could not resolve school backend URL:', err)
+  }
+}
 
 const AuthContext = createContext(null)
 
@@ -40,7 +62,14 @@ export function AuthProvider({ children }) {
             }
           }
 
-          // 2. Establish Django session using the Firebase ID token and role
+          // 2. Point the API client at THIS school's own backend before
+          // calling it -- must happen before primeCsrf/firebase-login,
+          // not after, since those calls themselves need to land on
+          // the right school's Django instance (only it has the
+          // FIREBASE_SERVICE_ACCOUNT credential to verify this token).
+          await resolveSchoolBackendUrl(schoolId)
+
+          // 3. Establish Django session using the Firebase ID token and role
           const token = await firebaseUser.getIdToken()
           await primeCsrf()
           await api.post('/api/auth/firebase-login/', { token, role, schoolId })
