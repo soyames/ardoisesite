@@ -25,3 +25,4 @@ vite.test.config.js
 *.njsproj
 *.sln
 *.sw?
+.env

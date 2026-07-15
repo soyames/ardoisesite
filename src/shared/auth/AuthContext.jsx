@@ -1,6 +1,7 @@
-import { createContext, useCallback, useContext, useEffect, useState } from 'react'
-import { api, ApiError, primeCsrf } from '../api/client.js'
-import { mockDb } from '../api/mockDb.js'
+import { createContext, useContext, useEffect, useState, useCallback } from 'react'
+import { signInWithEmailAndPassword, signOut as firebaseSignOut, onAuthStateChanged, sendPasswordResetEmail } from 'firebase/auth'
+import { doc, getDoc } from 'firebase/firestore'
+import { auth, db } from '../api/firebase.js'
 
 const AuthContext = createContext(null)
 
@@ -9,60 +10,79 @@ export function AuthProvider({ children }) {
   const [status, setStatus] = useState('loading') // loading | authenticated | anonymous
 
   useEffect(() => {
-    let cancelled = false
-    async function bootstrap() {
-      try {
-        await primeCsrf()
-        const me = await api.get('/api/auth/me/')
-        if (!cancelled) {
-          setUser(me)
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      if (firebaseUser) {
+        try {
+          // Fetch user profile from Firestore
+          const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid))
+          if (userDoc.exists()) {
+            const userData = userDoc.data()
+            setUser({
+              uid: firebaseUser.uid,
+              email: firebaseUser.email,
+              emailVerified: firebaseUser.emailVerified,
+              ...userData
+            })
+          } else {
+            // Document might not be created yet during registration flow
+            setUser({
+              uid: firebaseUser.uid,
+              email: firebaseUser.email,
+              emailVerified: firebaseUser.emailVerified,
+              role: 'pending'
+            })
+          }
           setStatus('authenticated')
+        } catch (error) {
+          console.error("Error fetching user profile:", error)
+          setStatus('anonymous')
         }
-      } catch (err) {
-        // 403 here just means "no active session yet" (see MeView's
-        // docstring on the backend for why it's 403 not 401) -- not
-        // an error worth surfacing, just "show the login screen".
-        // Or if primeCsrf fails due to network error, fallback to anonymous.
-        if (!cancelled) setStatus('anonymous')
+      } else {
+        setUser(null)
+        setStatus('anonymous')
       }
-    }
-    bootstrap()
-    return () => {
-      cancelled = true
-    }
+    })
+
+    return () => unsubscribe()
   }, [])
 
-  const login = useCallback(async (username, password) => {
-    // Intercept mock users for UI testing
-    if (mockDb.users[username]) {
-      const mockUser = mockDb.users[username];
-      setUser(mockUser);
-      setStatus('authenticated');
-      return mockUser;
+  const login = useCallback(async (email, password) => {
+    setStatus('loading')
+    try {
+      await signInWithEmailAndPassword(auth, email, password)
+      // onAuthStateChanged will handle the rest
+    } catch (error) {
+      setStatus('anonymous')
+      throw error
     }
-
-    const me = await api.post('/api/auth/login/', { username, password })
-    setUser(me)
-    setStatus('authenticated')
-    return me
   }, [])
 
   const logout = useCallback(async () => {
+    setStatus('loading')
     try {
-      // Don't call backend if it's a mock user
-      if (!user || !mockDb.users[user.username]) {
-        await api.post('/api/auth/logout/')
-      }
+      await firebaseSignOut(auth)
     } catch(err) {
-      // ignore
-    } finally {
-      setUser(null)
       setStatus('anonymous')
+      throw err
     }
-  }, [user])
+  }, [])
+  
+  const resetPassword = useCallback(async (email) => {
+    await sendPasswordResetEmail(auth, email)
+  }, [])
+
+  // Provide a method to manually refresh user data (useful after registration saves the doc)
+  const refreshUser = useCallback(async () => {
+    if (auth.currentUser) {
+      const userDoc = await getDoc(doc(db, 'users', auth.currentUser.uid))
+      if (userDoc.exists()) {
+        setUser(prev => ({ ...prev, ...userDoc.data() }))
+      }
+    }
+  }, [])
 
   return (
-    <AuthContext.Provider value={{ user, status, login, logout }}>
+    <AuthContext.Provider value={{ user, status, login, logout, resetPassword, refreshUser }}>
       {children}
     </AuthContext.Provider>
   )
@@ -74,4 +94,3 @@ export function useAuth() {
   return ctx
 }
 
-export { ApiError }
