@@ -1,19 +1,11 @@
-import { useParams, Link } from 'react-router-dom'
-
-const SCHOOL_DB = {
-  1: { id: 1, name: 'Complexe Scolaire La Liberté', city: 'Abomey-Calavi', cycle: 'Primaire & Secondaire', successRate: 98, internalRate: 95, image: 'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=1200&q=80', description: 'Une école d\'excellence reconnue pour sa rigueur et ses résultats aux examens nationaux.', students: 1200, teachers: 85, established: 2005 },
-  2: { id: 2, name: 'Collège Catholique Père Aupiais', city: 'Cotonou', cycle: 'Secondaire', successRate: 95, internalRate: 92, image: 'https://images.unsplash.com/photo-1541829070764-84a7d30dd3f3?w=1200&q=80', description: 'Un cadre d\'apprentissage prestigieux au cœur de Cotonou.', students: 2500, teachers: 150, established: 1960 },
-  3: { id: 3, name: 'Lycée Béhanzin', city: 'Porto-Novo', cycle: 'Secondaire', successRate: 92, internalRate: 88, image: 'https://images.unsplash.com/photo-1592280771190-3e2e4d571952?w=1200&q=80', description: 'Lycée historique de la capitale offrant une formation solide.', students: 3000, teachers: 200, established: 1950 },
-}
-
-const JOBS_MOCK = [
-  { id: 101, title: 'Professeur de Mathématiques (Terminale)', type: 'Temps Plein', posted: 'Il y a 2 jours' },
-  { id: 102, title: 'Surveillant Général Adjoint', type: 'Temps Plein', posted: 'Il y a 1 semaine' },
-]
+import { useParams, Link, useNavigate } from 'react-router-dom'
+import { mockApi } from '../../shared/api/mockDb.js'
 
 export default function SchoolDetail() {
   const { id } = useParams()
-  const school = SCHOOL_DB[id]
+  const navigate = useNavigate()
+  const school = mockApi.getSchool(id)
+  const jobs = mockApi.getJobs().filter(j => j.schoolId === parseInt(id))
 
   if (!school) {
     return (
@@ -39,8 +31,12 @@ export default function SchoolDetail() {
               </div>
               <h1 className="text-4xl font-extrabold text-white sm:text-5xl">{school.name}</h1>
             </div>
-            <button className="whitespace-nowrap rounded-xl bg-indigo-600 px-8 py-4 text-sm font-bold text-white shadow-lg transition hover:bg-indigo-500 hover:scale-105">
-              Demander l'inscription
+            <button 
+              onClick={() => navigate(`/schools/${school.id}/enroll`)}
+              disabled={school.isFull}
+              className={`whitespace-nowrap rounded-xl px-8 py-4 text-sm font-bold text-white shadow-lg transition ${school.isFull ? 'bg-slate-500 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-500 hover:scale-105'}`}
+            >
+              {school.isFull ? 'Capacité Atteinte (Complet)' : 'Demander l\'inscription'}
             </button>
           </div>
         </div>
@@ -57,7 +53,7 @@ export default function SchoolDetail() {
           <section>
             <h2 className="text-2xl font-bold text-slate-900">Offres d'emploi</h2>
             <div className="mt-6 space-y-4">
-              {JOBS_MOCK.map(job => (
+              {jobs.map(job => (
                 <div key={job.id} className="flex items-center justify-between rounded-xl bg-white p-6 shadow-sm ring-1 ring-slate-200 transition hover:shadow-md">
                   <div>
                     <h3 className="font-bold text-slate-900">{job.title}</h3>
@@ -67,7 +63,7 @@ export default function SchoolDetail() {
                       <span>{job.posted}</span>
                     </div>
                   </div>
-                  <button className="text-sm font-semibold text-indigo-600 hover:text-indigo-500">Postuler &rarr;</button>
+                  <button onClick={() => navigate(`/jobs/${job.id}/apply`)} className="text-sm font-semibold text-indigo-600 hover:text-indigo-500">Postuler &rarr;</button>
                 </div>
               ))}
             </div>

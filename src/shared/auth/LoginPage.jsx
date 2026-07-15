@@ -5,7 +5,7 @@ import { setApiBaseUrl } from '../../config/env.js'
 import { primeCsrf } from '../api/client.js'
 
 export default function LoginPage() {
-  const { login, status } = useAuth()
+  const { login, status, user } = useAuth()
   const [schoolCode, setSchoolCode] = useState('')
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
@@ -13,7 +13,8 @@ export default function LoginPage() {
   const [submitting, setSubmitting] = useState(false)
 
   if (status === 'authenticated') {
-    return <Navigate to="/" replace />
+    if (user?.role === 'teacher') return <Navigate to="/teacher-dashboard" replace />
+    return <Navigate to="/portal" replace />
   }
 
   async function handleSubmit(e) {
