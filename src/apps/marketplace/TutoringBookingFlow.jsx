@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../../shared/auth/AuthContext.jsx'
 import { TEACHER_DB } from './TeacherDetail.jsx'
+import { FedaPayButton } from '../../shared/components/FedaPayButton.jsx'
 
 export default function TutoringBookingFlow() {
   const { id } = useParams()
@@ -189,22 +190,54 @@ export default function TutoringBookingFlow() {
                     Retour
                   </button>
                   {user ? (
-                    <button 
-                      onClick={handleBook}
-                      disabled={!agreedToTerms}
-                      className="w-2/3 rounded-xl bg-green-600 px-4 py-3 text-sm font-bold text-white shadow-md hover:bg-green-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                    <FedaPayButton
+                      amount={total}
+                      description={`Réservation Tuteur: ${teacher.name}`}
+                      customerEmail={user?.email || "parent@ardoise.com"}
+                      customerName={user?.name || "Parent Ardoise"}
+                      customMetadata={{
+                        type: 'tutoring_subscription',
+                        teacherId: teacher.id,
+                        parentId: user?.id || 'unknown',
+                        duration: 6
+                      }}
+                      onComplete={(tx) => {
+                        console.log("Paiement FedaPay complété !", tx)
+                        setStep(3)
+                      }}
+                      className={`w-2/3 rounded-xl px-4 py-3 text-sm font-bold text-white shadow-md ${agreedToTerms ? 'bg-indigo-600 hover:bg-indigo-500' : 'bg-slate-300 cursor-not-allowed'}`}
                     >
-                      Signer et Activer le prélèvement
-                    </button>
+                      Signer et Payer {total.toLocaleString('fr-FR')} F
+                    </FedaPayButton>
                   ) : (
                     <Link 
                       to="/register"
                       className="flex w-2/3 items-center justify-center rounded-xl bg-indigo-600 px-4 py-3 text-sm font-bold text-white shadow-md hover:bg-indigo-500"
                     >
-                      S'inscrire ou se connecter pour signer
+                      S'inscrire ou se connecter pour payer
                     </Link>
                   )}
                 </div>
+              </div>
+            )}
+            
+            {step === 3 && (
+              <div className="text-center py-10">
+                <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-green-100 mb-6">
+                  <svg className="h-8 w-8 text-green-600" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+                <h2 className="text-2xl font-bold text-slate-900 mb-2">Paiement Réussi !</h2>
+                <p className="text-slate-600 mb-8 max-w-md mx-auto">
+                  Votre abonnement pour {teacher.name} est confirmé. Vous recevrez très bientôt un email avec les détails de la première séance.
+                </p>
+                <Link
+                  to="/marketplace"
+                  className="inline-flex justify-center rounded-xl bg-indigo-600 px-6 py-3 text-sm font-bold text-white shadow-sm hover:bg-indigo-500"
+                >
+                  Retour à l'accueil
+                </Link>
               </div>
             )}
           </div>

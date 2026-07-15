@@ -7,8 +7,11 @@ import Badge from '../../shared/ui/Badge.jsx'
 import Button from '../../shared/ui/Button.jsx'
 import EmptyState from '../../shared/ui/EmptyState.jsx'
 
+import ApiIntegrations from './ApiIntegrations.jsx'
+
 export default function FounderDashboard() {
   const { user } = useAuth()
+  const [activeTab, setActiveTab] = useState('overview')
   
   if (!user || user.role !== 'founder') {
     return <div className="py-20 text-center">Accès non autorisé</div>
@@ -65,78 +68,109 @@ export default function FounderDashboard() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <StatCard label="Inscriptions" value={pendingEnrollments.length} tone="warning" />
-        <StatCard label="Candidatures" value={pendingApps.length} tone="primary" />
-        <StatCard label="Total élèves" value={school?.students || 0} tone="neutral" />
-        <StatCard label="Professeurs" value={school?.teachers || 0} tone="neutral" />
+      <div className="border-b border-slate-200">
+        <nav className="-mb-px flex space-x-8">
+          <button
+            onClick={() => setActiveTab('overview')}
+            className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm ${
+              activeTab === 'overview'
+                ? 'border-indigo-500 text-indigo-600'
+                : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
+            }`}
+          >
+            Vue d'ensemble
+          </button>
+          <button
+            onClick={() => setActiveTab('integrations')}
+            className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm ${
+              activeTab === 'integrations'
+                ? 'border-indigo-500 text-indigo-600'
+                : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
+            }`}
+          >
+            Intégrations API (Paiements & WhatsApp)
+          </button>
+        </nav>
       </div>
 
-      <div className="mt-8">
-        <Card>
-          <CardHeader title="Demandes d'inscription" subtitle="En attente de votre décision" />
-          <CardBody>
-            {pendingEnrollments.length === 0 ? (
-              <EmptyState title="Aucune demande" description="Il n'y a pas de nouvelle demande d'inscription." />
-            ) : (
-              <ul className="space-y-4">
-                {pendingEnrollments.map(e => (
-                  <li key={e.id} className="flex flex-col md:flex-row md:items-center justify-between rounded-xl border border-slate-200 p-4 shadow-sm bg-white">
-                    <div>
-                      <p className="font-bold text-slate-900">{e.childName} <span className="text-sm font-normal text-slate-500">({e.childAge} ans)</span></p>
-                      <p className="text-sm text-slate-600 mt-1">Classe demandée: <span className="font-semibold">{e.childClass}</span></p>
-                      <p className="text-xs text-slate-400 mt-2">Parent: {e.parentName} &bull; {e.parentPhone}</p>
-                    </div>
-                    <div className="mt-4 md:mt-0 flex gap-2">
-                      <Button size="sm" variant="secondary" onClick={() => handleStatusUpdate(e.id, 'rejected')}>
-                        Refuser
-                      </Button>
-                      <Button size="sm" onClick={() => handleStatusUpdate(e.id, 'accepted')}>
-                        Accepter
-                      </Button>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </CardBody>
-        </Card>
-      </div>
+      {activeTab === 'overview' ? (
+        <>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <StatCard label="Inscriptions" value={pendingEnrollments.length} tone="warning" />
+            <StatCard label="Candidatures" value={pendingApps.length} tone="primary" />
+            <StatCard label="Total élèves" value={school?.students || 0} tone="neutral" />
+            <StatCard label="Professeurs" value={school?.teachers || 0} tone="neutral" />
+          </div>
 
-      <div className="mt-8">
-        <Card>
-          <CardHeader title="Dernières candidatures reçues" subtitle="Professeurs intéressés par vos annonces" />
-          <CardBody>
-            {pendingApps.length === 0 ? (
-              <EmptyState title="Aucune candidature" description="Vos annonces d'emploi n'ont pas encore reçu de candidatures récentes." />
-            ) : (
-              <ul className="space-y-4">
-                {pendingApps.map(a => {
-                  const job = mockApi.getJob(a.jobId)
-                  return (
-                    <li key={a.id} className="flex flex-col md:flex-row md:items-center justify-between rounded-xl border border-slate-200 p-4 shadow-sm bg-white">
-                      <div>
-                        <p className="font-bold text-slate-900">{a.teacherName}</p>
-                        <p className="text-sm text-slate-600 mt-1">Poste: <span className="font-semibold">{job?.title}</span></p>
-                        <p className="text-xs text-slate-400 mt-2">Email: {a.email}</p>
-                        {a.motivation && <p className="text-sm text-slate-500 mt-2 italic border-l-2 border-indigo-200 pl-2">"{a.motivation}"</p>}
-                      </div>
-                      <div className="mt-4 md:mt-0 flex gap-2">
-                        <Button size="sm" variant="secondary" onClick={() => handleAppStatusUpdate(a.id, 'rejected')}>
-                          Refuser
-                        </Button>
-                        <Button size="sm" onClick={() => handleAppStatusUpdate(a.id, 'accepted')}>
-                          Accepter
-                        </Button>
-                      </div>
-                    </li>
-                  )
-                })}
-              </ul>
-            )}
-          </CardBody>
-        </Card>
-      </div>
+          <div className="mt-8">
+            <Card>
+              <CardHeader title="Demandes d'inscription" subtitle="En attente de votre décision" />
+              <CardBody>
+                {pendingEnrollments.length === 0 ? (
+                  <EmptyState title="Aucune demande" description="Il n'y a pas de nouvelle demande d'inscription." />
+                ) : (
+                  <ul className="space-y-4">
+                    {pendingEnrollments.map(e => (
+                      <li key={e.id} className="flex flex-col md:flex-row md:items-center justify-between rounded-xl border border-slate-200 p-4 shadow-sm bg-white">
+                        <div>
+                          <p className="font-bold text-slate-900">{e.childName} <span className="text-sm font-normal text-slate-500">({e.childAge} ans)</span></p>
+                          <p className="text-sm text-slate-600 mt-1">Classe demandée: <span className="font-semibold">{e.childClass}</span></p>
+                          <p className="text-xs text-slate-400 mt-2">Parent: {e.parentName} &bull; {e.parentPhone}</p>
+                        </div>
+                        <div className="mt-4 md:mt-0 flex gap-2">
+                          <Button size="sm" variant="secondary" onClick={() => handleStatusUpdate(e.id, 'rejected')}>
+                            Refuser
+                          </Button>
+                          <Button size="sm" onClick={() => handleStatusUpdate(e.id, 'accepted')}>
+                            Accepter
+                          </Button>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </CardBody>
+            </Card>
+          </div>
+
+          <div className="mt-8">
+            <Card>
+              <CardHeader title="Dernières candidatures reçues" subtitle="Professeurs intéressés par vos annonces" />
+              <CardBody>
+                {pendingApps.length === 0 ? (
+                  <EmptyState title="Aucune candidature" description="Vos annonces d'emploi n'ont pas encore reçu de candidatures récentes." />
+                ) : (
+                  <ul className="space-y-4">
+                    {pendingApps.map(a => {
+                      const job = mockApi.getJob(a.jobId)
+                      return (
+                        <li key={a.id} className="flex flex-col md:flex-row md:items-center justify-between rounded-xl border border-slate-200 p-4 shadow-sm bg-white">
+                          <div>
+                            <p className="font-bold text-slate-900">{a.teacherName}</p>
+                            <p className="text-sm text-slate-600 mt-1">Poste: <span className="font-semibold">{job?.title}</span></p>
+                            <p className="text-xs text-slate-400 mt-2">Email: {a.email}</p>
+                            {a.motivation && <p className="text-sm text-slate-500 mt-2 italic border-l-2 border-indigo-200 pl-2">"{a.motivation}"</p>}
+                          </div>
+                          <div className="mt-4 md:mt-0 flex gap-2">
+                            <Button size="sm" variant="secondary" onClick={() => handleAppStatusUpdate(a.id, 'rejected')}>
+                              Refuser
+                            </Button>
+                            <Button size="sm" onClick={() => handleAppStatusUpdate(a.id, 'accepted')}>
+                              Accepter
+                            </Button>
+                          </div>
+                        </li>
+                      )
+                    })}
+                  </ul>
+                )}
+              </CardBody>
+            </Card>
+          </div>
+        </>
+      ) : (
+        <ApiIntegrations schoolId={school?.id} />
+      )}
     </div>
   )
 }

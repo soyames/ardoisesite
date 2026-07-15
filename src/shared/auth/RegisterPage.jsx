@@ -1,5 +1,9 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { createUserWithEmailAndPassword, sendEmailVerification } from 'firebase/auth'
+import { doc, setDoc } from 'firebase/firestore'
+import { auth, db } from '../api/firebase.js'
+import { useAuth } from './AuthContext.jsx'
 
 const WEST_AFRICA_DATA = {
   'Benin': ['Cotonou', 'Porto-Novo', 'Parakou', 'Abomey-Calavi', 'Ouidah', 'Bohicon', 'Natitingou'],
@@ -22,20 +26,67 @@ const WEST_AFRICA_DATA = {
 
 export default function RegisterPage() {
   const navigate = useNavigate()
+  const { refreshUser } = useAuth()
   const [role, setRole] = useState('parent')
   const [country, setCountry] = useState('Benin')
   const [city, setCity] = useState(WEST_AFRICA_DATA['Benin'][0])
+  const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
 
-  const handleRegister = (e) => {
+  const handleRegister = async (e) => {
     e.preventDefault()
-    // Mock register logic
-    alert('Inscription réussie !')
-    if (role === 'founder') {
-      navigate('/portal') // Changed to portal as founder dashboard is there
-    } else if (role === 'teacher') {
-      navigate('/teacher-dashboard')
-    } else {
-      navigate('/portal')
+    setError('')
+    setLoading(true)
+
+    const formData = new FormData(e.target)
+    const email = formData.get('email')
+    const password = formData.get('password')
+    const name = formData.get('name')
+    const phone = formData.get('phone')
+
+    try {
+      // 1. Create auth user
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password)
+      const user = userCredential.user
+
+      // 2. Save profile to Firestore
+      await setDoc(doc(db, 'users', user.uid), {
+        email,
+        name,
+        phone,
+        role,
+        country,
+        city,
+        createdAt: new Date().toISOString()
+      })
+
+      // 3. Send email verification (non-blocking)
+      await sendEmailVerification(user).catch(err => {
+        console.warn("Failed to send verification email:", err)
+      })
+
+      // 4. Force auth context to fetch the new Firestore document
+      await refreshUser()
+
+      alert('Inscription réussie ! Un email de vérification vous a été envoyé (facultatif pour les tests).')
+
+      if (role === 'founder') {
+        navigate('/portal')
+      } else if (role === 'teacher') {
+        navigate('/teacher-dashboard')
+      } else {
+        navigate('/portal')
+      }
+    } catch (err) {
+      if (err.code === 'auth/email-already-in-use') {
+        setError('Cet email est déjà utilisé.')
+      } else if (err.code === 'auth/weak-password') {
+        setError('Le mot de passe doit contenir au moins 6 caractères.')
+      } else {
+        setError(err.message || 'Erreur lors de l\'inscription.')
+      }
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -145,12 +196,19 @@ export default function RegisterPage() {
             </div>
           </div>
 
+          {error && (
+            <p className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700 ring-1 ring-red-200">
+              {error}
+            </p>
+          )}
+
           <div>
             <button
               type="submit"
-              className="flex w-full justify-center rounded-md bg-indigo-600 px-3 py-2.5 text-sm font-semibold text-white hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+              disabled={loading}
+              className="flex w-full justify-center rounded-md bg-indigo-600 px-3 py-2.5 text-sm font-semibold text-white hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:opacity-60"
             >
-              S'inscrire
+              {loading ? "Inscription..." : "S'inscrire"}
             </button>
           </div>
         </form>

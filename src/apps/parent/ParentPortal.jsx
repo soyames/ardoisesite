@@ -1,5 +1,8 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useEffect } from 'react'
 import { useAuth } from '../../shared/auth/AuthContext.jsx'
+import { doc, getDoc } from 'firebase/firestore'
+import { db } from '../../shared/api/firebase.js'
+import { FedaPayButton } from '../../shared/components/FedaPayButton.jsx'
 import { useApiGet } from '../../shared/hooks/useApi.js'
 import { Card, CardHeader, CardBody } from '../../shared/ui/Card.jsx'
 import Badge from '../../shared/ui/Badge.jsx'
@@ -180,14 +183,25 @@ function ChildDetail({ child, parentId }) {
             )}
             <ul className="space-y-2">
               {invoices.data?.map((inv) => (
-                <li key={inv.id} className="flex items-center justify-between rounded-control border border-border p-3">
-                  <div>
-                    <p className="text-sm font-medium text-ink">{inv.tranche_label || `Facture #${inv.id}`}</p>
-                    <p className="text-xs text-ink-muted">{inv.amount_due} FCFA</p>
+                <li key={inv.id} className="flex flex-col rounded-control border border-border p-3">
+                  <div className="flex items-center justify-between mb-2">
+                    <div>
+                      <p className="text-sm font-medium text-ink">{inv.tranche_label || `Facture #${inv.id}`}</p>
+                      <p className="text-xs text-ink-muted">{inv.amount_due} FCFA</p>
+                    </div>
+                    <Badge tone={inv.status === 'paid' ? 'success' : inv.status === 'overdue' ? 'danger' : 'warning'}>
+                      {inv.status}
+                    </Badge>
                   </div>
-                  <Badge tone={inv.status === 'paid' ? 'success' : inv.status === 'overdue' ? 'danger' : 'warning'}>
-                    {inv.status}
-                  </Badge>
+                  {inv.status !== 'paid' && (
+                    <div className="mt-2 flex justify-end border-t border-slate-100 pt-2">
+                      <SchoolPaymentButton 
+                        schoolId={child.current_enrollment?.school_id || 1} 
+                        invoice={inv} 
+                        parent={child}
+                      />
+                    </div>
+                  )}
                 </li>
               ))}
             </ul>
@@ -195,5 +209,50 @@ function ChildDetail({ child, parentId }) {
         </Card>
       </div>
     </div>
+  )
+}
+
+// Composant interne qui va chercher la clé de l'école avant d'afficher le bouton FedaPay
+function SchoolPaymentButton({ schoolId, invoice, parent }) {
+  const [pubKey, setPubKey] = useState(null)
+  
+  useEffect(() => {
+    async function fetchKey() {
+      try {
+        const snap = await getDoc(doc(db, 'schools', String(schoolId)))
+        if (snap.exists() && snap.data().fedaPayPublicKey) {
+          setPubKey(snap.data().fedaPayPublicKey)
+        } else {
+          // Fallback on global if school has no key configured yet
+          setPubKey(import.meta.env.VITE_FEDAPAY_PUBLIC_KEY)
+        }
+      } catch (e) {
+        setPubKey(import.meta.env.VITE_FEDAPAY_PUBLIC_KEY)
+      }
+    }
+    fetchKey()
+  }, [schoolId])
+
+  if (!pubKey) return <span className="text-xs text-slate-400">Chargement du paiement...</span>
+
+  return (
+    <FedaPayButton
+      publicKey={pubKey}
+      amount={Number(invoice.amount_due) - Number(invoice.amount_paid || 0)}
+      description={`Scolarité: ${invoice.tranche_label || 'Facture'}`}
+      customerName={`${parent.first_name} ${parent.last_name}`}
+      customMetadata={{
+        type: 'tuition_payment',
+        invoiceId: invoice.id,
+        schoolId: schoolId,
+        studentMatricule: parent.matricule
+      }}
+      className="rounded-md bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-indigo-500"
+      onComplete={(tx) => {
+        alert("Paiement initié avec succès ! L'école sera notifiée.")
+      }}
+    >
+      Payer en ligne
+    </FedaPayButton>
   )
 }

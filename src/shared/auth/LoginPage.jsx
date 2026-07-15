@@ -17,24 +17,37 @@ export default function LoginPage() {
     return <Navigate to="/portal" replace />
   }
 
+  const [resetMessage, setResetMessage] = useState('')
+
+  async function handleResetPassword() {
+    if (!username) {
+      setError('Veuillez entrer votre adresse email ci-dessus pour réinitialiser le mot de passe.')
+      return
+    }
+    try {
+      await resetPassword(username)
+      setResetMessage('Un email de réinitialisation vous a été envoyé.')
+      setError('')
+    } catch (err) {
+      setError(err.message || 'Erreur lors de l\'envoi de l\'email de réinitialisation.')
+    }
+  }
+
   async function handleSubmit(e) {
     e.preventDefault()
     setError('')
+    setResetMessage('')
     setSubmitting(true)
     
     try {
-      if (schoolCode.trim()) {
-        const subdomain = schoolCode.trim().toLowerCase()
-        setApiBaseUrl(`https://api.${subdomain}.soyames.com`)
-        await primeCsrf().catch(() => {}) // Ignore if backend is down, let login handle it
-      } else {
-        setApiBaseUrl('')
-        await primeCsrf().catch(() => {})
-      }
-      
       await login(username, password)
     } catch (err) {
-      setError(err.message || 'Connexion impossible. Vérifiez le Code École et vos identifiants.')
+      // Firebase throws specific errors
+      if (err.code === 'auth/invalid-credential') {
+        setError('Identifiants incorrects.')
+      } else {
+        setError(err.message || 'Connexion impossible.')
+      }
     } finally {
       setSubmitting(false)
     }
@@ -104,6 +117,22 @@ export default function LoginPage() {
               {error}
             </p>
           )}
+
+          {resetMessage && (
+            <p className="mb-4 rounded-xl bg-green-50 px-4 py-3 text-sm text-green-700 ring-1 ring-green-200">
+              {resetMessage}
+            </p>
+          )}
+
+          <div className="mb-4 flex justify-end">
+            <button
+              type="button"
+              onClick={handleResetPassword}
+              className="text-sm font-medium text-indigo-600 hover:text-indigo-500"
+            >
+              Mot de passe oublié ?
+            </button>
+          </div>
 
           <button
             type="submit"
