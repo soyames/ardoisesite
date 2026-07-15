@@ -1,0 +1,199 @@
+import { useMemo, useState } from 'react'
+import { useAuth } from '../../shared/auth/AuthContext.jsx'
+import { useApiGet } from '../../shared/hooks/useApi.js'
+import { Card, CardHeader, CardBody } from '../../shared/ui/Card.jsx'
+import Badge from '../../shared/ui/Badge.jsx'
+import Spinner from '../../shared/ui/Spinner.jsx'
+import EmptyState from '../../shared/ui/EmptyState.jsx'
+
+/**
+ * Everything a parent can see about their own children -- bulletins,
+ * attendance, discipline, and tuition status -- pulled straight from
+ * the read endpoints added for this (apps/students/api_views.py:
+ * MyChildrenView, and academics/api_views.py's Student*ListView
+ * classes on the backend). Every list here is the real, cross-family-
+ * blocked, released/approved-only-filtered data those endpoints
+ * return -- nothing here is a placeholder waiting for a backend that
+ * doesn't exist yet.
+ */
+export default function ParentPortal() {
+  const { user } = useAuth()
+  const children = useApiGet('/api/students/my-children/')
+  const [selectedId, setSelectedId] = useState(null)
+
+  const selectedChild = useMemo(
+    () => children.data?.find((c) => c.id === selectedId) ?? children.data?.[0] ?? null,
+    [children.data, selectedId]
+  )
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-xl font-semibold text-ink">Mes enfants</h1>
+        <p className="mt-1 text-sm text-ink-muted">Bulletins, presence, discipline et scolarite.</p>
+      </div>
+
+      {children.loading && (
+        <div className="flex justify-center py-10">
+          <Spinner />
+        </div>
+      )}
+
+      {!children.loading && (!children.data || children.data.length === 0) && (
+        <EmptyState
+          title="Aucun enfant lie a ce compte"
+          description="Si vous pensez que c'est une erreur, contactez le secretariat de l'ecole."
+        />
+      )}
+
+      {!children.loading && children.data?.length > 0 && (
+        <>
+          <div className="flex flex-wrap gap-2">
+            {children.data.map((child) => (
+              <button
+                key={child.id}
+                onClick={() => setSelectedId(child.id)}
+                className={`rounded-control px-4 py-2 text-sm font-medium transition ${
+                  (selectedChild?.id ?? children.data[0].id) === child.id
+                    ? 'bg-primary-600 text-white'
+                    : 'bg-primary-50 text-primary-700 hover:bg-primary-100'
+                }`}
+              >
+                {child.first_name} {child.last_name}
+              </button>
+            ))}
+          </div>
+
+          {selectedChild && (
+            <ChildDetail key={selectedChild.id} child={selectedChild} parentId={user?.parent_id} />
+          )}
+        </>
+      )}
+    </div>
+  )
+}
+
+function ChildDetail({ child, parentId }) {
+  const enrollmentId = child.current_enrollment?.id
+  const bulletins = useApiGet(enrollmentId ? `/api/academics/bulletins/?enrollment=${enrollmentId}` : null, {
+    skip: !enrollmentId,
+  })
+  const attendance = useApiGet(enrollmentId ? `/api/academics/attendance/?enrollment=${enrollmentId}` : null, {
+    skip: !enrollmentId,
+  })
+  const discipline = useApiGet(enrollmentId ? `/api/academics/discipline/list/?enrollment=${enrollmentId}` : null, {
+    skip: !enrollmentId,
+  })
+  const invoices = useApiGet(parentId ? `/api/finance/invoices/?parent=${parentId}&student_matricule=${child.matricule}` : null, {
+    skip: !parentId,
+  })
+
+  const absenceCount = attendance.data?.filter((a) => a.state.startsWith('absent')).length ?? 0
+
+  return (
+    <div className="space-y-6">
+      <Card>
+        <CardBody className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <p className="text-sm font-semibold text-ink">
+              {child.first_name} {child.last_name}
+            </p>
+            <p className="text-xs text-ink-muted">
+              {child.current_enrollment?.classroom_name} · {child.current_enrollment?.academic_year_label} · Matricule {child.matricule}
+            </p>
+          </div>
+          <Badge tone="neutral">{child.relation}</Badge>
+        </CardBody>
+      </Card>
+
+      <div className="grid gap-6 lg:grid-cols-2">
+        <Card>
+          <CardHeader title="Bulletins" subtitle="Publies par l'ecole" />
+          <CardBody>
+            {bulletins.loading && <Spinner />}
+            {!bulletins.loading && (!bulletins.data || bulletins.data.length === 0) && (
+              <EmptyState title="Aucun bulletin publie pour l'instant" />
+            )}
+            <ul className="space-y-2">
+              {bulletins.data?.map((b) => (
+                <li key={b.id} className="flex items-center justify-between rounded-control border border-border p-3">
+                  <div>
+                    <p className="text-sm font-medium text-ink">{b.exam_period_label}</p>
+                    <p className="text-xs text-ink-muted">
+                      Moyenne {b.average} · Rang {b.class_rank}/{b.class_size}
+                    </p>
+                  </div>
+                  <Badge tone="success">Publie</Badge>
+                </li>
+              ))}
+            </ul>
+          </CardBody>
+        </Card>
+
+        <Card>
+          <CardHeader title="Presence" subtitle={`${absenceCount} absence(s) enregistree(s)`} />
+          <CardBody>
+            {attendance.loading && <Spinner />}
+            {!attendance.loading && (!attendance.data || attendance.data.length === 0) && (
+              <EmptyState title="Aucun enregistrement de presence" />
+            )}
+            <ul className="max-h-64 space-y-2 overflow-y-auto">
+              {attendance.data?.slice(0, 20).map((a) => (
+                <li key={a.id} className="flex items-center justify-between rounded-control border border-border p-3">
+                  <p className="text-sm text-ink">{a.date}</p>
+                  <Badge tone={a.state === 'present' ? 'success' : a.state.startsWith('absent') ? 'danger' : 'warning'}>
+                    {a.state}
+                  </Badge>
+                </li>
+              ))}
+            </ul>
+          </CardBody>
+        </Card>
+
+        <Card>
+          <CardHeader title="Discipline" subtitle="Mesures approuvees" />
+          <CardBody>
+            {discipline.loading && <Spinner />}
+            {!discipline.loading && (!discipline.data || discipline.data.length === 0) && (
+              <EmptyState title="Aucune mesure disciplinaire" description="C'est une bonne nouvelle." />
+            )}
+            <ul className="space-y-2">
+              {discipline.data?.map((d) => (
+                <li key={d.id} className="rounded-control border border-border p-3">
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm font-medium text-ink">{d.measure}</p>
+                    <Badge tone="warning">{d.date}</Badge>
+                  </div>
+                  <p className="mt-1 text-xs text-ink-muted">{d.reason}</p>
+                </li>
+              ))}
+            </ul>
+          </CardBody>
+        </Card>
+
+        <Card>
+          <CardHeader title="Scolarite" subtitle="Factures et paiements" />
+          <CardBody>
+            {invoices.loading && <Spinner />}
+            {!invoices.loading && (!invoices.data || invoices.data.length === 0) && (
+              <EmptyState title="Aucune facture" />
+            )}
+            <ul className="space-y-2">
+              {invoices.data?.map((inv) => (
+                <li key={inv.id} className="flex items-center justify-between rounded-control border border-border p-3">
+                  <div>
+                    <p className="text-sm font-medium text-ink">{inv.tranche_label || `Facture #${inv.id}`}</p>
+                    <p className="text-xs text-ink-muted">{inv.amount_due} FCFA</p>
+                  </div>
+                  <Badge tone={inv.status === 'paid' ? 'success' : inv.status === 'overdue' ? 'danger' : 'warning'}>
+                    {inv.status}
+                  </Badge>
+                </li>
+              ))}
+            </ul>
+          </CardBody>
+        </Card>
+      </div>
+    </div>
+  )
+}
