@@ -21,11 +21,14 @@ export default function RegisterPage() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-slate-50 px-4 py-12 sm:px-6 lg:px-8">
       <div className="w-full max-w-md space-y-8">
-        <div>
-          <h2 className="mt-6 text-center text-3xl font-bold tracking-tight text-slate-900">
-            Inscription Ardoise
+        <div className="mb-8 text-center">
+          <Link to="/" className="mx-auto mb-4 flex justify-center">
+            <img src="/images/ardoise_lockup_horizontal.png" alt="Ardoise Logo" className="h-12 w-auto" />
+          </Link>
+          <h2 className="text-3xl font-bold tracking-tight text-slate-900">
+            Inscription
           </h2>
-          <p className="mt-2 text-center text-sm text-slate-600">
+          <p className="mt-2 text-sm text-slate-600">
             Rejoignez la plateforme éducative
           </p>
         </div>
@@ -54,6 +57,17 @@ export default function RegisterPage() {
                 required
                 className="relative block w-full rounded-md border-0 py-2.5 px-3 text-slate-900 ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:z-10 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
                 placeholder="Nom complet"
+              />
+            </div>
+            <div>
+              <label htmlFor="phone" className="sr-only">Numéro de téléphone</label>
+              <input
+                id="phone"
+                name="phone"
+                type="tel"
+                required
+                className="relative block w-full rounded-md border-0 py-2.5 px-3 text-slate-900 ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:z-10 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                placeholder="Numéro de téléphone"
               />
             </div>
             <div>

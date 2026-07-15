@@ -14,10 +14,7 @@ export default function PublicLayout() {
       <header className="sticky top-0 z-50 flex items-center justify-between border-b border-slate-200/50 bg-white/80 px-6 py-4 backdrop-blur-md">
         <div className="flex items-center gap-8">
           <Link to="/" className="flex items-center gap-2">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 font-bold text-white shadow-lg shadow-indigo-200">
-              A
-            </div>
-            <span className="text-xl font-extrabold tracking-tight text-slate-900">Ardoise</span>
+            <img src="/images/ardoise_lockup_horizontal.png" alt="Ardoise Logo" className="h-10 w-auto" />
           </Link>
 
           {/* Desktop Nav */}

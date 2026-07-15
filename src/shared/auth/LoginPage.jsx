@@ -46,10 +46,10 @@ export default function LoginPage() {
     <div className="min-h-svh flex items-center justify-center bg-slate-900 px-4">
       <div className="w-full max-w-sm">
         <div className="mb-8 text-center">
-          <Link to="/" className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 font-bold text-white shadow-lg shadow-indigo-500/30">
-            A
+          <Link to="/" className="mx-auto mb-4 flex justify-center">
+            <img src="/images/ardoise_lockup_horizontal.png" alt="Ardoise Logo" className="h-12 w-auto brightness-0 invert" />
           </Link>
-          <h1 className="text-2xl font-semibold text-white">Connexion Ardoise</h1>
+          <h1 className="text-2xl font-semibold text-white">Connexion</h1>
           <p className="mt-1 text-sm text-slate-400">Accédez à votre espace</p>
         </div>
 
