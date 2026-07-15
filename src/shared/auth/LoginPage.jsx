@@ -24,15 +24,12 @@ export default function LoginPage() {
     
     try {
       if (schoolCode.trim()) {
-        // Construct the expected backend URL for this school
-        // Ex: LALIBERTE -> https://api.laliberte.soyames.com
         const subdomain = schoolCode.trim().toLowerCase()
         setApiBaseUrl(`https://api.${subdomain}.soyames.com`)
-        await primeCsrf() // Need to fetch CSRF from the new backend
+        await primeCsrf().catch(() => {}) // Ignore if backend is down, let login handle it
       } else {
-        // Clear it to use the default/platform URL
         setApiBaseUrl('')
-        await primeCsrf()
+        await primeCsrf().catch(() => {})
       }
       
       await login(username, password)

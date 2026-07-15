@@ -11,8 +11,8 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     let cancelled = false
     async function bootstrap() {
-      await primeCsrf()
       try {
+        await primeCsrf()
         const me = await api.get('/api/auth/me/')
         if (!cancelled) {
           setUser(me)
@@ -22,6 +22,7 @@ export function AuthProvider({ children }) {
         // 403 here just means "no active session yet" (see MeView's
         // docstring on the backend for why it's 403 not 401) -- not
         // an error worth surfacing, just "show the login screen".
+        // Or if primeCsrf fails due to network error, fallback to anonymous.
         if (!cancelled) setStatus('anonymous')
       }
     }
