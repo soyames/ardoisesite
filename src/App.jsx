@@ -15,6 +15,8 @@ import PublicLayout from './shared/layout/PublicLayout.jsx'
 import Home from './apps/marketplace/Home.jsx'
 import SchoolList from './apps/marketplace/SchoolList.jsx'
 import SchoolDetail from './apps/marketplace/SchoolDetail.jsx'
+import SchoolEnrollment from './apps/marketplace/SchoolEnrollment.jsx'
+import JobApplicationFlow from './apps/marketplace/JobApplicationFlow.jsx'
 import TeacherList from './apps/marketplace/TeacherList.jsx'
 import TeacherDetail from './apps/marketplace/TeacherDetail.jsx'
 import TutoringBookingFlow from './apps/marketplace/TutoringBookingFlow.jsx'
@@ -76,10 +78,12 @@ export default function App() {
           <Route path="/" element={<Home />} />
           <Route path="/schools" element={<SchoolList />} />
           <Route path="/schools/:id" element={<SchoolDetail />} />
+          <Route path="/schools/:id/enroll" element={<SchoolEnrollment />} />
           <Route path="/teachers" element={<TeacherList />} />
           <Route path="/teachers/:id" element={<TeacherDetail />} />
           <Route path="/teachers/:id/book" element={<TutoringBookingFlow />} />
           <Route path="/jobs" element={<Recruitment />} />
+          <Route path="/jobs/:id/apply" element={<JobApplicationFlow />} />
           <Route path="/teacher-dashboard" element={<TeacherMarketplaceDashboard />} />
           <Route path="privacy" element={<Privacy />} />
           <Route path="terms" element={<Terms />} />

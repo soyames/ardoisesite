@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useState } from 'react'
 import { api, ApiError, primeCsrf } from '../api/client.js'
+import { mockDb } from '../api/mockDb.js'
 
 const AuthContext = createContext(null)
 
@@ -31,6 +32,14 @@ export function AuthProvider({ children }) {
   }, [])
 
   const login = useCallback(async (username, password) => {
+    // Intercept mock users for UI testing
+    if (mockDb.users[username]) {
+      const mockUser = mockDb.users[username];
+      setUser(mockUser);
+      setStatus('authenticated');
+      return mockUser;
+    }
+
     const me = await api.post('/api/auth/login/', { username, password })
     setUser(me)
     setStatus('authenticated')
@@ -39,12 +48,17 @@ export function AuthProvider({ children }) {
 
   const logout = useCallback(async () => {
     try {
-      await api.post('/api/auth/logout/')
+      // Don't call backend if it's a mock user
+      if (!user || !mockDb.users[user.username]) {
+        await api.post('/api/auth/logout/')
+      }
+    } catch(err) {
+      // ignore
     } finally {
       setUser(null)
       setStatus('anonymous')
     }
-  }, [])
+  }, [user])
 
   return (
     <AuthContext.Provider value={{ user, status, login, logout }}>

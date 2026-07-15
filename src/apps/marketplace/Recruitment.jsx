@@ -1,16 +1,17 @@
 import { useState } from 'react'
-
-const JOBS_DATA = [
-  { id: 1, school: 'Complexe Scolaire La Liberté', city: 'Abomey-Calavi', title: 'Professeur de Mathématiques (Terminale)', type: 'Temps Plein', posted: 'Il y a 2 jours', logo: 'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=100&q=80' },
-  { id: 2, school: 'Lycée Béhanzin', city: 'Porto-Novo', title: 'Professeur de Philosophie', type: 'Temps Partiel', posted: 'Il y a 3 jours', logo: 'https://images.unsplash.com/photo-1592280771190-3e2e4d571952?w=100&q=80' },
-  { id: 3, school: 'École Primaire Montaigne', city: 'Cotonou', title: 'Instituteur/Institutrice (CM2)', type: 'Temps Plein', posted: 'Il y a 1 semaine', logo: 'https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=100&q=80' },
-  { id: 4, school: 'Collège Catholique Père Aupiais', city: 'Cotonou', title: 'Surveillant Général Adjoint', type: 'Temps Plein', posted: 'Il y a 1 semaine', logo: 'https://images.unsplash.com/photo-1541829070764-84a7d30dd3f3?w=100&q=80' },
-]
+import { useNavigate } from 'react-router-dom'
+import { mockApi } from '../../shared/api/mockDb.js'
 
 export default function Recruitment() {
+  const navigate = useNavigate()
   const [search, setSearch] = useState('')
 
-  const filteredJobs = JOBS_DATA.filter(job => 
+  const allJobs = mockApi.getJobs().map(j => {
+    const s = mockApi.getSchool(j.schoolId)
+    return { ...j, school: s.name, city: s.city, logo: s.image }
+  })
+
+  const filteredJobs = allJobs.filter(job => 
     job.title.toLowerCase().includes(search.toLowerCase()) || 
     job.school.toLowerCase().includes(search.toLowerCase())
   )
@@ -56,7 +57,7 @@ export default function Recruitment() {
               </div>
               <div className="mt-4 md:mt-0 flex flex-col items-end gap-3 w-full md:w-auto">
                 <span className="text-xs text-slate-400">{job.posted}</span>
-                <button className="w-full md:w-auto rounded-xl bg-white px-6 py-2.5 text-sm font-semibold text-indigo-600 ring-1 ring-inset ring-indigo-200 transition hover:bg-indigo-50">
+                <button onClick={() => navigate(`/jobs/${job.id}/apply`)} className="w-full md:w-auto rounded-xl bg-white px-6 py-2.5 text-sm font-semibold text-indigo-600 ring-1 ring-inset ring-indigo-200 transition hover:bg-indigo-50">
                   Postuler
                 </button>
               </div>

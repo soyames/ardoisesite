@@ -31,11 +31,11 @@ export default function RegisterPage() {
     // Mock register logic
     alert('Inscription réussie !')
     if (role === 'founder') {
-      navigate('/install')
+      navigate('/portal') // Changed to portal as founder dashboard is there
     } else if (role === 'teacher') {
       navigate('/teacher-dashboard')
     } else {
-      navigate('/teachers')
+      navigate('/portal')
     }
   }
 
