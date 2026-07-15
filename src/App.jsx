@@ -9,6 +9,7 @@ import FounderDashboard from './apps/founder/FounderDashboard.jsx'
 import ParentPortal from './apps/parent/ParentPortal.jsx'
 import CashierPortal from './apps/cashier/CashierPortal.jsx'
 import TeacherPortal from './apps/teacher/TeacherPortal.jsx'
+import SuperadminDashboard from './apps/superadmin/SuperadminDashboard.jsx'
 
 // Public Marketplace Layout & Pages
 import PublicLayout from './shared/layout/PublicLayout.jsx'
@@ -34,6 +35,8 @@ const NAV_BY_ROLE = {
   parent: [{ to: '/portal', label: 'Mes enfants', end: true }],
   cashier: [{ to: '/portal', label: 'Encaissement', end: true }],
   teacher: [{ to: '/portal', label: 'Mes classes', end: true }],
+  superadmin: [{ to: '/portal', label: 'Administration', end: true }],
+  support_agent: [{ to: '/portal', label: 'Support Tickets', end: true }],
 }
 
 const PORTAL_BY_ROLE = {
@@ -42,6 +45,8 @@ const PORTAL_BY_ROLE = {
   parent: ParentPortal,
   cashier: CashierPortal,
   teacher: TeacherPortal,
+  superadmin: SuperadminDashboard,
+  support_agent: SuperadminDashboard,
 }
 
 function PortalHome() {
