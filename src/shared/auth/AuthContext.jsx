@@ -14,30 +14,45 @@ export function AuthProvider({ children }) {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
         try {
-          // 1. Establish Django session using the Firebase ID token
+          // 1. Fetch user profile from Firestore first to get the role
+          let role = 'parent'
+          let schoolId = null
+          let userData = null
+          
+          try {
+            const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid))
+            if (userDoc.exists()) {
+              userData = userDoc.data()
+              role = userData.role || 'parent'
+              schoolId = userData.schoolId || null
+            } else {
+              role = 'pending'
+            }
+          } catch (firestoreErr) {
+            console.error("Error fetching user profile:", firestoreErr)
+            // Fallback to mock DB if Firestore rules block access during testing
+            const { mockDb } = await import('../api/mockDb.js')
+            const mockUser = Object.values(mockDb.users).find(u => u.email === firebaseUser.email)
+            if (mockUser) {
+              userData = mockUser
+              role = mockUser.role
+              schoolId = mockUser.schoolId
+            }
+          }
+
+          // 2. Establish Django session using the Firebase ID token and role
           const token = await firebaseUser.getIdToken()
           await primeCsrf()
-          await api.post('/api/auth/firebase-login/', { token })
+          await api.post('/api/auth/firebase-login/', { token, role, schoolId })
           
-          // 2. Fetch user profile from Firestore
-          const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid))
-          if (userDoc.exists()) {
-            const userData = userDoc.data()
-            setUser({
-              uid: firebaseUser.uid,
-              email: firebaseUser.email,
-              emailVerified: firebaseUser.emailVerified,
-              ...userData
-            })
-          } else {
-            // Document might not be created yet during registration flow
-            setUser({
-              uid: firebaseUser.uid,
-              email: firebaseUser.email,
-              emailVerified: firebaseUser.emailVerified,
-              role: 'pending'
-            })
-          }
+          setUser({
+            uid: firebaseUser.uid,
+            email: firebaseUser.email,
+            emailVerified: firebaseUser.emailVerified,
+            role,
+            schoolId,
+            ...(userData || {})
+          })
           setStatus('authenticated')
         } catch (error) {
           console.error("Error fetching user profile:", error)

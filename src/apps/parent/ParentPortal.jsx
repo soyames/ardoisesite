@@ -248,8 +248,21 @@ function SchoolPaymentButton({ schoolId, invoice, parent }) {
         studentMatricule: parent.matricule
       }}
       className="rounded-md bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-indigo-500"
-      onComplete={(tx) => {
-        alert("Paiement initié avec succès ! L'école sera notifiée.")
+      onComplete={async (tx) => {
+        try {
+          // Import api here to avoid circular dependency if any, or use the global one if imported
+          const { api, primeCsrf } = await import('../../shared/api/client.js')
+          await primeCsrf()
+          await api.post('/api/finance/sandbox-payment/', {
+            transactionId: String(tx.id || tx.transaction_id || Date.now()),
+            invoiceId: invoice.id
+          })
+          alert("Paiement effectué avec succès ! Le reçu a été envoyé par WhatsApp.")
+          window.location.reload()
+        } catch (err) {
+          console.error(err)
+          alert("Le paiement FedaPay a réussi, mais l'enregistrement côté école a échoué.")
+        }
       }}
     >
       Payer en ligne
