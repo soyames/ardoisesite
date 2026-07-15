@@ -9,6 +9,7 @@ export default function TeacherMarketplaceDashboard() {
   const [price, setPrice] = useState('15000')
 
   const [newExp, setNewExp] = useState({ employer: '', start: '', end: '', description: '' })
+  const [newEdu, setNewEdu] = useState({ school: '', degree: '', year: '' })
 
   const handleAddExperience = (e) => {
     e.preventDefault()
@@ -16,6 +17,14 @@ export default function TeacherMarketplaceDashboard() {
     mockApi.addExperience(user.id, newExp)
     setNewExp({ employer: '', start: '', end: '', description: '' })
     alert('Expérience ajoutée avec succès !')
+  }
+
+  const handleAddEducation = (e) => {
+    e.preventDefault()
+    if (!user) return
+    mockApi.addEducation(user.id, newEdu)
+    setNewEdu({ school: '', degree: '', year: '' })
+    alert('Formation ajoutée avec succès !')
   }
 
   if (!user) return null
@@ -48,6 +57,12 @@ export default function TeacherMarketplaceDashboard() {
               className={`w-full text-left px-4 py-3 rounded-xl text-sm font-semibold transition ${activeTab === 'experiences' ? 'bg-indigo-50 text-indigo-700 ring-1 ring-indigo-200' : 'text-slate-600 hover:bg-slate-100'}`}
             >
               Mes Expériences
+            </button>
+            <button 
+              onClick={() => setActiveTab('education')}
+              className={`w-full text-left px-4 py-3 rounded-xl text-sm font-semibold transition ${activeTab === 'education' ? 'bg-indigo-50 text-indigo-700 ring-1 ring-indigo-200' : 'text-slate-600 hover:bg-slate-100'}`}
+            >
+              Formations & Diplômes
             </button>
             <button 
               onClick={() => setActiveTab('contracts')}
@@ -138,6 +153,46 @@ export default function TeacherMarketplaceDashboard() {
                       </div>
                     )) : (
                       <p className="text-sm text-slate-500">Aucune expérience ajoutée pour le moment.</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {activeTab === 'education' && (
+              <div className="space-y-6">
+                <div className="bg-white rounded-2xl shadow-sm ring-1 ring-slate-200 p-8">
+                  <h2 className="text-xl font-bold text-slate-900 border-b border-slate-100 pb-4 mb-6">Ajouter une Formation / Diplôme</h2>
+                  <form onSubmit={handleAddEducation} className="space-y-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">Établissement (Université, École)</label>
+                        <input required type="text" value={newEdu.school} onChange={e => setNewEdu({...newEdu, school: e.target.value})} className="w-full rounded-xl border-0 py-2 px-3 text-slate-900 ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-indigo-600 sm:text-sm" placeholder="Ex: Université d'Abomey-Calavi" />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">Diplôme Obtenu</label>
+                        <input required type="text" value={newEdu.degree} onChange={e => setNewEdu({...newEdu, degree: e.target.value})} className="w-full rounded-xl border-0 py-2 px-3 text-slate-900 ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-indigo-600 sm:text-sm" placeholder="Ex: Licence en Mathématiques" />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-slate-700 mb-1">Année d'obtention</label>
+                      <input required type="text" value={newEdu.year} onChange={e => setNewEdu({...newEdu, year: e.target.value})} className="w-full sm:max-w-xs rounded-xl border-0 py-2 px-3 text-slate-900 ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-indigo-600 sm:text-sm" placeholder="Ex: 2020" />
+                    </div>
+                    <button type="submit" className="rounded-xl bg-indigo-600 px-6 py-2.5 text-sm font-bold text-white shadow-md hover:bg-indigo-500">Ajouter</button>
+                  </form>
+                </div>
+
+                <div className="bg-white rounded-2xl shadow-sm ring-1 ring-slate-200 p-8">
+                  <h2 className="text-xl font-bold text-slate-900 border-b border-slate-100 pb-4 mb-6">Mes Diplômes</h2>
+                  <div className="space-y-6">
+                    {user.education?.length > 0 ? user.education.map((edu, i) => (
+                      <div key={i} className="border-l-4 border-emerald-200 pl-4 py-1">
+                        <h3 className="font-bold text-slate-900">{edu.degree}</h3>
+                        <p className="text-sm text-emerald-600 font-medium mb-1">{edu.school}</p>
+                        <p className="text-sm text-slate-600">Année : {edu.year}</p>
+                      </div>
+                    )) : (
+                      <p className="text-sm text-slate-500">Aucun diplôme ajouté pour le moment.</p>
                     )}
                   </div>
                 </div>

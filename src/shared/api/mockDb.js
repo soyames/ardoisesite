@@ -96,5 +96,12 @@ export const mockApi = {
       if (!teacher.experiences) teacher.experiences = []
       teacher.experiences.push({ ...exp, id: nextId++ })
     }
+  },
+  addEducation: (teacherId, edu) => {
+    const teacher = Object.values(mockDb.users).find(u => u.id === teacherId)
+    if (teacher) {
+      if (!teacher.education) teacher.education = []
+      teacher.education.push({ ...edu, id: nextId++ })
+    }
   }
 }
