@@ -69,10 +69,17 @@ export function AuthProvider({ children }) {
           // FIREBASE_SERVICE_ACCOUNT credential to verify this token).
           await resolveSchoolBackendUrl(schoolId)
 
-          // 3. Establish Django session using the Firebase ID token and role
+          // 3. Establish Django session using the Firebase ID token and role (ONLY if user belongs to a school)
           const token = await firebaseUser.getIdToken()
-          await primeCsrf()
-          await api.post('/api/auth/firebase-login/', { token, role, schoolId })
+          if (schoolId) {
+            try {
+              await primeCsrf()
+              await api.post('/api/auth/firebase-login/', { token, role, schoolId })
+            } catch (authErr) {
+              // Re-throw real Django errors (500, etc) so they aren't silently swallowed
+              throw authErr
+            }
+          }
           
           setUser({
             uid: firebaseUser.uid,
