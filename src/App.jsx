@@ -2,6 +2,7 @@ import { Navigate, Route, Routes } from 'react-router-dom'
 import { AuthProvider, useAuth } from './shared/auth/AuthContext.jsx'
 import RequireRole from './shared/auth/RequireRole.jsx'
 import LoginPage from './shared/auth/LoginPage.jsx'
+import RegisterPage from './shared/auth/RegisterPage.jsx'
 import AppShell from './shared/layout/AppShell.jsx'
 import EmptyState from './shared/ui/EmptyState.jsx'
 import FounderDashboard from './apps/founder/FounderDashboard.jsx'
@@ -19,6 +20,9 @@ import TeacherDetail from './apps/marketplace/TeacherDetail.jsx'
 import TutoringBookingFlow from './apps/marketplace/TutoringBookingFlow.jsx'
 import Recruitment from './apps/marketplace/Recruitment.jsx'
 import TeacherMarketplaceDashboard from './apps/marketplace/TeacherMarketplaceDashboard.jsx'
+import Privacy from './apps/marketplace/Privacy.jsx'
+import Terms from './apps/marketplace/Terms.jsx'
+import InstallGuide from './apps/marketplace/InstallGuide.jsx'
 
 const NAV_BY_ROLE = {
   founder: [{ to: '/portal', label: 'Tableau de bord', end: true }],
@@ -65,6 +69,7 @@ export default function App() {
     <AuthProvider>
       <Routes>
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/register" element={<RegisterPage />} />
         
         {/* Public Marketplace Routes */}
         <Route element={<PublicLayout />}>
@@ -76,6 +81,9 @@ export default function App() {
           <Route path="/teachers/:id/book" element={<TutoringBookingFlow />} />
           <Route path="/jobs" element={<Recruitment />} />
           <Route path="/teacher-dashboard" element={<TeacherMarketplaceDashboard />} />
+          <Route path="privacy" element={<Privacy />} />
+          <Route path="terms" element={<Terms />} />
+          <Route path="install" element={<InstallGuide />} />
         </Route>
 
         {/* Private School Portal Routes */}

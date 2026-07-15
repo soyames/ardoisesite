@@ -1,10 +1,12 @@
 import { useState } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useParams, useNavigate, Link } from 'react-router-dom'
+import { useAuth } from '../../shared/auth/AuthContext.jsx'
 import { TEACHER_DB } from './TeacherDetail.jsx'
 
 export default function TutoringBookingFlow() {
   const { id } = useParams()
   const navigate = useNavigate()
+  const { user } = useAuth()
   const teacher = TEACHER_DB[id]
 
   const [step, setStep] = useState(1)
@@ -164,13 +166,22 @@ export default function TutoringBookingFlow() {
                   >
                     Retour
                   </button>
-                  <button 
-                    onClick={handleBook}
-                    disabled={!agreedToTerms}
-                    className="w-2/3 rounded-xl bg-green-600 px-4 py-3 text-sm font-bold text-white shadow-md hover:bg-green-500 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    Signer et Activer le prélèvement
-                  </button>
+                  {user ? (
+                    <button 
+                      onClick={handleBook}
+                      disabled={!agreedToTerms}
+                      className="w-2/3 rounded-xl bg-green-600 px-4 py-3 text-sm font-bold text-white shadow-md hover:bg-green-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      Signer et Activer le prélèvement
+                    </button>
+                  ) : (
+                    <Link 
+                      to="/register"
+                      className="flex w-2/3 items-center justify-center rounded-xl bg-indigo-600 px-4 py-3 text-sm font-bold text-white shadow-md hover:bg-indigo-500"
+                    >
+                      S'inscrire ou se connecter pour signer
+                    </Link>
+                  )}
                 </div>
               </div>
             )}

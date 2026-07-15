@@ -1,4 +1,4 @@
-import { API_BASE_URL } from '../../config/env.js'
+import { getApiBaseUrl } from '../../config/env.js'
 
 /**
  * Thin fetch wrapper matching the backend's actual auth model exactly
@@ -37,7 +37,7 @@ async function request(path, { method = 'GET', body, headers = {}, isFormData = 
     if (csrfToken) finalHeaders['X-CSRFToken'] = csrfToken
   }
 
-  const response = await fetch(`${API_BASE_URL}${path}`, {
+  const response = await fetch(`${getApiBaseUrl()}${path}`, {
     method,
     credentials: 'include', // send/receive the session + csrf cookies cross-origin
     headers: finalHeaders,

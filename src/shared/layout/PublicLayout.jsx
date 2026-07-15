@@ -69,12 +69,20 @@ export default function PublicLayout() {
               </button>
             </div>
           ) : (
-            <Link
-              to="/login"
-              className="hidden md:inline-flex rounded-lg bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white shadow-md transition hover:bg-slate-800 hover:shadow-lg"
-            >
-              Connexion
-            </Link>
+            <div className="hidden md:flex items-center gap-2">
+              <Link
+                to="/register"
+                className="rounded-lg px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-100 transition"
+              >
+                S'inscrire
+              </Link>
+              <Link
+                to="/login"
+                className="rounded-lg bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white shadow-md transition hover:bg-slate-800 hover:shadow-lg"
+              >
+                Connexion
+              </Link>
+            </div>
           )}
 
           {/* Mobile menu button */}
@@ -129,8 +137,19 @@ export default function PublicLayout() {
       </main>
 
       <footer className="mt-auto border-t border-slate-200 bg-white py-12">
-        <div className="mx-auto max-w-7xl px-6 text-center">
-          <p className="text-sm font-medium text-slate-500">
+        <div className="mx-auto max-w-7xl px-6 flex flex-col items-center gap-6">
+          <nav className="flex flex-wrap justify-center gap-x-8 gap-y-4">
+            <Link to="/install" className="text-sm font-medium text-slate-500 hover:text-slate-900">
+              Pour les Écoles (Installation)
+            </Link>
+            <Link to="/privacy" className="text-sm font-medium text-slate-500 hover:text-slate-900">
+              Confidentialité
+            </Link>
+            <Link to="/terms" className="text-sm font-medium text-slate-500 hover:text-slate-900">
+              Conditions d'Utilisation
+            </Link>
+          </nav>
+          <p className="text-sm font-medium text-slate-400">
             © 2026 Ardoise Platform. Tous droits réservés.
           </p>
         </div>
