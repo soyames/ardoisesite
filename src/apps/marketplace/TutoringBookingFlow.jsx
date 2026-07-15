@@ -6,7 +6,7 @@ import { TEACHER_DB } from './TeacherDetail.jsx'
 export default function TutoringBookingFlow() {
   const { id } = useParams()
   const navigate = useNavigate()
-  const { user } = useAuth()
+  const { user, status } = useAuth()
   const teacher = TEACHER_DB[id]
 
   const [step, setStep] = useState(1)
@@ -17,6 +17,28 @@ export default function TutoringBookingFlow() {
   // New State for Payment
   const [paymentDate, setPaymentDate] = useState('5') // default 5th of the month
   const [agreedToTerms, setAgreedToTerms] = useState(false)
+
+  if (!teacher) return <div className="py-20 text-center">Teacher not found</div>
+
+  if (status === 'loading') return null
+
+  if (status === 'anonymous' || !user || user.role !== 'parent') {
+    return (
+      <div className="py-32 px-4 text-center">
+        <h2 className="text-2xl font-bold text-slate-900 mb-4">Connexion Requise</h2>
+        <p className="text-slate-600 mb-8">Vous devez être connecté en tant que parent pour réserver un tuteur.</p>
+        <div className="flex justify-center gap-4">
+          <Link to="/login" className="rounded-xl bg-indigo-600 px-6 py-3 text-sm font-bold text-white hover:bg-indigo-500">
+            Se connecter
+          </Link>
+          <Link to="/register" className="rounded-xl bg-slate-200 px-6 py-3 text-sm font-bold text-slate-900 hover:bg-slate-300">
+            S'inscrire
+          </Link>
+        </div>
+      </div>
+    )
+  }
+
 
   if (!teacher) return <div className="py-20 text-center">Teacher not found</div>
 
