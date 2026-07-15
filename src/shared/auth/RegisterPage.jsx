@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { createUserWithEmailAndPassword, sendEmailVerification } from 'firebase/auth'
-import { doc, setDoc } from 'firebase/firestore'
+import { doc, setDoc, addDoc, collection } from 'firebase/firestore'
 import { auth, db } from '../api/firebase.js'
 import { useAuth } from './AuthContext.jsx'
 
@@ -32,7 +32,24 @@ export default function RegisterPage() {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password)
       const user = userCredential.user
 
-      // 2. Save profile to Firestore
+      // 2. Setup School if founder
+      let schoolId = null;
+      if (role === 'founder') {
+        const schoolName = formData.get('schoolName') || 'Mon École';
+        const slug = schoolName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+        const backendUrl = `https://ardoise.soyames.com/${slug}`;
+        const schoolDocRef = await addDoc(collection(db, 'schools'), {
+          name: schoolName,
+          city,
+          country,
+          backendUrl,
+          isFull: false,
+          createdAt: new Date().toISOString()
+        });
+        schoolId = schoolDocRef.id;
+      }
+
+      // 3. Save profile to Firestore
       await setDoc(doc(db, 'users', user.uid), {
         email,
         name,
@@ -40,6 +57,7 @@ export default function RegisterPage() {
         role,
         country,
         city,
+        ...(schoolId ? { schoolId } : {}),
         createdAt: new Date().toISOString()
       })
 
@@ -114,6 +132,19 @@ export default function RegisterPage() {
                 placeholder="Nom complet"
               />
             </div>
+            {role === 'founder' && (
+              <div>
+                <label htmlFor="schoolName" className="sr-only">Nom de l'école</label>
+                <input
+                  id="schoolName"
+                  name="schoolName"
+                  type="text"
+                  required
+                  className="relative block w-full rounded-md border-0 py-2.5 px-3 text-slate-900 ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:z-10 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                  placeholder="Nom de l'école (ex: CS Bâtisseur)"
+                />
+              </div>
+            )}
             <div>
               <label htmlFor="phone" className="sr-only">Numéro de téléphone</label>
               <input
