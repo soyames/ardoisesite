@@ -33,6 +33,7 @@ export function FedaPayButton({
 
     const widget = window.FedaPay.init({
       public_key: effectivePublicKey,
+      environment: import.meta.env.VITE_FEDAPAY_ENVIRONMENT || 'sandbox',
       transaction: {
         amount: amount,
         description: description,
