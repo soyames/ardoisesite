@@ -6,7 +6,17 @@ import { auth, db } from '../api/firebase.js'
 import { useAuth } from './AuthContext.jsx'
 
 const WEST_AFRICA_DATA = {
-  'Benin': ['Cotonou', 'Porto-Novo', 'Parakou', 'Abomey-Calavi', 'Ouidah', 'Bohicon', 'Natitingou'],
+  'Benin': [
+    'Abomey', 'Abomey-Calavi', 'Adja-Ouèrè', 'Adjarra', 'Adjohoun', 'Agbangnizoun', 'Aguégués',
+    'Akpro-Missérété', 'Allada', 'Aplahoué', 'Athiémé', 'Avrankou', 'Banikoara', 'Bantè', 'Bassila',
+    'Bembéréké', 'Bohicon', 'Bonou', 'Bopa', 'Boukoumbé', 'Cobly', 'Comè', 'Copargo', 'Cotonou', 'Covè',
+    'Dangbo', 'Dassa-Zoumè', 'Djakotomey', 'Djidja', 'Djougou', 'Dogbo', 'Glazoué', 'Gogounou',
+    'Grand-Popo', 'Houéyogbé', 'Ifangni', 'Kalalé', 'Kandi', 'Karimama', 'Kérou', 'Kétou', 'Klouékanmè',
+    'Kouandé', 'Kpomassè', 'Lalo', 'Lokossa', 'Malanville', 'Matéri', "N'Dali", 'Natitingou', 'Nikki',
+    'Ouaké', 'Ouèssè', 'Ouidah', 'Ouinhi', 'Parakou', 'Pèrèrè', 'Péhunco', 'Pobè', 'Porto-Novo', 'Sakété',
+    'Savalou', 'Savè', 'Segbana', 'Sèmè-Kpodji', 'Sinendé', 'Sô-Ava', 'Tanguiéta', 'Tchaourou', 'Toffo',
+    'Tori-Bossito', 'Toucountouna', 'Toviklin', 'Za-Kpota', 'Zagnanado', 'Zè', 'Zogbodomey',
+  ],
   'Burkina Faso': ['Ouagadougou', 'Bobo-Dioulasso', 'Koudougou', 'Banfora'],
   'Cap-Vert': ['Praia', 'Mindelo', 'Santa Maria'],
   'Côte d\'Ivoire': ['Abidjan', 'Bouaké', 'Yamoussoukro', 'San-Pédro', 'Daloa'],
