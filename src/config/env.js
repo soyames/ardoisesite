@@ -18,5 +18,16 @@ export function setApiBaseUrl(url) {
   }
 }
 
+/**
+ * The central platform Worker (ardoise-api), unconditionally -- never
+ * the per-school override `getApiBaseUrl()` resolves to once a founder
+ * is logged in. Platform-level routes (team invites, activation,
+ * FedaPay/WhatsApp webhooks) live on api.ardoise.soyames.com itself,
+ * not on any individual school's own Django backend.
+ */
+export function getPlatformApiBaseUrl() {
+  return DEFAULT_URL
+}
+
 // Keep a fallback export for simple backwards compatibility, but use the getter for dynamic fetches
 export const API_BASE_URL = getApiBaseUrl()

@@ -7,6 +7,8 @@ import { useAuth } from './AuthContext.jsx'
 
 import { FRANCOPHONE_AFRICA_DATA as WEST_AFRICA_DATA } from '../constants/locations.js'
 
+const INPUT_CLASS = "relative block w-full rounded-control border-0 bg-surface-raised py-2.5 px-3 text-ink ring-1 ring-inset ring-border placeholder:text-ink-muted focus:z-10 focus:ring-2 focus:ring-inset focus:ring-primary-500 sm:text-sm sm:leading-6"
+
 export default function RegisterPage() {
   const navigate = useNavigate()
   const { refreshUser } = useAuth()
@@ -92,28 +94,28 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-slate-50 px-4 py-12 sm:px-6 lg:px-8">
+    <div className="flex min-h-screen items-center justify-center bg-surface px-4 py-12 sm:px-6 lg:px-8">
       <div className="w-full max-w-md space-y-8">
         <div className="mb-8 text-center">
           <Link to="/" className="mx-auto mb-4 flex justify-center">
             <img src="/images/ardoise_lockup_horizontal.png" alt="Ardoise Logo" className="h-12 w-auto mix-blend-multiply" />
           </Link>
-          <h2 className="text-3xl font-bold tracking-tight text-slate-900">
+          <h2 className="text-3xl font-bold tracking-tight text-ink">
             Inscription
           </h2>
-          <p className="mt-2 text-sm text-slate-600">
+          <p className="mt-2 text-sm text-ink-muted">
             Rejoignez la plateforme éducative
           </p>
         </div>
         <form className="mt-8 space-y-6" onSubmit={handleRegister}>
-          <div className="space-y-4 rounded-md shadow-sm">
-            
+          <div className="space-y-4 rounded-card shadow-card">
+
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Je suis un(e)...</label>
-              <select 
+              <label className="block text-sm font-medium text-ink mb-1">Je suis un(e)...</label>
+              <select
                 value={role}
                 onChange={(e) => setRole(e.target.value)}
-                className="relative block w-full rounded-md border-0 py-2.5 px-3 text-slate-900 ring-1 ring-inset ring-slate-300 focus:z-10 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                className={INPUT_CLASS}
               >
                 <option value="parent">Parent (Pour trouver un tuteur)</option>
                 <option value="teacher">Professeur (Pour donner des cours)</option>
@@ -128,7 +130,7 @@ export default function RegisterPage() {
                 name="name"
                 type="text"
                 required
-                className="relative block w-full rounded-md border-0 py-2.5 px-3 text-slate-900 ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:z-10 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                className={INPUT_CLASS}
                 placeholder="Nom complet"
               />
             </div>
@@ -140,7 +142,7 @@ export default function RegisterPage() {
                   name="schoolName"
                   type="text"
                   required
-                  className="relative block w-full rounded-md border-0 py-2.5 px-3 text-slate-900 ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:z-10 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                  className={INPUT_CLASS}
                   placeholder="Nom de l'école (ex: CS Bâtisseur)"
                 />
               </div>
@@ -152,7 +154,7 @@ export default function RegisterPage() {
                 name="phone"
                 type="tel"
                 required
-                className="relative block w-full rounded-md border-0 py-2.5 px-3 text-slate-900 ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:z-10 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                className={INPUT_CLASS}
                 placeholder="Numéro de téléphone"
               />
             </div>
@@ -164,7 +166,7 @@ export default function RegisterPage() {
                 type="email"
                 autoComplete="email"
                 required
-                className="relative block w-full rounded-md border-0 py-2.5 px-3 text-slate-900 ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:z-10 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                className={INPUT_CLASS}
                 placeholder="Adresse Email"
               />
             </div>
@@ -176,32 +178,32 @@ export default function RegisterPage() {
                 type="password"
                 autoComplete="new-password"
                 required
-                className="relative block w-full rounded-md border-0 py-2.5 px-3 text-slate-900 ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:z-10 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                className={INPUT_CLASS}
                 placeholder="Mot de passe"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Pays</label>
+              <label className="block text-sm font-medium text-ink mb-1">Pays</label>
               <select
                 value={country}
                 onChange={(e) => {
                   setCountry(e.target.value)
                   setCity(WEST_AFRICA_DATA[e.target.value][0])
                 }}
-                className="relative block w-full rounded-md border-0 py-2.5 px-3 text-slate-900 ring-1 ring-inset ring-slate-300 focus:z-10 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                className={INPUT_CLASS}
               >
                 {Object.keys(WEST_AFRICA_DATA).map(c => (
                   <option key={c} value={c}>{c}</option>
                 ))}
               </select>
             </div>
-            
+
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Ville</label>
+              <label className="block text-sm font-medium text-ink mb-1">Ville</label>
               <select
                 value={city}
                 onChange={(e) => setCity(e.target.value)}
-                className="relative block w-full rounded-md border-0 py-2.5 px-3 text-slate-900 ring-1 ring-inset ring-slate-300 focus:z-10 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                className={INPUT_CLASS}
               >
                 {WEST_AFRICA_DATA[country].map(c => (
                   <option key={c} value={c}>{c}</option>
@@ -211,7 +213,7 @@ export default function RegisterPage() {
           </div>
 
           {error && (
-            <p className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700 ring-1 ring-red-200">
+            <p className="rounded-card bg-danger-50 px-4 py-3 text-sm text-danger-700 ring-1 ring-danger-500/20">
               {error}
             </p>
           )}
@@ -220,16 +222,16 @@ export default function RegisterPage() {
             <button
               type="submit"
               disabled={loading}
-              className="flex w-full justify-center rounded-md bg-indigo-600 px-3 py-2.5 text-sm font-semibold text-white hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:opacity-60"
+              className="flex w-full justify-center rounded-control bg-primary-600 px-3 py-2.5 text-sm font-semibold text-white hover:bg-primary-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600 disabled:opacity-60"
             >
               {loading ? "Inscription..." : "S'inscrire"}
             </button>
           </div>
         </form>
 
-        <p className="text-center text-sm text-slate-600">
+        <p className="text-center text-sm text-ink-muted">
           Vous avez déjà un compte ?{' '}
-          <Link to="/login" className="font-semibold text-indigo-600 hover:text-indigo-500">
+          <Link to="/login" className="font-semibold text-primary-600 hover:text-primary-500">
             Connectez-vous
           </Link>
         </p>

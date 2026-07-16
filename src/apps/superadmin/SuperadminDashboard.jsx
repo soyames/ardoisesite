@@ -1,14 +1,17 @@
 import { useState, useEffect } from 'react'
-import { collection, query, orderBy, onSnapshot, doc, updateDoc, getDocs, setDoc } from 'firebase/firestore'
-import { db } from '../../shared/api/firebase.js'
+import { collection, query, where, orderBy, onSnapshot, doc, updateDoc } from 'firebase/firestore'
+import { db, auth } from '../../shared/api/firebase.js'
 import { useAuth } from '../../shared/auth/AuthContext.jsx'
 import { Card, CardHeader, CardBody } from '../../shared/ui/Card.jsx'
 import Button from '../../shared/ui/Button.jsx'
 import Badge from '../../shared/ui/Badge.jsx'
+import EmptyState from '../../shared/ui/EmptyState.jsx'
+import { getPlatformApiBaseUrl } from '../../config/env.js'
+import MarketplaceAccountSettings from '../../shared/settings/MarketplaceAccountSettings.jsx'
 
 export default function SuperadminDashboard() {
   const { user } = useAuth()
-  const [activeTab, setActiveTab] = useState('tickets') // 'tickets', 'team', 'schools'
+  const [activeTab, setActiveTab] = useState('tickets') // 'tickets', 'schools', 'team', 'settings'
 
   return (
     <div className="space-y-6">
@@ -27,6 +30,13 @@ export default function SuperadminDashboard() {
         >
           Tickets de Support
         </Button>
+        <Button
+          variant={activeTab === 'schools' ? 'primary' : 'ghost'}
+          onClick={() => setActiveTab('schools')}
+          className={activeTab === 'schools' ? '' : 'text-ink-muted hover:text-ink'}
+        >
+          Écoles
+        </Button>
         {user?.role === 'superadmin' && (
           <Button
             variant={activeTab === 'team' ? 'primary' : 'ghost'}
@@ -36,13 +46,191 @@ export default function SuperadminDashboard() {
             Gestion de l'Équipe
           </Button>
         )}
+        <Button
+          variant={activeTab === 'settings' ? 'primary' : 'ghost'}
+          onClick={() => setActiveTab('settings')}
+          className={activeTab === 'settings' ? '' : 'text-ink-muted hover:text-ink'}
+        >
+          Mon Compte
+        </Button>
       </div>
 
       <div className="mt-6">
         {activeTab === 'tickets' && <SupportTickets />}
+        {activeTab === 'schools' && <SchoolsRegistry />}
         {activeTab === 'team' && user?.role === 'superadmin' && <TeamManagement />}
+        {activeTab === 'settings' && <MarketplaceAccountSettings />}
       </div>
     </div>
+  )
+}
+
+const PLAN_CODES = [
+  { value: 'trial', label: 'Essai (Trial)' },
+  { value: 'starter', label: 'Starter' },
+  { value: 'premium', label: 'Premium' },
+]
+const DURATION_OPTIONS = [
+  { value: 7, label: '7 jours' },
+  { value: 14, label: '14 jours' },
+  { value: 30, label: '30 jours' },
+  { value: 90, label: '90 jours' },
+]
+
+function isExpired(school) {
+  const expiresAt = school.subscriptionExpiresAt ? new Date(school.subscriptionExpiresAt) : null
+  return expiresAt !== null && expiresAt.getTime() < Date.now()
+}
+
+function subscriptionBadge(school) {
+  if (!school.subscriptionActive) return <Badge tone="neutral">Gratuit</Badge>
+  if (isExpired(school)) return <Badge tone="danger">Expiré</Badge>
+  return <Badge tone="success">Actif</Badge>
+}
+
+function SubscriptionManager({ school, onChanged }) {
+  const [planCode, setPlanCode] = useState(school.planCode || 'trial')
+  const [durationDays, setDurationDays] = useState(14)
+  const [whatsapp, setWhatsapp] = useState((school.features || []).includes('whatsapp_notifications'))
+  const [submitting, setSubmitting] = useState(false)
+  const [error, setError] = useState(null)
+
+  const call = async (body) => {
+    setSubmitting(true)
+    setError(null)
+    try {
+      const idToken = await auth.currentUser.getIdToken()
+      const res = await fetch(`${getPlatformApiBaseUrl()}/api/admin/schools/${school.id}/subscription`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${idToken}` },
+        body: JSON.stringify(body),
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        setError(data.error || 'Erreur lors de la mise a jour.')
+        return
+      }
+      onChanged()
+    } catch (err) {
+      console.error(err)
+      setError('Erreur reseau.')
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  const grant = () => call({
+    active: true, plan_code: planCode, duration_days: durationDays,
+    features: whatsapp ? ['whatsapp_notifications'] : [],
+  })
+  const revoke = () => call({ active: false })
+
+  return (
+    <div className="mt-3 rounded-control bg-primary-50/50 p-4 space-y-3">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+        <select
+          className="rounded-control border-0 py-2 px-3 text-sm ring-1 ring-inset ring-border"
+          value={planCode} onChange={(e) => setPlanCode(e.target.value)}
+        >
+          {PLAN_CODES.map((p) => <option key={p.value} value={p.value}>{p.label}</option>)}
+        </select>
+        <select
+          className="rounded-control border-0 py-2 px-3 text-sm ring-1 ring-inset ring-border"
+          value={durationDays} onChange={(e) => setDurationDays(Number(e.target.value))}
+        >
+          {DURATION_OPTIONS.map((d) => <option key={d.value} value={d.value}>{d.label}</option>)}
+        </select>
+        <label className="flex items-center gap-2 text-sm text-ink">
+          <input type="checkbox" checked={whatsapp} onChange={(e) => setWhatsapp(e.target.checked)} />
+          WhatsApp
+        </label>
+      </div>
+
+      {school.activationCode && (
+        <p className="text-xs text-ink-muted">
+          Code d'activation : <code className="rounded bg-surface-raised px-1.5 py-0.5">{school.activationCode}</code>
+          {' '}(a fournir a l'ecole pour ARDOISE_ACTIVATION_CODE)
+        </p>
+      )}
+
+      {error && <p className="text-sm text-danger-600">{error}</p>}
+
+      <div className="flex gap-2">
+        <Button size="sm" onClick={grant} disabled={submitting}>
+          {submitting ? 'En cours...' : "Accorder l'acces"}
+        </Button>
+        {school.subscriptionActive && (
+          <Button size="sm" variant="danger" onClick={revoke} disabled={submitting}>Revoquer</Button>
+        )}
+      </div>
+    </div>
+  )
+}
+
+function SchoolsRegistry() {
+  const [schools, setSchools] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [managingId, setManagingId] = useState(null)
+
+  useEffect(() => {
+    const q = query(collection(db, 'schools'), orderBy('createdAt', 'desc'))
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const s = []
+      snapshot.forEach((doc) => s.push({ id: doc.id, ...doc.data() }))
+      setSchools(s)
+      setLoading(false)
+    }, (err) => {
+      console.error(err)
+      setLoading(false)
+    })
+    return () => unsubscribe()
+  }, [])
+
+  if (loading) return <div className="text-sm text-ink-muted">Chargement des écoles...</div>
+
+  if (schools.length === 0) {
+    return (
+      <EmptyState
+        title="Aucune école enregistrée"
+        description="Les écoles apparaissent ici une fois leur inscription terminée sur le marketplace."
+      />
+    )
+  }
+
+  return (
+    <Card>
+      <CardBody className="p-0">
+        <ul className="divide-y divide-border">
+          {schools.map((school) => (
+            <li key={school.id} className="p-5">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <div>
+                  <p className="text-sm font-medium text-ink">{school.name || 'Sans nom'}</p>
+                  <p className="text-xs text-ink-muted">
+                    {[school.city, school.country].filter(Boolean).join(', ') || 'Ville non renseignée'}
+                    {school.backendUrl && <span className="ml-2 text-ink-muted">· {school.backendUrl}</span>}
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  {subscriptionBadge(school)}
+                  <Badge tone="info">{school.planCode || 'free'}</Badge>
+                  <Button
+                    size="sm" variant="secondary"
+                    onClick={() => setManagingId(managingId === school.id ? null : school.id)}
+                  >
+                    {managingId === school.id ? 'Fermer' : "Gerer l'abonnement"}
+                  </Button>
+                </div>
+              </div>
+
+              {managingId === school.id && (
+                <SubscriptionManager school={school} onChanged={() => setManagingId(null)} />
+              )}
+            </li>
+          ))}
+        </ul>
+      </CardBody>
+    </Card>
   )
 }
 
@@ -79,11 +267,10 @@ function SupportTickets() {
   return (
     <div className="space-y-4">
       {tickets.length === 0 ? (
-        <Card>
-          <CardBody className="text-center py-10">
-            <p className="text-ink-muted">Aucun ticket pour le moment.</p>
-          </CardBody>
-        </Card>
+        <EmptyState
+          title="Inbox zero"
+          description="Aucun ticket de support en attente. Beau travail."
+        />
       ) : (
         tickets.map((ticket) => (
           <Card key={ticket.id} className="transition-all hover:shadow-md">
@@ -125,55 +312,63 @@ function TeamManagement() {
   const [email, setEmail] = useState('')
   const [role, setRole] = useState('support_agent')
   const [members, setMembers] = useState([])
-  const [status, setStatus] = useState('')
+  const [membersLoading, setMembersLoading] = useState(true)
+  const [status, setStatus] = useState(null) // { kind: 'success' | 'error', text: string }
+  const [submitting, setSubmitting] = useState(false)
 
-  const loadMembers = async () => {
-    // In a real scenario, this might be handled via Cloud Functions or querying a 'users' collection 
-    // where role is superadmin or support_agent. We will assume a 'team_members' collection for simplicity.
-    try {
-      const q = query(collection(db, 'team_members'))
-      const snapshot = await getDocs(q)
-      const m = []
-      snapshot.forEach((doc) => {
-        m.push({ id: doc.id, ...doc.data() })
-      })
-      setMembers(m)
-    } catch (e) {
-      console.error(e)
-    }
-  }
-
+  // Reads the real access-control source of truth (users/{uid}.role) --
+  // not a separate collection. What's listed here IS who can log in,
+  // no separate "did the grant actually take effect" question.
   useEffect(() => {
-    loadMembers()
+    const q = query(collection(db, 'users'), where('role', 'in', ['superadmin', 'support_agent']))
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const m = []
+      snapshot.forEach((doc) => m.push({ id: doc.id, ...doc.data() }))
+      setMembers(m)
+      setMembersLoading(false)
+    }, (err) => {
+      console.error(err)
+      setMembersLoading(false)
+    })
+    return () => unsubscribe()
   }, [])
 
   const handleAddMember = async (e) => {
     e.preventDefault()
     if (!email) return
-    setStatus('Ajout en cours...')
+    setSubmitting(true)
+    setStatus(null)
     try {
-      // Store in team_members. The AuthContext should ideally check this collection 
-      // or the backend needs to set Custom Claims for these roles.
-      // For the frontend pilot, we just mock the assignment in Firestore.
-      await setDoc(doc(db, 'team_members', email), {
-        email,
-        role,
-        createdAt: new Date().toISOString()
+      const idToken = await auth.currentUser.getIdToken()
+      const res = await fetch(`${getPlatformApiBaseUrl()}/api/team/invite`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${idToken}`,
+        },
+        body: JSON.stringify({ email, role }),
       })
-      setStatus('Membre ajouté avec succès')
+      const data = await res.json()
+
+      if (!res.ok) {
+        setStatus({ kind: 'error', text: data.message || data.error || 'Erreur lors de l\'ajout' })
+        return
+      }
+
+      setStatus({ kind: 'success', text: `${data.email} a maintenant accès (${data.role === 'superadmin' ? 'Superadmin' : 'Agent de Support'}).` })
       setEmail('')
-      loadMembers()
-      setTimeout(() => setStatus(''), 3000)
     } catch (error) {
       console.error(error)
-      setStatus('Erreur lors de l\'ajout')
+      setStatus({ kind: 'error', text: 'Erreur réseau lors de l\'ajout. Réessayez.' })
+    } finally {
+      setSubmitting(false)
     }
   }
 
   return (
     <div className="space-y-6">
       <Card>
-        <CardHeader title="Ajouter un collaborateur" subtitle="Donnez accès au portail d'administration" />
+        <CardHeader title="Ajouter un collaborateur" subtitle="La personne doit déjà avoir un compte Ardoise (elle s'inscrit normalement sur ardoise.soyames.com, puis vous lui donnez accès ici)." />
         <CardBody>
           <form onSubmit={handleAddMember} className="flex flex-col sm:flex-row gap-4 items-end">
             <div className="flex-1 w-full">
@@ -197,31 +392,39 @@ function TeamManagement() {
                 <option value="superadmin">Superadmin</option>
               </select>
             </div>
-            <Button type="submit" variant="primary" className="w-full sm:w-auto h-[38px]">
-              Ajouter
+            <Button type="submit" variant="primary" className="w-full sm:w-auto h-[38px]" disabled={submitting}>
+              {submitting ? 'Ajout en cours...' : 'Donner accès'}
             </Button>
           </form>
-          {status && <p className="mt-4 text-sm font-medium text-success-600">{status}</p>}
+          {status && (
+            <p className={`mt-4 text-sm font-medium ${status.kind === 'success' ? 'text-success-600' : 'text-danger-600'}`}>
+              {status.text}
+            </p>
+          )}
         </CardBody>
       </Card>
 
       <Card>
         <CardHeader title="Membres de l'équipe" />
         <CardBody className="p-0">
-          <ul className="divide-y divide-border">
-            {members.length === 0 ? (
-              <li className="p-5 text-sm text-ink-muted">Aucun membre configuré</li>
-            ) : (
-              members.map((m) => (
+          {membersLoading ? (
+            <div className="p-5 text-sm text-ink-muted">Chargement...</div>
+          ) : members.length === 0 ? (
+            <div className="p-5">
+              <EmptyState title="Aucun membre configuré" description="Ajoutez votre premier collaborateur ci-dessus." />
+            </div>
+          ) : (
+            <ul className="divide-y divide-border">
+              {members.map((m) => (
                 <li key={m.id} className="p-5 flex items-center justify-between">
                   <span className="text-sm font-medium text-ink">{m.email}</span>
                   <Badge tone={m.role === 'superadmin' ? 'warning' : 'info'}>
                     {m.role === 'superadmin' ? 'Superadmin' : 'Support'}
                   </Badge>
                 </li>
-              ))
-            )}
-          </ul>
+              ))}
+            </ul>
+          )}
         </CardBody>
       </Card>
     </div>

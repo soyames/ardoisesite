@@ -1,0 +1,117 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Fonction utilitaire pour récupérer le profil de l'utilisateur connecté
+    function getUserData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    // Écoles -- annuaire public du marketplace. Un visiteur anonyme qui
+    // consulte /schools/:id (SchoolDetail.jsx, SchoolEnrollment.jsx) doit
+    // pouvoir lire le profil public d'une école SANS être connecté --
+    // c'est le bug corrigé ici : l'ancienne règle exigeait request.auth
+    // != null même pour une simple lecture publique.
+    match /schools/{schoolId} {
+      allow read: if true;
+
+      // La création est autorisée lors de l'inscription
+      allow create: if isSignedIn();
+
+      // SEUL le fondateur lié à cette école a le droit de modifier les infos (comme le backendUrl)
+      allow update, delete: if isSignedIn()
+                            && getUserData().role == 'founder'
+                            && getUserData().schoolId == schoolId;
+
+      // Règles pour les secrets (clés FedaPay, WhatsApp...) : strictement réservé au fondateur de l'école
+      match /secrets/{secretDoc} {
+        allow read, write: if isSignedIn()
+                           && getUserData().role == 'founder'
+                           && getUserData().schoolId == schoolId;
+      }
+    }
+
+    // Utilisateurs
+    match /users/{userId} {
+      // Tout utilisateur connecté peut lire les profils (pour l'affichage)
+      allow read: if isSignedIn();
+      // Chacun ne peut modifier que son propre profil -- la promotion
+      // superadmin/support_agent passe exclusivement par le endpoint
+      // autorisé POST /api/team/invite (ardoise-api), jamais par une
+      // écriture client directe sur le champ role de quelqu'un d'autre.
+      allow write: if isSignedIn() && request.auth.uid == userId;
+    }
+
+    // Offres d'emploi -- tableau public du marketplace, lecture libre.
+    // Seul le fondateur de l'école concernée peut créer/modifier/supprimer
+    // une offre pour SA propre école.
+    match /jobs/{jobId} {
+      allow read: if true;
+      allow create: if isSignedIn()
+                    && getUserData().role == 'founder'
+                    && getUserData().schoolId == request.resource.data.schoolId;
+      allow update, delete: if isSignedIn()
+                            && getUserData().role == 'founder'
+                            && getUserData().schoolId == resource.data.schoolId;
+    }
+
+    // Candidatures -- un professeur crée la sienne (JobApplicationFlow.jsx) ;
+    // seuls le candidat lui-même et le fondateur de l'école concernée
+    // peuvent la lire/la mettre à jour (FounderDashboard.jsx).
+    match /job_applications/{applicationId} {
+      allow create: if isSignedIn()
+                    && getUserData().role == 'teacher'
+                    && request.resource.data.teacherId == request.auth.uid;
+      allow read, update: if isSignedIn() && (
+        request.auth.uid == resource.data.teacherId ||
+        (getUserData().role == 'founder' && getUserData().schoolId == resource.data.schoolId)
+      );
+    }
+
+    // Demandes d'inscription -- un parent crée la sienne
+    // (SchoolEnrollment.jsx) ; seuls le parent demandeur et le fondateur
+    // de l'école concernée peuvent la lire/la mettre à jour
+    // (FounderDashboard.jsx).
+    match /school_enrollment_requests/{requestId} {
+      allow create: if isSignedIn()
+                    && getUserData().role == 'parent'
+                    && request.resource.data.parentId == request.auth.uid;
+      allow read, update: if isSignedIn() && (
+        request.auth.uid == resource.data.parentId ||
+        (getUserData().role == 'founder' && getUserData().schoolId == resource.data.schoolId)
+      );
+    }
+
+    // Tickets de support -- n'importe qui (y compris un visiteur anonyme)
+    // peut créer un ticket via le formulaire de contact public
+    // (ContactForm.jsx) ; seuls superadmin/support_agent peuvent les lire
+    // et les mettre à jour (SuperadminDashboard.jsx).
+    match /support_tickets/{ticketId} {
+      allow create: if true;
+      allow read, update: if isSignedIn() && getUserData().role in ['superadmin', 'support_agent'];
+    }
+
+    // Transactions FedaPay -- écrites uniquement par le Worker
+    // ardoise-api via le SDK Admin (qui ignore ces règles), jamais par
+    // un client. Aucun accès client, ni lecture ni écriture.
+    match /transactions/{transactionId} {
+      allow read, write: if false;
+    }
+
+    // Collection historique, remplacée par users/{uid}.role +
+    // POST /api/team/invite (voir SuperadminDashboard.jsx) -- plus rien
+    // ne doit y écrire.
+    match /team_members/{memberId} {
+      allow read, write: if false;
+    }
+
+    // Règle par défaut pour toute autre collection non listée explicitement ci-dessus
+    match /{document=**} {
+      allow read, write: if isSignedIn();
+    }
+  }
+}

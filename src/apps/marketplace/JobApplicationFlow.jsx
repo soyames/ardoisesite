@@ -1,21 +1,39 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
+import { doc, getDoc, collection, addDoc, serverTimestamp } from 'firebase/firestore'
+import { db } from '../../shared/api/firebase.js'
 import { useAuth } from '../../shared/auth/AuthContext.jsx'
-import { mockApi } from '../../shared/api/mockDb.js'
 import EmptyState from '../../shared/ui/EmptyState.jsx'
+import Spinner from '../../shared/ui/Spinner.jsx'
 
 export default function JobApplicationFlow() {
   const { id } = useParams()
   const navigate = useNavigate()
   const { user, status } = useAuth()
-  
-  const job = mockApi.getJob(id)
-  const school = job ? mockApi.getSchool(job.schoolId) : null
-  
+
+  const [job, setJob] = useState(undefined) // undefined = loading, null = not found
+
   const [motivation, setMotivation] = useState('')
   const [submitting, setSubmitting] = useState(false)
 
-  if (!job || !school) {
+  useEffect(() => {
+    let cancelled = false
+    getDoc(doc(db, 'jobs', id)).then((snap) => {
+      if (cancelled) return
+      setJob(snap.exists() ? { id: snap.id, ...snap.data() } : null)
+    }).catch(() => { if (!cancelled) setJob(null) })
+    return () => { cancelled = true }
+  }, [id])
+
+  if (job === undefined) {
+    return (
+      <div className="flex justify-center py-32">
+        <Spinner />
+      </div>
+    )
+  }
+
+  if (!job) {
     return (
       <div className="mx-auto max-w-2xl px-6 py-32">
         <EmptyState title="Offre introuvable" />
@@ -42,31 +60,39 @@ export default function JobApplicationFlow() {
     )
   }
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
     setSubmitting(true)
-    setTimeout(() => {
-      mockApi.createApplication({
+    try {
+      await addDoc(collection(db, 'job_applications'), {
         jobId: job.id,
-        teacherId: user.id,
-        teacherName: user.name,
+        jobTitle: job.title,
+        schoolId: job.schoolId,
+        teacherId: user.uid,
+        teacherName: user.name || '',
         email: user.email,
-        motivation
+        motivation,
+        status: 'pending',
+        createdAt: serverTimestamp(),
       })
       alert('Candidature envoyée avec succès ! L\'école vous contactera bientôt.')
       navigate('/portal') // Redirect teacher to their portal/dashboard
-    }, 800)
+    } catch (err) {
+      console.error(err)
+      alert('Une erreur est survenue lors de l\'envoi de la candidature. Réessayez.')
+      setSubmitting(false)
+    }
   }
 
   return (
     <div className="min-h-screen bg-surface py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-2xl mx-auto bg-surface-raised p-8 rounded-card shadow-card ring-1 ring-border">
         <div className="mb-8 border-b border-border pb-6 flex items-center gap-6">
-          <img src={school.image} alt={school.name} className="h-16 w-16 rounded-control object-cover ring-1 ring-border" />
+          {job.schoolImage && <img src={job.schoolImage} alt={job.schoolName} className="h-16 w-16 rounded-control object-cover ring-1 ring-border" />}
           <div>
             <h1 className="text-2xl font-bold text-ink">Postuler</h1>
             <p className="text-ink-muted mt-1 font-semibold">{job.title}</p>
-            <p className="text-ink-muted text-sm">{school.name} &bull; {school.city}</p>
+            <p className="text-ink-muted text-sm">{job.schoolName} &bull; {job.schoolCity}</p>
           </div>
         </div>
 

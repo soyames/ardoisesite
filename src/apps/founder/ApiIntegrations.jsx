@@ -1,16 +1,17 @@
-import React, { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { doc, getDoc, setDoc } from 'firebase/firestore'
-import { db } from '../../shared/api/firebase.js'
-import { useAuth } from '../../shared/auth/AuthContext.jsx'
+import { auth, db } from '../../shared/api/firebase.js'
+import { getPlatformApiBaseUrl } from '../../config/env.js'
 import { Card, CardHeader, CardBody } from '../../shared/ui/Card.jsx'
 import Button from '../../shared/ui/Button.jsx'
 
+const INPUT_CLASS = "mt-1 block w-full rounded-control border-0 py-2 px-3 bg-surface-raised text-ink ring-1 ring-inset ring-border focus:ring-2 focus:ring-primary-500 sm:text-sm"
+
 export default function ApiIntegrations({ schoolId }) {
-  const { user } = useAuth()
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [msg, setMsg] = useState('')
-  
+
   const [config, setConfig] = useState({
     backendUrl: '',
     fedaPayPublicKey: '',
@@ -89,93 +90,93 @@ export default function ApiIntegrations({ schoolId }) {
     setConfig({ ...config, [e.target.name]: e.target.value })
   }
 
-  if (loading) return <div>Chargement des paramètres...</div>
+  if (loading) return <div className="text-ink-muted">Chargement des paramètres...</div>
 
   return (
     <Card>
       <CardHeader title="Intégrations API (Paiements & WhatsApp)" subtitle="Configurez vos propres clés pour recevoir directement l'argent et envoyer des messages WhatsApp." />
       <CardBody>
         <form onSubmit={handleSave} className="space-y-6">
-          <div className="bg-amber-50 p-4 rounded-lg ring-1 ring-amber-200">
-            <h3 className="font-bold text-slate-900 mb-2">Adresse de votre serveur (obligatoire)</h3>
-            <p className="text-sm text-slate-600 mb-4">
+          <div className="bg-warning-50 p-4 rounded-card ring-1 ring-warning-500/30">
+            <h3 className="font-bold text-ink mb-2">Adresse de votre serveur (obligatoire)</h3>
+            <p className="text-sm text-ink-muted mb-4">
               L'adresse a laquelle votre instance Ardoise est joignable depuis internet.
               Sans elle, personne de votre école (caissier, enseignant, parent) ne peut
-              se connecter à votre portail — voir le guide d'installation pour les 3 façons
+              se connecter à votre portail - voir le guide d'installation pour les 3 façons
               d'obtenir cette adresse selon votre situation (ordinateur seul, serveur local,
               serveur avec nom de domaine).
             </p>
             <div>
-              <label className="block text-sm font-medium text-slate-700">URL du backend</label>
+              <label className="block text-sm font-medium text-ink">URL du backend</label>
               <input
                 type="url"
                 name="backendUrl"
                 value={config.backendUrl}
                 onChange={handleChange}
                 placeholder="https://laliberte.exemple.com  ou  https://12.34.56.78:8000"
-                className="mt-1 block w-full rounded-md border-0 py-2 px-3 text-slate-900 ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-indigo-600 sm:text-sm"
+                className={INPUT_CLASS}
               />
-              <p className="text-xs text-slate-500 mt-1">
+              <p className="text-xs text-ink-muted mt-1">
                 Doit être accessible en HTTPS pour un serveur avec nom de domaine (voir le guide).
                 Pour un ordinateur unique sans domaine, utilisez l'adresse IP locale de l'école
-                (ex. http://192.168.1.50:8000) — seuls les appareils du même réseau Wi-Fi y auront accès.
+                (ex. http://192.168.1.50:8000) - seuls les appareils du même réseau Wi-Fi y auront accès.
               </p>
             </div>
           </div>
 
-          <div className="bg-slate-50 p-4 rounded-lg ring-1 ring-slate-200">
-            <h3 className="font-bold text-slate-900 mb-4">Configuration FedaPay</h3>
+          <div className="bg-surface p-4 rounded-card ring-1 ring-border">
+            <h3 className="font-bold text-ink mb-4">Configuration FedaPay</h3>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-slate-700">Clé Publique FedaPay (pk_live_... ou pk_sandbox_...)</label>
-                <input 
-                  type="text" 
-                  name="fedaPayPublicKey" 
-                  value={config.fedaPayPublicKey} 
+                <label className="block text-sm font-medium text-ink">Clé Publique FedaPay (pk_live_... ou pk_sandbox_...)</label>
+                <input
+                  type="text"
+                  name="fedaPayPublicKey"
+                  value={config.fedaPayPublicKey}
                   onChange={handleChange}
-                  className="mt-1 block w-full rounded-md border-0 py-2 px-3 text-slate-900 ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-indigo-600 sm:text-sm" 
-                  placeholder="pk_..." 
+                  className={INPUT_CLASS}
+                  placeholder="pk_..."
                 />
-                <p className="text-xs text-slate-500 mt-1">Cette clé sera utilisée publiquement pour afficher le module de paiement sur le portail parent.</p>
+                <p className="text-xs text-ink-muted mt-1">Cette clé sera utilisée publiquement pour afficher le module de paiement sur le portail parent.</p>
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-700">Clé Secrète FedaPay (sk_live_... ou sk_sandbox_...)</label>
-                <input 
-                  type="password" 
-                  name="fedaPaySecretKey" 
-                  value={config.fedaPaySecretKey} 
+                <label className="block text-sm font-medium text-ink">Clé Secrète FedaPay (sk_live_... ou sk_sandbox_...)</label>
+                <input
+                  type="password"
+                  name="fedaPaySecretKey"
+                  value={config.fedaPaySecretKey}
                   onChange={handleChange}
-                  className="mt-1 block w-full rounded-md border-0 py-2 px-3 text-slate-900 ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-indigo-600 sm:text-sm" 
-                  placeholder="sk_..." 
+                  className={INPUT_CLASS}
+                  placeholder="sk_..."
                 />
-                <p className="text-xs text-slate-500 mt-1">Stockée de façon sécurisée. Utilisée par le serveur pour les remboursements ou vérifications.</p>
+                <p className="text-xs text-ink-muted mt-1">Stockée de façon sécurisée. Utilisée par le serveur pour les remboursements ou vérifications.</p>
               </div>
             </div>
           </div>
 
-          <div className="bg-slate-50 p-4 rounded-lg ring-1 ring-slate-200">
-            <h3 className="font-bold text-slate-900 mb-4">Configuration WhatsApp Business API</h3>
+          <div className="bg-surface p-4 rounded-card ring-1 ring-border">
+            <h3 className="font-bold text-ink mb-4">Configuration WhatsApp Business API</h3>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-slate-700">Jeton d'accès (Access Token)</label>
-                <input 
-                  type="password" 
-                  name="whatsappToken" 
-                  value={config.whatsappToken} 
+                <label className="block text-sm font-medium text-ink">Jeton d'accès (Access Token)</label>
+                <input
+                  type="password"
+                  name="whatsappToken"
+                  value={config.whatsappToken}
                   onChange={handleChange}
-                  className="mt-1 block w-full rounded-md border-0 py-2 px-3 text-slate-900 ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-indigo-600 sm:text-sm" 
-                  placeholder="EAXXXXX..." 
+                  className={INPUT_CLASS}
+                  placeholder="EAXXXXX..."
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-700">ID du Numéro de Téléphone (Phone Number ID)</label>
-                <input 
-                  type="text" 
-                  name="whatsappPhoneNumberId" 
-                  value={config.whatsappPhoneNumberId} 
+                <label className="block text-sm font-medium text-ink">ID du Numéro de Téléphone (Phone Number ID)</label>
+                <input
+                  type="text"
+                  name="whatsappPhoneNumberId"
+                  value={config.whatsappPhoneNumberId}
                   onChange={handleChange}
-                  className="mt-1 block w-full rounded-md border-0 py-2 px-3 text-slate-900 ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-indigo-600 sm:text-sm" 
-                  placeholder="101010101010..." 
+                  className={INPUT_CLASS}
+                  placeholder="101010101010..."
                 />
               </div>
             </div>
@@ -185,26 +186,30 @@ export default function ApiIntegrations({ schoolId }) {
             <Button type="submit" disabled={saving}>
               {saving ? 'Sauvegarde...' : 'Sauvegarder les clés'}
             </Button>
-            {msg && <p className={`text-sm ${msg.includes('Erreur') ? 'text-red-600' : 'text-green-600'}`}>{msg}</p>}
+            {msg && <p className={`text-sm ${msg.includes('Erreur') ? 'text-danger-600' : 'text-success-600'}`}>{msg}</p>}
           </div>
         </form>
 
-        <div className="mt-8 pt-6 border-t border-slate-200">
-          <h3 className="font-bold text-slate-900 mb-2">Tester l'envoi WhatsApp</h3>
-          <p className="text-sm text-slate-600 mb-4">Envoyez un message test pour vérifier que votre configuration WhatsApp API fonctionne.</p>
+        <div className="mt-8 pt-6 border-t border-border">
+          <h3 className="font-bold text-ink mb-2">Tester l'envoi WhatsApp</h3>
+          <p className="text-sm text-ink-muted mb-4">Envoyez un message test pour vérifier que votre configuration WhatsApp API fonctionne.</p>
           <div className="flex gap-3 max-w-lg">
-            <input 
-              type="text" 
+            <input
+              type="text"
               id="testPhone"
-              placeholder="Numéro (ex: 22997000000)" 
-              className="flex-1 rounded-md border-0 py-2 px-3 text-slate-900 ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-indigo-600 sm:text-sm"
+              placeholder="Numéro (ex: 22997000000)"
+              className={`flex-1 ${INPUT_CLASS} mt-0`}
             />
             <Button onClick={async () => {
               const phone = document.getElementById('testPhone').value
               if (!phone) return alert('Entrez un numéro')
               try {
-                const token = await user?.getIdToken?.() || ''
-                const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/schools/${schoolId}/whatsapp/send`, {
+                const token = await auth.currentUser?.getIdToken() || ''
+                // Fixed: this is a call to the CENTRAL platform Worker
+                // (ardoise-api), never the school's own backend --
+                // getApiBaseUrl() resolves to the school's Django URL
+                // post-login and would silently misroute this request.
+                const res = await fetch(`${getPlatformApiBaseUrl()}/api/schools/${schoolId}/whatsapp/send`, {
                   method: 'POST',
                   headers: {
                     'Content-Type': 'application/json',
@@ -216,10 +221,11 @@ export default function ApiIntegrations({ schoolId }) {
                   })
                 })
                 const data = await res.json()
-                if (data.success) alert('Message envoyé avec succès !')
-                else alert('Erreur: ' + (data.error || JSON.stringify(data.details)))
+                if (res.ok && data.success) alert('Message envoyé avec succès !')
+                else alert('Erreur: ' + (data.error || JSON.stringify(data.details || data)))
               } catch (e) {
-                alert('Erreur réseau')
+                console.error(e)
+                alert('Erreur réseau ou du serveur : ' + e.message)
               }
             }}>Envoyer</Button>
           </div>

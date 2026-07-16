@@ -1,81 +1,111 @@
 import { useState, useEffect } from 'react'
+import { collection, doc, getDoc, onSnapshot, query, updateDoc, where } from 'firebase/firestore'
+import { db } from '../../shared/api/firebase.js'
 import { useAuth } from '../../shared/auth/AuthContext.jsx'
-import { mockApi } from '../../shared/api/mockDb.js'
 import StatCard from '../../shared/ui/StatCard.jsx'
 import { Card, CardHeader, CardBody } from '../../shared/ui/Card.jsx'
-import Badge from '../../shared/ui/Badge.jsx'
 import Button from '../../shared/ui/Button.jsx'
 import EmptyState from '../../shared/ui/EmptyState.jsx'
+import Spinner from '../../shared/ui/Spinner.jsx'
 
 import ApiIntegrations from './ApiIntegrations.jsx'
 
 export default function FounderDashboard() {
   const { user } = useAuth()
   const [activeTab, setActiveTab] = useState('overview')
-  
+
+  const [school, setSchool] = useState(undefined)
+  const [enrollments, setEnrollments] = useState([])
+  const [applications, setApplications] = useState([])
+
+  const schoolId = user?.schoolId
+
+  useEffect(() => {
+    if (!schoolId) return
+    let cancelled = false
+    getDoc(doc(db, 'schools', schoolId)).then((snap) => {
+      if (!cancelled) setSchool(snap.exists() ? { id: snap.id, ...snap.data() } : null)
+    })
+    return () => { cancelled = true }
+  }, [schoolId])
+
+  useEffect(() => {
+    if (!schoolId) return
+    const q = query(collection(db, 'school_enrollment_requests'), where('schoolId', '==', schoolId))
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const e = []
+      snapshot.forEach((d) => e.push({ id: d.id, ...d.data() }))
+      setEnrollments(e)
+    })
+    return () => unsubscribe()
+  }, [schoolId])
+
+  useEffect(() => {
+    if (!schoolId) return
+    const q = query(collection(db, 'job_applications'), where('schoolId', '==', schoolId))
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const a = []
+      snapshot.forEach((d) => a.push({ id: d.id, ...d.data() }))
+      setApplications(a)
+    })
+    return () => unsubscribe()
+  }, [schoolId])
+
   if (!user || user.role !== 'founder') {
     return <div className="py-20 text-center">Accès non autorisé</div>
   }
 
-  const [school, setSchool] = useState(mockApi.getSchool(user.schoolId))
-  const [enrollments, setEnrollments] = useState([])
-  const [applications, setApplications] = useState([])
-  
-  const refreshData = () => {
-    setSchool(mockApi.getSchool(user.schoolId))
-    setEnrollments(mockApi.getEnrollmentsForSchool(user.schoolId))
-    setApplications(mockApi.getApplicationsForSchool ? mockApi.getApplicationsForSchool(user.schoolId) : [])
-  }
-
-  useEffect(() => {
-    refreshData()
-  }, [])
-
   const pendingEnrollments = enrollments.filter(e => e.status === 'pending')
-
-  const handleToggleCapacity = () => {
-    mockApi.setSchoolCapacity(school.id, !school.isFull)
-    refreshData()
-  }
-
-  const handleStatusUpdate = (id, newStatus) => {
-    mockApi.updateEnrollmentStatus(id, newStatus)
-    refreshData()
-  }
-
-  const handleAppStatusUpdate = (id, newStatus) => {
-    mockApi.updateApplicationStatus(id, newStatus)
-    refreshData()
-  }
-
   const pendingApps = applications.filter(a => a.status === 'pending')
+
+  const handleToggleCapacity = async () => {
+    if (!school) return
+    await updateDoc(doc(db, 'schools', school.id), { isFull: !school.isFull })
+    setSchool((prev) => ({ ...prev, isFull: !prev.isFull }))
+  }
+
+  const handleStatusUpdate = async (id, newStatus) => {
+    await updateDoc(doc(db, 'school_enrollment_requests', id), { status: newStatus })
+  }
+
+  const handleAppStatusUpdate = async (id, newStatus) => {
+    await updateDoc(doc(db, 'job_applications', id), { status: newStatus })
+  }
+
+  if (school === undefined) {
+    return (
+      <div className="flex justify-center py-20">
+        <Spinner />
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-start">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Tableau de bord Fondateur</h1>
-          <p className="mt-1 text-sm text-slate-500">Gérez {school?.name}</p>
+          <h1 className="text-2xl font-bold text-ink">Tableau de bord Fondateur</h1>
+          <p className="mt-1 text-sm text-ink-muted">Gérez {school?.name}</p>
         </div>
         <div className="flex items-center gap-3">
-          <span className="text-sm font-semibold text-slate-700">Capacité Atteinte ?</span>
+          <span className="text-sm font-semibold text-ink">Capacité Atteinte ?</span>
           <button
             onClick={handleToggleCapacity}
-            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2 ${school?.isFull ? 'bg-red-500' : 'bg-slate-200'}`}
+            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 ${school?.isFull ? 'bg-danger-500' : 'bg-primary-100'}`}
           >
             <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition ${school?.isFull ? 'translate-x-6' : 'translate-x-1'}`} />
           </button>
         </div>
       </div>
 
-      <div className="border-b border-slate-200">
+      <div className="border-b border-border">
         <nav className="-mb-px flex space-x-8">
           <button
             onClick={() => setActiveTab('overview')}
             className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm ${
               activeTab === 'overview'
-                ? 'border-indigo-500 text-indigo-600'
-                : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
+                ? 'border-primary-500 text-primary-600'
+                : 'border-transparent text-ink-muted hover:text-ink hover:border-border'
             }`}
           >
             Vue d'ensemble
@@ -84,8 +114,8 @@ export default function FounderDashboard() {
             onClick={() => setActiveTab('integrations')}
             className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm ${
               activeTab === 'integrations'
-                ? 'border-indigo-500 text-indigo-600'
-                : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
+                ? 'border-primary-500 text-primary-600'
+                : 'border-transparent text-ink-muted hover:text-ink hover:border-border'
             }`}
           >
             Intégrations API (Paiements & WhatsApp)
@@ -111,11 +141,11 @@ export default function FounderDashboard() {
                 ) : (
                   <ul className="space-y-4">
                     {pendingEnrollments.map(e => (
-                      <li key={e.id} className="flex flex-col md:flex-row md:items-center justify-between rounded-xl border border-slate-200 p-4 shadow-sm bg-white">
+                      <li key={e.id} className="flex flex-col md:flex-row md:items-center justify-between rounded-card border border-border p-4 shadow-card bg-surface-raised">
                         <div>
-                          <p className="font-bold text-slate-900">{e.childName} <span className="text-sm font-normal text-slate-500">({e.childAge} ans)</span></p>
-                          <p className="text-sm text-slate-600 mt-1">Classe demandée: <span className="font-semibold">{e.childClass}</span></p>
-                          <p className="text-xs text-slate-400 mt-2">Parent: {e.parentName} &bull; {e.parentPhone}</p>
+                          <p className="font-bold text-ink">{e.childName} <span className="text-sm font-normal text-ink-muted">({e.childAge} ans)</span></p>
+                          <p className="text-sm text-ink-muted mt-1">Classe demandée: <span className="font-semibold">{e.childClass}</span></p>
+                          <p className="text-xs text-ink-muted mt-2">Parent: {e.parentName} &bull; {e.parentPhone}</p>
                         </div>
                         <div className="mt-4 md:mt-0 flex gap-2">
                           <Button size="sm" variant="secondary" onClick={() => handleStatusUpdate(e.id, 'rejected')}>
@@ -141,27 +171,24 @@ export default function FounderDashboard() {
                   <EmptyState title="Aucune candidature" description="Vos annonces d'emploi n'ont pas encore reçu de candidatures récentes." />
                 ) : (
                   <ul className="space-y-4">
-                    {pendingApps.map(a => {
-                      const job = mockApi.getJob(a.jobId)
-                      return (
-                        <li key={a.id} className="flex flex-col md:flex-row md:items-center justify-between rounded-xl border border-slate-200 p-4 shadow-sm bg-white">
-                          <div>
-                            <p className="font-bold text-slate-900">{a.teacherName}</p>
-                            <p className="text-sm text-slate-600 mt-1">Poste: <span className="font-semibold">{job?.title}</span></p>
-                            <p className="text-xs text-slate-400 mt-2">Email: {a.email}</p>
-                            {a.motivation && <p className="text-sm text-slate-500 mt-2 italic border-l-2 border-indigo-200 pl-2">"{a.motivation}"</p>}
-                          </div>
-                          <div className="mt-4 md:mt-0 flex gap-2">
-                            <Button size="sm" variant="secondary" onClick={() => handleAppStatusUpdate(a.id, 'rejected')}>
-                              Refuser
-                            </Button>
-                            <Button size="sm" onClick={() => handleAppStatusUpdate(a.id, 'accepted')}>
-                              Accepter
-                            </Button>
-                          </div>
-                        </li>
-                      )
-                    })}
+                    {pendingApps.map(a => (
+                      <li key={a.id} className="flex flex-col md:flex-row md:items-center justify-between rounded-card border border-border p-4 shadow-card bg-surface-raised">
+                        <div>
+                          <p className="font-bold text-ink">{a.teacherName}</p>
+                          <p className="text-sm text-ink-muted mt-1">Poste: <span className="font-semibold">{a.jobTitle}</span></p>
+                          <p className="text-xs text-ink-muted mt-2">Email: {a.email}</p>
+                          {a.motivation && <p className="text-sm text-ink-muted mt-2 italic border-l-2 border-primary-200 pl-2">"{a.motivation}"</p>}
+                        </div>
+                        <div className="mt-4 md:mt-0 flex gap-2">
+                          <Button size="sm" variant="secondary" onClick={() => handleAppStatusUpdate(a.id, 'rejected')}>
+                            Refuser
+                          </Button>
+                          <Button size="sm" onClick={() => handleAppStatusUpdate(a.id, 'accepted')}>
+                            Accepter
+                          </Button>
+                        </div>
+                      </li>
+                    ))}
                   </ul>
                 )}
               </CardBody>

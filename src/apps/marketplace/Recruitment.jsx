@@ -1,20 +1,33 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { mockApi } from '../../shared/api/mockDb.js'
+import { collection, onSnapshot, orderBy, query } from 'firebase/firestore'
+import { db } from '../../shared/api/firebase.js'
 import EmptyState from '../../shared/ui/EmptyState.jsx'
+import Spinner from '../../shared/ui/Spinner.jsx'
 
 export default function Recruitment() {
   const navigate = useNavigate()
   const [search, setSearch] = useState('')
+  const [jobs, setJobs] = useState([])
+  const [loading, setLoading] = useState(true)
 
-  const allJobs = mockApi.getJobs().map(j => {
-    const s = mockApi.getSchool(j.schoolId)
-    return { ...j, school: s.name, city: s.city, logo: s.image }
-  })
+  useEffect(() => {
+    const q = query(collection(db, 'jobs'), orderBy('createdAt', 'desc'))
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const j = []
+      snapshot.forEach((d) => j.push({ id: d.id, ...d.data() }))
+      setJobs(j)
+      setLoading(false)
+    }, (err) => {
+      console.error(err)
+      setLoading(false)
+    })
+    return () => unsubscribe()
+  }, [])
 
-  const filteredJobs = allJobs.filter(job => 
-    job.title.toLowerCase().includes(search.toLowerCase()) || 
-    job.school.toLowerCase().includes(search.toLowerCase())
+  const filteredJobs = jobs.filter(job =>
+    job.title.toLowerCase().includes(search.toLowerCase()) ||
+    (job.schoolName || '').toLowerCase().includes(search.toLowerCase())
   )
 
   return (
@@ -40,24 +53,28 @@ export default function Recruitment() {
           />
         </div>
 
+        {loading ? (
+          <div className="flex justify-center py-20">
+            <Spinner />
+          </div>
+        ) : (
         <div className="space-y-4">
           {filteredJobs.map(job => (
             <div key={job.id} className="group relative flex flex-col md:flex-row items-start md:items-center justify-between rounded-card bg-surface-raised p-6 shadow-card ring-1 ring-border transition hover:shadow-elevated hover:ring-primary-200">
               <div className="flex items-center gap-6">
-                <img src={job.logo} alt={job.school} className="h-16 w-16 rounded-control object-cover ring-1 ring-border" />
+                {job.schoolImage && <img src={job.schoolImage} alt={job.schoolName} className="h-16 w-16 rounded-control object-cover ring-1 ring-border" />}
                 <div>
                   <h3 className="text-xl font-bold text-ink group-hover:text-primary-600 transition-colors">{job.title}</h3>
                   <div className="mt-2 flex flex-wrap items-center gap-3 text-sm text-ink-muted">
-                    <span className="font-semibold text-ink">{job.school}</span>
+                    <span className="font-semibold text-ink">{job.schoolName}</span>
                     <span>&bull;</span>
-                    <span>{job.city}</span>
+                    <span>{job.schoolCity}</span>
                     <span>&bull;</span>
                     <span className="rounded-full bg-primary-100 px-2 py-0.5 text-xs font-semibold">{job.type}</span>
                   </div>
                 </div>
               </div>
               <div className="mt-4 md:mt-0 flex flex-col items-end gap-3 w-full md:w-auto">
-                <span className="text-xs text-ink-muted">{job.posted}</span>
                 <button onClick={() => navigate(`/jobs/${job.id}/apply`)} className="w-full md:w-auto rounded-control bg-surface-raised px-6 py-2.5 text-sm font-semibold text-primary-600 ring-1 ring-inset ring-primary-200 transition hover:bg-primary-50">
                   Postuler
                 </button>
@@ -71,6 +88,7 @@ export default function Recruitment() {
             </div>
           )}
         </div>
+        )}
 
       </div>
     </div>

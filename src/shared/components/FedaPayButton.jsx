@@ -1,15 +1,15 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
 
-export function FedaPayButton({ 
-  amount, 
-  description, 
-  customMetadata, 
+export function FedaPayButton({
+  amount,
+  description,
+  customMetadata,
   customerEmail,
   customerName,
   publicKey,
   onComplete,
-  className = "w-full rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600",
-  children 
+  className = "w-full rounded-control bg-accent-500 px-3 py-2 text-sm font-semibold text-primary-950 shadow-sm hover:bg-accent-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-500",
+  children
 }) {
   const [isProcessing, setIsProcessing] = useState(false)
 
