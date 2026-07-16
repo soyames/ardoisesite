@@ -19,6 +19,7 @@ const CATEGORIES = [
 
 const TABS = [
   { key: 'sale', label: 'Vente' },
+  { key: 'prets', label: 'Prets' },
   { key: 'catalog', label: 'Catalogue' },
   { key: 'stock', label: 'Stock' },
   { key: 'vendors', label: 'Fournisseurs' },
@@ -51,6 +52,7 @@ export default function LibrarianPortal() {
       </div>
 
       {tab === 'sale' && <SaleTab />}
+      {tab === 'prets' && <PretsTab />}
       {tab === 'catalog' && <CatalogTab />}
       {tab === 'stock' && <StockTab />}
       {tab === 'vendors' && <VendorsTab />}
@@ -148,6 +150,123 @@ function SaleTab() {
           </ul>
         </CardBody>
       </Card>
+    </div>
+  )
+}
+
+function PretsTab() {
+  const items = useApiGet('/api/shop/inventory/')
+  const loans = useApiGet('/api/shop/loans/')
+  const [form, setForm] = useState({ item: '', student_matricule: '', due_date: '' })
+  const [error, setError] = useState(null)
+  const [submitting, setSubmitting] = useState(false)
+  const [busy, setBusy] = useState(null)
+
+  const bookItems = items.data?.filter((i) => i.category === 'book') || []
+  const openLoans = loans.data?.filter((l) => !l.returned_date) || []
+  const returnedLoans = loans.data?.filter((l) => l.returned_date) || []
+
+  const submit = async (e) => {
+    e.preventDefault()
+    setSubmitting(true)
+    setError(null)
+    try {
+      await api.post('/api/shop/loans/', { ...form, item: Number(form.item) })
+      setForm({ item: '', student_matricule: '', due_date: '' })
+      loans.refetch()
+      items.refetch()
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'Erreur inattendue.')
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  const returnLoan = async (id) => {
+    setBusy(id)
+    try {
+      await api.post(`/api/shop/loans/${id}/return/`)
+      loans.refetch()
+      items.refetch()
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'Erreur inattendue.')
+    } finally {
+      setBusy(null)
+    }
+  }
+
+  return (
+    <div className="space-y-4">
+      <Card>
+        <CardHeader title="Nouveau pret" subtitle="Seuls les livres/manuels (categorie 'Livre') peuvent etre pretes." />
+        <CardBody>
+          <form onSubmit={submit} className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+            <select required className={INPUT_CLASS} value={form.item} onChange={(e) => setForm({ ...form, item: e.target.value })}>
+              <option value="">Choisir le livre...</option>
+              {bookItems.map((i) => (
+                <option key={i.id} value={i.id} disabled={Number(i.quantity_on_hand) <= 0}>
+                  {i.name} ({i.quantity_on_hand} dispo)
+                </option>
+              ))}
+            </select>
+            <input
+              required className={INPUT_CLASS} placeholder="Matricule eleve"
+              value={form.student_matricule} onChange={(e) => setForm({ ...form, student_matricule: e.target.value })}
+            />
+            <input
+              required type="date" className={INPUT_CLASS}
+              value={form.due_date} onChange={(e) => setForm({ ...form, due_date: e.target.value })}
+            />
+            {error && <p className="text-sm text-danger-600 sm:col-span-3">{error}</p>}
+            <div className="sm:col-span-3">
+              <Button type="submit" disabled={submitting}>{submitting ? 'Enregistrement...' : 'Preter'}</Button>
+            </div>
+          </form>
+        </CardBody>
+      </Card>
+
+      <Card>
+        <CardHeader title="Prets en cours" />
+        <CardBody className="p-0">
+          {loans.loading && <div className="flex justify-center py-8"><Spinner /></div>}
+          {!loans.loading && openLoans.length === 0 && <div className="p-4"><EmptyState title="Aucun pret en cours" /></div>}
+          <ul className="divide-y divide-border">
+            {openLoans.map((l) => (
+              <li key={l.id} className="flex items-center justify-between p-4">
+                <div>
+                  <p className="text-sm font-medium text-ink">{l.item_name} - {l.student_name}</p>
+                  <p className="text-xs text-ink-muted">{l.student_matricule} - a rendre le {l.due_date}</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Badge tone={l.is_overdue ? 'danger' : 'neutral'}>{l.is_overdue ? 'En retard' : 'En cours'}</Badge>
+                  <Button size="sm" onClick={() => returnLoan(l.id)} disabled={busy === l.id}>
+                    {busy === l.id ? 'Retour...' : 'Retourner'}
+                  </Button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </CardBody>
+      </Card>
+
+      {returnedLoans.length > 0 && (
+        <Card>
+          <CardHeader title="Prets rendus" />
+          <CardBody className="p-0">
+            <ul className="divide-y divide-border">
+              {returnedLoans.slice(0, 15).map((l) => (
+                <li key={l.id} className="flex items-center justify-between p-4">
+                  <div>
+                    <p className="text-sm text-ink">{l.item_name} - {l.student_name}</p>
+                    <p className="text-xs text-ink-muted">Rendu le {l.returned_date}</p>
+                  </div>
+                  {Number(l.fine_amount) > 0 && <Badge tone="warning">Amende {l.fine_amount} FCFA</Badge>}
+                </li>
+              ))}
+            </ul>
+          </CardBody>
+        </Card>
+      )}
     </div>
   )
 }
