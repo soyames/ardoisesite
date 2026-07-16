@@ -22,10 +22,22 @@ service cloud.firestore {
       // La création est autorisée lors de l'inscription
       allow create: if isSignedIn();
 
-      // SEUL le fondateur lié à cette école a le droit de modifier les infos (comme le backendUrl)
-      allow update, delete: if isSignedIn()
-                            && getUserData().role == 'founder'
-                            && getUserData().schoolId == schoolId;
+      // SEUL le fondateur lié à cette école a le droit de modifier les infos (comme le backendUrl) --
+      // MAIS jamais les champs d'abonnement. Ces champs ne sont écrits que par
+      // le webhook FedaPay signé (ardoise-api, via le SDK Admin qui ignore ces
+      // règles) après confirmation réelle du paiement -- un fondateur qui
+      // appelait updateDoc() directement depuis le client (SubscriptionPanel.jsx,
+      // corrigé) pouvait sinon s'auto-activer un abonnement gratuit sans jamais
+      // payer, puisque cette règle ne restreignait aucun champ.
+      allow update: if isSignedIn()
+                    && getUserData().role == 'founder'
+                    && getUserData().schoolId == schoolId
+                    && !request.resource.data.diff(resource.data).affectedKeys()
+                          .hasAny(['subscriptionActive', 'subscriptionExpiresAt', 'subscriptionStatus',
+                                   'activationCode', 'lastPaymentDate', 'lastPaymentTx']);
+      allow delete: if isSignedIn()
+                    && getUserData().role == 'founder'
+                    && getUserData().schoolId == schoolId;
 
       // Règles pour les secrets (clés FedaPay, WhatsApp...) : strictement réservé au fondateur de l'école
       match /secrets/{secretDoc} {

@@ -1,71 +1,57 @@
 import React, { useState, useEffect } from 'react'
-import { doc, getDoc, updateDoc, serverTimestamp } from 'firebase/firestore'
+import { doc, getDoc } from 'firebase/firestore'
 import { db } from '../../shared/api/firebase'
 import { FedaPayButton } from '../../shared/components/FedaPayButton.jsx'
 import { Card, CardHeader, CardBody } from '../../shared/ui/Card.jsx'
 
-// Helper function to generate UUID
-function generateUUID() {
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-    const r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8);
-    return v.toString(16);
-  });
-}
+// Le paiement lui-meme ne fait plus jamais d'ecriture Firestore cote client
+// -- c'est desormais le webhook FedaPay signe (ardoise-api) qui active
+// l'abonnement server-side, seule ecriture que firestore.rules autorise
+// sur ces champs. Ce composant se contente de rafraichir sa lecture apres
+// un paiement, en patientant que le webhook ait eu le temps d'arriver.
+const CONFIRM_POLL_ATTEMPTS = 6
+const CONFIRM_POLL_DELAY_MS = 2000
 
 export default function SubscriptionPanel({ schoolId }) {
   const [loading, setLoading] = useState(true)
   const [schoolData, setSchoolData] = useState(null)
   const [error, setError] = useState(null)
+  const [confirming, setConfirming] = useState(false)
+
+  const fetchSchoolData = async () => {
+    try {
+      const docRef = doc(db, 'schools', String(schoolId))
+      const docSnap = await getDoc(docRef)
+      if (docSnap.exists()) {
+        setSchoolData(docSnap.data())
+      }
+      return docSnap.exists() ? docSnap.data() : null
+    } catch (err) {
+      setError("Erreur lors du chargement des informations de l'école.")
+      console.error(err)
+      return null
+    }
+  }
 
   useEffect(() => {
     if (!schoolId) return
-
-    const fetchSchoolData = async () => {
-      try {
-        const docRef = doc(db, 'schools', schoolId)
-        const docSnap = await getDoc(docRef)
-        if (docSnap.exists()) {
-          setSchoolData(docSnap.data())
-        }
-      } catch (err) {
-        setError("Erreur lors du chargement des informations de l'école.")
-        console.error(err)
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    fetchSchoolData()
+    setLoading(true)
+    fetchSchoolData().finally(() => setLoading(false))
   }, [schoolId])
 
-  const handlePaymentComplete = async (tx) => {
-    try {
-      setLoading(true)
-      const docRef = doc(db, 'schools', schoolId)
-      
-      const newActivationCode = schoolData?.activationCode || generateUUID()
-      
-      // Activer l'abonnement dans Firestore
-      await updateDoc(docRef, {
-        subscriptionStatus: 'active',
-        activationCode: newActivationCode,
-        lastPaymentDate: serverTimestamp(),
-        lastPaymentTx: tx.id || 'manual'
-      })
-      // Mettre à jour l'état local
-      setSchoolData((prev) => ({
-        ...prev,
-        subscriptionStatus: 'active',
-        activationCode: newActivationCode,
-        lastPaymentDate: new Date()
-      }))
-      alert("Paiement réussi ! Votre abonnement est actif. Veuillez récupérer votre clé d'activation et télécharger le logiciel.")
-    } catch (err) {
-      console.error("Erreur lors de la mise à jour de l'abonnement :", err)
-      alert("Le paiement a réussi, mais nous n'avons pas pu activer votre abonnement. Veuillez contacter le support.")
-    } finally {
-      setLoading(false)
+  const handlePaymentComplete = async () => {
+    setConfirming(true)
+    for (let attempt = 0; attempt < CONFIRM_POLL_ATTEMPTS; attempt++) {
+      await new Promise((resolve) => setTimeout(resolve, CONFIRM_POLL_DELAY_MS))
+      const data = await fetchSchoolData()
+      if (data?.subscriptionActive) {
+        setConfirming(false)
+        alert("Paiement confirme ! Votre abonnement est actif. Recuperez votre cle d'activation ci-dessous.")
+        return
+      }
     }
+    setConfirming(false)
+    alert("Paiement recu, en attente de confirmation. Rafraichissez cette page dans une minute si le statut ne change pas.")
   }
 
   if (loading) {
@@ -76,7 +62,7 @@ export default function SubscriptionPanel({ schoolId }) {
     return <div className="p-4 bg-error-50 text-error-800 rounded-card">{error}</div>
   }
 
-  const isActive = schoolData?.subscriptionStatus === 'active'
+  const isActive = schoolData?.subscriptionActive === true
   const PRICE_FCFA = 50000
 
   return (
@@ -111,11 +97,11 @@ export default function SubscriptionPanel({ schoolId }) {
                     amount={PRICE_FCFA}
                     description={`Abonnement SaaS ERP pour l'école ${schoolData?.name || schoolId}`}
                     customerEmail={schoolData?.email || 'ecole@example.com'}
+                    customMetadata={{ type: 'school_subscription_payment', schoolId: String(schoolId) }}
                     onComplete={handlePaymentComplete}
+                    className="w-full rounded-control bg-primary-600 px-4 py-2 text-sm font-bold text-white transition hover:bg-primary-500 disabled:opacity-60"
                   >
-                    <button className="w-full rounded-control bg-primary-600 px-4 py-2 text-sm font-bold text-white transition hover:bg-primary-500">
-                      Payer l'abonnement annuel
-                    </button>
+                    {confirming ? 'Confirmation du paiement...' : "Payer l'abonnement annuel"}
                   </FedaPayButton>
                 </div>
               ) : (
