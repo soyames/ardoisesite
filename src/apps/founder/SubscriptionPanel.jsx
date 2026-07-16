@@ -101,7 +101,7 @@ export default function SubscriptionPanel({ schoolId }) {
               {!isActive ? (
                 <div className="bg-surface-raised p-4 rounded-xl border border-border">
                   <div className="flex justify-between items-center mb-4">
-                    <span className="font-semibold text-ink">Licence Mensuelle</span>
+                    <span className="font-semibold text-ink">Licence Annuelle</span>
                     <span className="text-xl font-bold text-primary-600">{PRICE_FCFA.toLocaleString('fr-FR')} FCFA</span>
                   </div>
                   
@@ -114,7 +114,7 @@ export default function SubscriptionPanel({ schoolId }) {
                     onComplete={handlePaymentComplete}
                   >
                     <button className="w-full rounded-control bg-primary-600 px-4 py-2 text-sm font-bold text-white transition hover:bg-primary-500">
-                      Payer l'abonnement mensuel
+                      Payer l'abonnement annuel
                     </button>
                   </FedaPayButton>
                 </div>
