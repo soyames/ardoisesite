@@ -4,6 +4,7 @@ import SchoolSettings from './SchoolSettings.jsx'
 import RecruitmentPanel from './RecruitmentPanel.jsx'
 import EnrollmentPanel from './EnrollmentPanel.jsx'
 import ApiIntegrations from './ApiIntegrations.jsx'
+import SubscriptionPanel from './SubscriptionPanel.jsx'
 
 export default function FounderDashboard() {
   const { user } = useAuth()
@@ -17,7 +18,8 @@ export default function FounderDashboard() {
     { id: 'overview', label: "Vue d'ensemble (Inscriptions)" },
     { id: 'recruitment', label: 'Recrutement' },
     { id: 'settings', label: "Paramètres de l'école" },
-    { id: 'integrations', label: 'Intégrations API' }
+    { id: 'integrations', label: 'Intégrations API' },
+    { id: 'subscription', label: 'Facturation & Abonnement' }
   ]
 
   return (
@@ -52,6 +54,7 @@ export default function FounderDashboard() {
         {activeTab === 'recruitment' && <RecruitmentPanel />}
         {activeTab === 'settings' && <SchoolSettings />}
         {activeTab === 'integrations' && <ApiIntegrations schoolId={user.schoolId} />}
+        {activeTab === 'subscription' && <SubscriptionPanel schoolId={user.schoolId} />}
       </div>
     </div>
   )
