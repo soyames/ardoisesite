@@ -5,16 +5,18 @@ import RecruitmentPanel from './RecruitmentPanel.jsx'
 import EnrollmentPanel from './EnrollmentPanel.jsx'
 import ApiIntegrations from './ApiIntegrations.jsx'
 import SubscriptionPanel from './SubscriptionPanel.jsx'
+import DepartmentsHub from './DepartmentsHub.jsx'
 
 export default function FounderDashboard() {
   const { user } = useAuth()
-  const [activeTab, setActiveTab] = useState('overview')
+  const [activeTab, setActiveTab] = useState('departments')
 
-  if (!user || user.role !== 'founder') {
+  if (!user || !['founder', 'director'].includes(user.role)) {
     return <div className="py-20 text-center">Accès non autorisé</div>
   }
 
   const tabs = [
+    { id: 'departments', label: 'Departements (ERP)' },
     { id: 'overview', label: "Vue d'ensemble (Inscriptions)" },
     { id: 'recruitment', label: 'Recrutement' },
     { id: 'settings', label: "Paramètres de l'école" },
@@ -50,6 +52,7 @@ export default function FounderDashboard() {
       </div>
 
       <div className="mt-6">
+        {activeTab === 'departments' && <DepartmentsHub />}
         {activeTab === 'overview' && <EnrollmentPanel />}
         {activeTab === 'recruitment' && <RecruitmentPanel />}
         {activeTab === 'settings' && <SchoolSettings />}
