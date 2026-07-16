@@ -87,7 +87,8 @@ export function AuthProvider({ children }) {
               }
             } catch (authErr) {
               // Re-throw real Django errors (500, etc) so they aren't silently swallowed
-              throw authErr
+              console.warn('Django backend unreachable or failed to authenticate:', authErr)
+                // Do not throw, so the user can still use Firebase-only features (e.g. Marketplace)
             }
           }
           
