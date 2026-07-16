@@ -226,7 +226,7 @@ function ChildDetail({ child, parentId }) {
                     </Badge>
                   </div>
                   {inv.status !== 'paid' && (
-                    <div className="mt-2 flex justify-end border-t border-slate-100 pt-2">
+                    <div className="mt-2 flex justify-end border-t border-border pt-2">
                       <SchoolPaymentButton 
                         schoolId={child.current_enrollment?.school_id || 1} 
                         invoice={inv} 
@@ -265,7 +265,7 @@ function SchoolPaymentButton({ schoolId, invoice, parent }) {
     fetchKey()
   }, [schoolId])
 
-  if (!pubKey) return <span className="text-xs text-slate-400">Chargement du paiement...</span>
+  if (!pubKey) return <span className="text-xs text-ink-muted">Chargement du paiement...</span>
 
   return (
     <FedaPayButton

@@ -1,31 +1,49 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
+import { doc, updateDoc, arrayUnion } from 'firebase/firestore'
+import { db } from '../../shared/api/firebase.js'
 import { useAuth } from '../../shared/auth/AuthContext.jsx'
-import { mockApi } from '../../shared/api/mockDb.js'
 import Badge from '../../shared/ui/Badge.jsx'
+import MarketplaceAccountSettings from '../../shared/settings/MarketplaceAccountSettings.jsx'
 
 export default function TeacherMarketplaceDashboard() {
-  const { user } = useAuth()
+  const { user, refreshUser } = useAuth()
   const [activeTab, setActiveTab] = useState('profile')
   const [price, setPrice] = useState('15000')
 
   const [newExp, setNewExp] = useState({ employer: '', start: '', end: '', description: '' })
   const [newEdu, setNewEdu] = useState({ school: '', degree: '', year: '' })
 
-  const handleAddExperience = (e) => {
+  const handleAddExperience = async (e) => {
     e.preventDefault()
     if (!user) return
-    mockApi.addExperience(user.id, newExp)
-    setNewExp({ employer: '', start: '', end: '', description: '' })
-    alert('Expérience ajoutée avec succès !')
+    try {
+      await updateDoc(doc(db, 'users', user.uid), {
+        experiences: arrayUnion({ ...newExp, id: Date.now() }),
+      })
+      await refreshUser()
+      setNewExp({ employer: '', start: '', end: '', description: '' })
+      alert('Expérience ajoutée avec succès !')
+    } catch (err) {
+      console.error(err)
+      alert("Erreur lors de l'ajout de l'expérience.")
+    }
   }
 
-  const handleAddEducation = (e) => {
+  const handleAddEducation = async (e) => {
     e.preventDefault()
     if (!user) return
-    mockApi.addEducation(user.id, newEdu)
-    setNewEdu({ school: '', degree: '', year: '' })
-    alert('Formation ajoutée avec succès !')
+    try {
+      await updateDoc(doc(db, 'users', user.uid), {
+        education: arrayUnion({ ...newEdu, id: Date.now() }),
+      })
+      await refreshUser()
+      setNewEdu({ school: '', degree: '', year: '' })
+      alert('Formation ajoutée avec succès !')
+    } catch (err) {
+      console.error(err)
+      alert("Erreur lors de l'ajout de la formation.")
+    }
   }
 
   if (!user) return null
@@ -70,6 +88,12 @@ export default function TeacherMarketplaceDashboard() {
               className={`w-full text-left px-4 py-3 rounded-control text-sm font-semibold transition ${activeTab === 'contracts' ? 'bg-primary-50 text-primary-700 ring-1 ring-primary-200' : 'text-ink-muted hover:bg-primary-50'}`}
             >
               Mes Contrats (2)
+            </button>
+            <button
+              onClick={() => setActiveTab('account')}
+              className={`w-full text-left px-4 py-3 rounded-control text-sm font-semibold transition ${activeTab === 'account' ? 'bg-primary-50 text-primary-700 ring-1 ring-primary-200' : 'text-ink-muted hover:bg-primary-50'}`}
+            >
+              Mon Compte
             </button>
           </div>
 
@@ -217,6 +241,8 @@ export default function TeacherMarketplaceDashboard() {
                 </div>
               </div>
             )}
+
+            {activeTab === 'account' && <MarketplaceAccountSettings />}
           </div>
 
         </div>

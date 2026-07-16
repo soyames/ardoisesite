@@ -67,7 +67,7 @@ export default function TeacherPortal() {
                   classSubjectId === c.id ? 'bg-primary-600 text-white' : 'bg-primary-50 text-primary-700 hover:bg-primary-100'
                 }`}
               >
-                {c.classroom_name} — {c.subject_name}
+                {c.classroom_name} - {c.subject_name}
               </button>
             ))}
           </div>

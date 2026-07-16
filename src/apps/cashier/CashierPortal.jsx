@@ -60,7 +60,7 @@ export default function CashierPortal() {
 
       {searched && (
         <Card>
-          <CardHeader title={`Factures — ${searched}`} />
+          <CardHeader title={`Factures - ${searched}`} />
           <CardBody>
             {invoices.loading && (
               <div className="flex justify-center py-6">

@@ -1,20 +1,39 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
+import { doc, getDoc, collection, addDoc, serverTimestamp } from 'firebase/firestore'
+import { db } from '../../shared/api/firebase.js'
 import { useAuth } from '../../shared/auth/AuthContext.jsx'
-import { mockApi } from '../../shared/api/mockDb.js'
 import EmptyState from '../../shared/ui/EmptyState.jsx'
+import Spinner from '../../shared/ui/Spinner.jsx'
 
 export default function SchoolEnrollment() {
   const { id } = useParams()
   const navigate = useNavigate()
   const { user, status } = useAuth()
-  
-  const school = mockApi.getSchool(id)
-  
+
+  const [school, setSchool] = useState(undefined) // undefined = loading, null = not found
+
   const [childName, setChildName] = useState('')
   const [childAge, setChildAge] = useState('')
   const [childClass, setChildClass] = useState('6ème')
   const [submitting, setSubmitting] = useState(false)
+
+  useEffect(() => {
+    let cancelled = false
+    getDoc(doc(db, 'schools', id)).then((snap) => {
+      if (cancelled) return
+      setSchool(snap.exists() ? { id: snap.id, ...snap.data() } : null)
+    }).catch(() => { if (!cancelled) setSchool(null) })
+    return () => { cancelled = true }
+  }, [id])
+
+  if (school === undefined) {
+    return (
+      <div className="flex justify-center py-32">
+        <Spinner />
+      </div>
+    )
+  }
 
   if (!school) {
     return (
@@ -43,22 +62,28 @@ export default function SchoolEnrollment() {
     )
   }
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
     setSubmitting(true)
-    setTimeout(() => {
-      mockApi.createEnrollment({
+    try {
+      await addDoc(collection(db, 'school_enrollment_requests'), {
         schoolId: school.id,
-        parentId: user.id,
-        parentName: user.name,
-        parentPhone: user.phone,
+        parentId: user.uid,
+        parentName: user.name || '',
+        parentPhone: user.phone || '',
         childName,
         childAge,
-        childClass
+        childClass,
+        status: 'pending',
+        createdAt: serverTimestamp(),
       })
       alert('Demande envoyée avec succès ! L\'école vous contactera bientôt.')
       navigate('/portal') // Redirect parent to their portal/dashboard
-    }, 800)
+    } catch (err) {
+      console.error(err)
+      alert("Une erreur est survenue lors de l'envoi de la demande. Réessayez.")
+      setSubmitting(false)
+    }
   }
 
   return (

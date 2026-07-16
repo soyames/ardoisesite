@@ -10,6 +10,8 @@ import ParentPortal from './apps/parent/ParentPortal.jsx'
 import CashierPortal from './apps/cashier/CashierPortal.jsx'
 import TeacherPortal from './apps/teacher/TeacherPortal.jsx'
 import SuperadminDashboard from './apps/superadmin/SuperadminDashboard.jsx'
+import CollabHub from './shared/collab/CollabHub.jsx'
+import SettingsPage from './shared/settings/SettingsPage.jsx'
 
 // Public Marketplace Layout & Pages
 import PublicLayout from './shared/layout/PublicLayout.jsx'
@@ -29,14 +31,23 @@ import InstallGuide from './apps/marketplace/InstallGuide.jsx'
 import ContactForm from './apps/marketplace/ContactForm.jsx'
 import HowItWorks from './apps/marketplace/HowItWorks.jsx'
 
+// Settings (Profil + Sessions) is Django-backed (see SettingsPage.jsx)
+// - added to every role that actually has a Django session on this
+// school's ERP. superadmin/support_agent don't: AuthContext.jsx only
+// calls /api/auth/firebase-login/ when a schoolId is known, and those
+// two roles are platform-level Firestore accounts with no schoolId,
+// so there's no Django session for a Settings page to manage here -
+// their profile page is the separate marketplace-side one instead.
+const SETTINGS_NAV_ITEM = { to: '/portal/settings', label: 'Parametres', end: false }
+
 const NAV_BY_ROLE = {
-  founder: [{ to: '/portal', label: 'Tableau de bord', end: true }],
-  director: [{ to: '/portal', label: 'Tableau de bord', end: true }],
-  parent: [{ to: '/portal', label: 'Mes enfants', end: true }],
-  cashier: [{ to: '/portal', label: 'Encaissement', end: true }],
-  teacher: [{ to: '/portal', label: 'Mes classes', end: true }],
-  superadmin: [{ to: '/portal', label: 'Administration', end: true }],
-  support_agent: [{ to: '/portal', label: 'Support Tickets', end: true }],
+  founder: [{ to: '/portal', label: 'Tableau de bord', end: true }, { to: '/portal/collab', label: 'Collaboration', end: false }, SETTINGS_NAV_ITEM],
+  director: [{ to: '/portal', label: 'Tableau de bord', end: true }, { to: '/portal/collab', label: 'Collaboration', end: false }, SETTINGS_NAV_ITEM],
+  parent: [{ to: '/portal', label: 'Mes enfants', end: true }, SETTINGS_NAV_ITEM],
+  cashier: [{ to: '/portal', label: 'Encaissement', end: true }, { to: '/portal/collab', label: 'Collaboration', end: false }, SETTINGS_NAV_ITEM],
+  teacher: [{ to: '/portal', label: 'Mes classes', end: true }, { to: '/portal/collab', label: 'Collaboration', end: false }, SETTINGS_NAV_ITEM],
+  superadmin: [{ to: '/portal', label: 'Administration', end: true }, { to: '/portal/collab', label: 'Collaboration', end: false }],
+  support_agent: [{ to: '/portal', label: 'Support Tickets', end: true }, { to: '/portal/collab', label: 'Collaboration', end: false }],
 }
 
 const PORTAL_BY_ROLE = {
@@ -63,12 +74,12 @@ function PortalHome() {
   return <Portal />
 }
 
-function Shell() {
+function Shell({ children }) {
   const { user } = useAuth()
   const navItems = NAV_BY_ROLE[user.role] ?? []
   return (
     <AppShell navItems={navItems}>
-      <PortalHome />
+      {children || <PortalHome />}
     </AppShell>
   )
 }
@@ -108,7 +119,27 @@ export default function App() {
             </RequireRole>
           }
         />
-        
+        <Route
+          path="/portal/collab"
+          element={
+            <RequireRole>
+              <Shell>
+                <CollabHub />
+              </Shell>
+            </RequireRole>
+          }
+        />
+        <Route
+          path="/portal/settings"
+          element={
+            <RequireRole>
+              <Shell>
+                <SettingsPage />
+              </Shell>
+            </RequireRole>
+          }
+        />
+
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </AuthProvider>

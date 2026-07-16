@@ -51,15 +51,12 @@ export function AuthProvider({ children }) {
               role = 'pending'
             }
           } catch (firestoreErr) {
+            // Fail honest, not silent: if Firestore is unreachable or
+            // rules block the read, the user proceeds with the
+            // pre-error default (role='parent', schoolId=null) rather
+            // than a fabricated identity. Logged so a real outage is
+            // visible, not masked by a fake-but-plausible login.
             console.error("Error fetching user profile:", firestoreErr)
-            // Fallback to mock DB if Firestore rules block access during testing
-            const { mockDb } = await import('../api/mockDb.js')
-            const mockUser = Object.values(mockDb.users).find(u => u.email === firebaseUser.email)
-            if (mockUser) {
-              userData = mockUser
-              role = mockUser.role
-              schoolId = mockUser.schoolId
-            }
           }
 
           // 2. Point the API client at THIS school's own backend before
@@ -74,7 +71,11 @@ export function AuthProvider({ children }) {
           if (schoolId) {
             try {
               await primeCsrf()
-              await api.post('/api/auth/firebase-login/', { token, role, schoolId })
+              const res = await api.post('/api/auth/firebase-login/', { token, role, schoolId })
+              if (res && res.id) {
+                userData = userData || {}
+                userData.id = res.id // Store the Django user ID for frontend resolution
+              }
             } catch (authErr) {
               // Re-throw real Django errors (500, etc) so they aren't silently swallowed
               throw authErr
@@ -91,19 +92,16 @@ export function AuthProvider({ children }) {
           })
           setStatus('authenticated')
         } catch (error) {
+          // A real Django-side auth failure (the re-thrown error from
+          // the firebase-login call above) -- fail honest: the user is
+          // NOT granted a session with a fabricated role. Previously
+          // this silently logged them in as a fake mock user even when
+          // the real backend rejected them, which could mask an actual
+          // outage or a genuine permission problem behind a working-
+          // looking (but fake) login.
           console.error("Error fetching user profile or authenticating with Django:", error)
-          // Fallback to mock DB if Firestore rules block access during testing
-          const { mockDb } = await import('../api/mockDb.js')
-          const mockUser = Object.values(mockDb.users).find(u => u.email === firebaseUser.email)
-          
-          setUser({
-            uid: firebaseUser.uid,
-            email: firebaseUser.email,
-            emailVerified: firebaseUser.emailVerified,
-            role: mockUser ? mockUser.role : 'parent',
-            ...(mockUser || {})
-          })
-          setStatus('authenticated')
+          setUser(null)
+          setStatus('anonymous')
         }
       } else {
         setUser(null)
