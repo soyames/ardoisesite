@@ -138,7 +138,7 @@ export default function InstallGuide() {
   -v ardoise_data:/app/data \\
   -e ARDOISE_ACTIVATION_CODE="VOTRE_CODE_ICI" \\
   -e FIREBASE_SERVICE_ACCOUNT='COLLEZ_ICI_LE_JSON_FOURNI_PAR_ARDOISE' \\
-  soyames/ardoise:latest`}</CodeBlock>
+  amesc/ardoise:latest`}</CodeBlock>
               <p className="text-ink-muted mt-4">
                 <code className="bg-primary-100 px-1 rounded">-v ardoise_data:/app/data</code> est important : sans ce
                 volume, vos données seraient perdues au prochain redémarrage du conteneur. La commande télécharge
@@ -304,7 +304,7 @@ docker run -d --name caddy -p 80:80 -p 443:443 \\
         <section>
           <h2 className="text-xl font-bold text-ink mb-4">7. Mises à jour</h2>
           <CodeBlock>{scenario === 'laptop'
-            ? `docker pull soyames/ardoise:latest\ndocker stop ardoise-backend && docker rm ardoise-backend\n# puis relancez la commande docker run de l'étape 3`
+            ? `docker pull amesc/ardoise:latest\ndocker stop ardoise-backend && docker rm ardoise-backend\n# puis relancez la commande docker run de l'étape 3`
             : `docker compose pull\ndocker compose up -d`}</CodeBlock>
           <p className="text-ink-muted mt-4">
             Les migrations de base de données, la synchronisation des rôles, et le référentiel comptable se font
