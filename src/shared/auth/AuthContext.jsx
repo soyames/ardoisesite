@@ -46,7 +46,16 @@ export function AuthProvider({ children }) {
             if (userDoc.exists()) {
               userData = userDoc.data()
               role = userData.role || 'parent'
-              schoolId = userData.schoolId || null
+              // Firestore document IDs are always strings - if this
+              // field was ever typed as a Number in the console (an
+              // easy mistake, "1" vs 1), every downstream
+              // doc(db, 'schools', schoolId) call throws
+              // "n.indexOf is not a function" deep in the Firestore
+              // SDK, since it expects a string path segment. Normalize
+              // once here so every consumer (FounderDashboard.jsx,
+              // resolveSchoolBackendUrl above, query filters) gets a
+              // consistent type without each having to re-guard it.
+              schoolId = userData.schoolId != null ? String(userData.schoolId) : null
             } else {
               role = 'pending'
             }
@@ -142,7 +151,13 @@ export function AuthProvider({ children }) {
     if (auth.currentUser) {
       const userDoc = await getDoc(doc(db, 'users', auth.currentUser.uid))
       if (userDoc.exists()) {
-        setUser(prev => ({ ...prev, ...userDoc.data() }))
+        const data = userDoc.data()
+        // Same schoolId string-coercion as the initial onAuthStateChanged
+        // load above - without it, a refreshUser() call (e.g. after
+        // saving Settings) would silently reintroduce a numeric schoolId
+        // and reopen the doc(db, 'schools', schoolId) crash.
+        if (data.schoolId != null) data.schoolId = String(data.schoolId)
+        setUser(prev => ({ ...prev, ...data }))
       }
     }
   }, [])

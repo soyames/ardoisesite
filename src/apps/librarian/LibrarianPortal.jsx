@@ -1,0 +1,350 @@
+import { useState } from 'react'
+import { api, ApiError } from '../../shared/api/client.js'
+import { useApiGet } from '../../shared/hooks/useApi.js'
+import { Card, CardHeader, CardBody } from '../../shared/ui/Card.jsx'
+import Button from '../../shared/ui/Button.jsx'
+import Badge from '../../shared/ui/Badge.jsx'
+import Spinner from '../../shared/ui/Spinner.jsx'
+import EmptyState from '../../shared/ui/EmptyState.jsx'
+
+const INPUT_CLASS =
+  'block w-full rounded-control border-0 py-2 px-3 bg-surface-raised text-ink ring-1 ring-inset ring-border focus:ring-2 focus:ring-primary-500 sm:text-sm'
+
+const CATEGORIES = [
+  { value: 'book', label: 'Livre / Manuel APC' },
+  { value: 'uniform', label: 'Uniforme' },
+  { value: 'supply', label: 'Fourniture scolaire' },
+  { value: 'other', label: 'Autre' },
+]
+
+const TABS = [
+  { key: 'sale', label: 'Vente' },
+  { key: 'catalog', label: 'Catalogue' },
+  { key: 'stock', label: 'Stock' },
+  { key: 'vendors', label: 'Fournisseurs' },
+]
+
+const NON_MEAL_CATEGORIES = ['book', 'uniform', 'supply', 'other']
+
+export default function LibrarianPortal() {
+  const [tab, setTab] = useState('sale')
+
+  return (
+    <div className="space-y-4">
+      <div>
+        <h1 className="text-xl font-semibold text-ink">Librairie / Economat</h1>
+        <p className="mt-1 text-sm text-ink-muted">Catalogue, ventes au comptoir et approvisionnement.</p>
+      </div>
+
+      <div className="flex flex-wrap gap-1 border-b border-border">
+        {TABS.map((t) => (
+          <button
+            key={t.key}
+            onClick={() => setTab(t.key)}
+            className={`px-4 py-2 text-sm font-medium transition ${
+              tab === t.key ? 'border-b-2 border-primary-600 text-primary-700' : 'text-ink-muted hover:text-ink'
+            }`}
+          >
+            {t.label}
+          </button>
+        ))}
+      </div>
+
+      {tab === 'sale' && <SaleTab />}
+      {tab === 'catalog' && <CatalogTab />}
+      {tab === 'stock' && <StockTab />}
+      {tab === 'vendors' && <VendorsTab />}
+    </div>
+  )
+}
+
+function SaleTab() {
+  const items = useApiGet('/api/shop/inventory/')
+  const sales = useApiGet('/api/shop/sales/')
+  const [cart, setCart] = useState({})
+  const [receipt, setReceipt] = useState('')
+  const [error, setError] = useState(null)
+  const [submitting, setSubmitting] = useState(false)
+
+  const setQty = (itemId, qty) => setCart({ ...cart, [itemId]: qty })
+  const sellable = items.data?.filter((i) => NON_MEAL_CATEGORIES.includes(i.category)) || []
+
+  const total = Object.entries(cart).reduce((sum, [itemId, qty]) => {
+    const item = sellable.find((i) => String(i.id) === itemId)
+    return sum + (item ? Number(item.unit_price) * Number(qty || 0) : 0)
+  }, 0)
+
+  const submit = async (e) => {
+    e.preventDefault()
+    setSubmitting(true)
+    setError(null)
+    try {
+      const lines = Object.entries(cart)
+        .filter(([, qty]) => Number(qty) > 0)
+        .map(([item, quantity]) => ({ item: Number(item), quantity: Number(quantity) }))
+      if (lines.length === 0) {
+        setError('Ajoutez au moins un article.')
+        return
+      }
+      await api.post('/api/shop/sales/', { method: 'cash', receipt_number: receipt, lines })
+      setCart({})
+      setReceipt('')
+      sales.refetch()
+      items.refetch()
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'Erreur inattendue.')
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  return (
+    <div className="space-y-4">
+      <Card>
+        <CardHeader title="Nouvelle vente" />
+        <CardBody>
+          <form onSubmit={submit} className="space-y-3">
+            {items.loading && <div className="flex justify-center py-8"><Spinner /></div>}
+            {!items.loading && (
+              <div className="space-y-2">
+                {sellable.map((i) => (
+                  <div key={i.id} className="flex items-center justify-between rounded-control border border-border p-2">
+                    <div>
+                      <p className="text-sm text-ink">{i.name}</p>
+                      <p className="text-xs text-ink-muted">{i.unit_price} FCFA - stock {i.quantity_on_hand}</p>
+                    </div>
+                    <input
+                      type="number" min="0" className={`w-20 ${INPUT_CLASS}`}
+                      value={cart[i.id] || ''} onChange={(e) => setQty(i.id, e.target.value)}
+                    />
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <input required className={INPUT_CLASS} placeholder="N° recu" value={receipt} onChange={(e) => setReceipt(e.target.value)} />
+
+            <div className="flex items-center justify-between">
+              <p className="text-sm font-medium text-ink">Total: {total.toLocaleString()} FCFA</p>
+              {error && <p className="text-sm text-danger-600">{error}</p>}
+              <Button type="submit" disabled={submitting}>{submitting ? 'Encaissement...' : 'Encaisser'}</Button>
+            </div>
+          </form>
+        </CardBody>
+      </Card>
+
+      <Card>
+        <CardHeader title="Ventes recentes" />
+        <CardBody className="p-0">
+          {sales.loading && <div className="flex justify-center py-8"><Spinner /></div>}
+          {!sales.loading && sales.data?.length === 0 && <div className="p-4"><EmptyState title="Aucune vente" /></div>}
+          <ul className="divide-y divide-border">
+            {sales.data?.slice(0, 15).map((s) => (
+              <li key={s.id} className="flex items-center justify-between p-4">
+                <p className="text-sm text-ink">Recu {s.receipt_number} - {s.lines.map((l) => l.item_name).join(', ')}</p>
+                <Badge tone="neutral">{Number(s.total_amount).toLocaleString()} FCFA</Badge>
+              </li>
+            ))}
+          </ul>
+        </CardBody>
+      </Card>
+    </div>
+  )
+}
+
+function CatalogTab() {
+  const items = useApiGet('/api/shop/inventory/')
+  const [form, setForm] = useState({ category: 'book', name: '', unit_price: '', low_stock_threshold: '5' })
+  const [error, setError] = useState(null)
+  const [submitting, setSubmitting] = useState(false)
+
+  const submit = async (e) => {
+    e.preventDefault()
+    setSubmitting(true)
+    setError(null)
+    try {
+      await api.post('/api/shop/inventory/', {
+        ...form,
+        unit_price: Number(form.unit_price),
+        low_stock_threshold: Number(form.low_stock_threshold),
+      })
+      setForm({ category: 'book', name: '', unit_price: '', low_stock_threshold: '5' })
+      items.refetch()
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'Erreur inattendue.')
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  return (
+    <div className="space-y-4">
+      <Card>
+        <CardHeader title="Nouvel article" />
+        <CardBody>
+          <form onSubmit={submit} className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <select className={INPUT_CLASS} value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })}>
+              {CATEGORIES.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
+            </select>
+            <input required className={INPUT_CLASS} placeholder="Nom de l'article" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+            <input required type="number" step="0.01" className={INPUT_CLASS} placeholder="Prix unitaire (FCFA)" value={form.unit_price} onChange={(e) => setForm({ ...form, unit_price: e.target.value })} />
+            <input type="number" step="0.01" className={INPUT_CLASS} placeholder="Seuil de stock bas" value={form.low_stock_threshold} onChange={(e) => setForm({ ...form, low_stock_threshold: e.target.value })} />
+            {error && <p className="text-sm text-danger-600 sm:col-span-2">{error}</p>}
+            <div className="sm:col-span-2"><Button type="submit" disabled={submitting}>{submitting ? 'Enregistrement...' : 'Ajouter au catalogue'}</Button></div>
+          </form>
+        </CardBody>
+      </Card>
+
+      <Card>
+        <CardHeader title="Catalogue" />
+        <CardBody className="p-0">
+          {items.loading && <div className="flex justify-center py-8"><Spinner /></div>}
+          <ul className="divide-y divide-border">
+            {items.data?.map((i) => (
+              <li key={i.id} className="flex items-center justify-between p-4">
+                <div>
+                  <p className="text-sm text-ink">{i.name}</p>
+                  <p className="text-xs text-ink-muted">{CATEGORIES.find((c) => c.value === i.category)?.label || i.category} - {i.unit_price} FCFA</p>
+                </div>
+                <Badge tone={Number(i.quantity_on_hand) <= Number(i.low_stock_threshold) ? 'danger' : 'success'}>
+                  {i.quantity_on_hand} en stock
+                </Badge>
+              </li>
+            ))}
+          </ul>
+        </CardBody>
+      </Card>
+    </div>
+  )
+}
+
+function StockTab() {
+  const items = useApiGet('/api/shop/inventory/')
+  const movements = useApiGet('/api/shop/stock-movements/')
+  const [form, setForm] = useState({ item: '', direction: 'in', quantity: '', note: '' })
+  const [error, setError] = useState(null)
+  const [submitting, setSubmitting] = useState(false)
+
+  const submit = async (e) => {
+    e.preventDefault()
+    setSubmitting(true)
+    setError(null)
+    try {
+      await api.post('/api/shop/stock-movements/', { ...form, item: Number(form.item), quantity: Number(form.quantity) })
+      setForm({ item: '', direction: 'in', quantity: '', note: '' })
+      items.refetch()
+      movements.refetch()
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'Erreur inattendue.')
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  return (
+    <div className="space-y-4">
+      <Card>
+        <CardHeader title="Mouvement de stock" subtitle="Reapprovisionnement ou ajustement d'inventaire." />
+        <CardBody>
+          <form onSubmit={submit} className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <select required className={INPUT_CLASS} value={form.item} onChange={(e) => setForm({ ...form, item: e.target.value })}>
+              <option value="">Choisir l'article...</option>
+              {items.data?.map((i) => <option key={i.id} value={i.id}>{i.name}</option>)}
+            </select>
+            <select className={INPUT_CLASS} value={form.direction} onChange={(e) => setForm({ ...form, direction: e.target.value })}>
+              <option value="in">Entree</option>
+              <option value="out">Sortie</option>
+              <option value="adjustment">Ajustement</option>
+            </select>
+            <input required type="number" step="0.01" className={INPUT_CLASS} placeholder="Quantite" value={form.quantity} onChange={(e) => setForm({ ...form, quantity: e.target.value })} />
+            <input className={INPUT_CLASS} placeholder="Note (optionnel)" value={form.note} onChange={(e) => setForm({ ...form, note: e.target.value })} />
+            {error && <p className="text-sm text-danger-600 sm:col-span-2">{error}</p>}
+            <div className="sm:col-span-2"><Button type="submit" disabled={submitting}>{submitting ? 'Enregistrement...' : 'Enregistrer'}</Button></div>
+          </form>
+        </CardBody>
+      </Card>
+
+      <Card>
+        <CardHeader title="Historique des mouvements" />
+        <CardBody className="p-0">
+          {movements.loading && <div className="flex justify-center py-8"><Spinner /></div>}
+          {!movements.loading && movements.data?.length === 0 && <div className="p-4"><EmptyState title="Aucun mouvement" /></div>}
+          <ul className="divide-y divide-border">
+            {movements.data?.slice(0, 15).map((m) => (
+              <li key={m.id} className="flex items-center justify-between p-4">
+                <div>
+                  <p className="text-sm text-ink">{m.item_name}{m.note ? ` - ${m.note}` : ''}</p>
+                  <p className="text-xs text-ink-muted">{m.recorded_by_name}</p>
+                </div>
+                <Badge tone={m.direction === 'in' ? 'success' : m.direction === 'out' ? 'warning' : 'neutral'}>
+                  {m.direction === 'in' ? '+' : m.direction === 'out' ? '-' : '='}{m.quantity}
+                </Badge>
+              </li>
+            ))}
+          </ul>
+        </CardBody>
+      </Card>
+    </div>
+  )
+}
+
+function VendorsTab() {
+  const vendors = useApiGet('/api/finance/vendors/')
+  const bills = useApiGet('/api/finance/vendor-bills/')
+  const [form, setForm] = useState({ vendor: '', amount: '', description: '', expense_account_code: '601' })
+  const [error, setError] = useState(null)
+  const [submitting, setSubmitting] = useState(false)
+
+  const submit = async (e) => {
+    e.preventDefault()
+    setSubmitting(true)
+    setError(null)
+    try {
+      await api.post('/api/finance/vendor-bills/', { ...form, vendor: Number(form.vendor) })
+      setForm({ vendor: '', amount: '', description: '', expense_account_code: '601' })
+      bills.refetch()
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'Erreur inattendue.')
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  return (
+    <div className="space-y-4">
+      <Card>
+        <CardHeader title="Nouvelle facture fournisseur" />
+        <CardBody>
+          <form onSubmit={submit} className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <select required className={INPUT_CLASS} value={form.vendor} onChange={(e) => setForm({ ...form, vendor: e.target.value })}>
+              <option value="">Choisir le fournisseur...</option>
+              {vendors.data?.map((v) => <option key={v.id} value={v.id}>{v.name}</option>)}
+            </select>
+            <input required type="number" step="0.01" className={INPUT_CLASS} placeholder="Montant (FCFA)" value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} />
+            <input required className={`sm:col-span-2 ${INPUT_CLASS}`} placeholder="Description" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
+            {error && <p className="text-sm text-danger-600 sm:col-span-2">{error}</p>}
+            <div className="sm:col-span-2"><Button type="submit" disabled={submitting}>{submitting ? 'Enregistrement...' : 'Enregistrer'}</Button></div>
+          </form>
+        </CardBody>
+      </Card>
+      <Card>
+        <CardHeader title="Factures recentes" />
+        <CardBody className="p-0">
+          {bills.loading && <div className="flex justify-center py-8"><Spinner /></div>}
+          {!bills.loading && bills.data?.length === 0 && <div className="p-4"><EmptyState title="Aucune facture" /></div>}
+          <ul className="divide-y divide-border">
+            {bills.data?.map((b) => (
+              <li key={b.id} className="flex items-center justify-between p-4">
+                <div>
+                  <p className="text-sm font-medium text-ink">{b.vendor_name}</p>
+                  <p className="text-xs text-ink-muted">{b.description} - {b.bill_date}</p>
+                </div>
+                <Badge tone="neutral">{b.amount} FCFA</Badge>
+              </li>
+            ))}
+          </ul>
+        </CardBody>
+      </Card>
+    </div>
+  )
+}
