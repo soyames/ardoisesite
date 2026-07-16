@@ -9,6 +9,15 @@ import FounderDashboard from './apps/founder/FounderDashboard.jsx'
 import ParentPortal from './apps/parent/ParentPortal.jsx'
 import CashierPortal from './apps/cashier/CashierPortal.jsx'
 import TeacherPortal from './apps/teacher/TeacherPortal.jsx'
+import SecretaryPortal from './apps/secretary/SecretaryPortal.jsx'
+import HrPortal from './apps/hr/HrPortal.jsx'
+import ComptablePortal from './apps/comptable/ComptablePortal.jsx'
+import CenseurPortal from './apps/censeur/CenseurPortal.jsx'
+import SurveillantPortal from './apps/surveillant/SurveillantPortal.jsx'
+import CanteenPortal from './apps/canteen/CanteenPortal.jsx'
+import LibrarianPortal from './apps/librarian/LibrarianPortal.jsx'
+import StudentPortal from './apps/student/StudentPortal.jsx'
+import AuditorPortal from './apps/auditor/AuditorPortal.jsx'
 import SuperadminDashboard from './apps/superadmin/SuperadminDashboard.jsx'
 import CollabHub from './shared/collab/CollabHub.jsx'
 import SettingsPage from './shared/settings/SettingsPage.jsx'
@@ -46,6 +55,15 @@ const NAV_BY_ROLE = {
   parent: [{ to: '/portal', label: 'Mes enfants', end: true }, SETTINGS_NAV_ITEM],
   cashier: [{ to: '/portal', label: 'Encaissement', end: true }, { to: '/portal/collab', label: 'Collaboration', end: false }, SETTINGS_NAV_ITEM],
   teacher: [{ to: '/portal', label: 'Mes classes', end: true }, { to: '/portal/collab', label: 'Collaboration', end: false }, SETTINGS_NAV_ITEM],
+  secretary: [{ to: '/portal', label: 'Secretariat', end: true }, { to: '/portal/collab', label: 'Collaboration', end: false }, SETTINGS_NAV_ITEM],
+  hr: [{ to: '/portal', label: 'RH & Paie', end: true }, { to: '/portal/collab', label: 'Collaboration', end: false }, SETTINGS_NAV_ITEM],
+  comptable: [{ to: '/portal', label: 'Comptabilite', end: true }, { to: '/portal/collab', label: 'Collaboration', end: false }, SETTINGS_NAV_ITEM],
+  censeur: [{ to: '/portal', label: 'Censorat', end: true }, { to: '/portal/collab', label: 'Collaboration', end: false }, SETTINGS_NAV_ITEM],
+  surveillant: [{ to: '/portal', label: 'Surveillance', end: true }, { to: '/portal/collab', label: 'Collaboration', end: false }, SETTINGS_NAV_ITEM],
+  canteen: [{ to: '/portal', label: 'Cantine', end: true }, { to: '/portal/collab', label: 'Collaboration', end: false }, SETTINGS_NAV_ITEM],
+  librarian: [{ to: '/portal', label: 'Librairie', end: true }, { to: '/portal/collab', label: 'Collaboration', end: false }, SETTINGS_NAV_ITEM],
+  student: [{ to: '/portal', label: 'Mon espace', end: true }, SETTINGS_NAV_ITEM],
+  auditor: [{ to: '/portal', label: 'Audit', end: true }, SETTINGS_NAV_ITEM],
   superadmin: [{ to: '/portal', label: 'Administration', end: true }, { to: '/portal/collab', label: 'Collaboration', end: false }],
   support_agent: [{ to: '/portal', label: 'Support Tickets', end: true }, { to: '/portal/collab', label: 'Collaboration', end: false }],
 }
@@ -56,6 +74,15 @@ const PORTAL_BY_ROLE = {
   parent: ParentPortal,
   cashier: CashierPortal,
   teacher: TeacherPortal,
+  secretary: SecretaryPortal,
+  hr: HrPortal,
+  comptable: ComptablePortal,
+  censeur: CenseurPortal,
+  surveillant: SurveillantPortal,
+  canteen: CanteenPortal,
+  librarian: LibrarianPortal,
+  student: StudentPortal,
+  auditor: AuditorPortal,
   superadmin: SuperadminDashboard,
   support_agent: SuperadminDashboard,
 }

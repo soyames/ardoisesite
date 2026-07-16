@@ -1,0 +1,347 @@
+import { useState } from 'react'
+import { api, ApiError } from '../../shared/api/client.js'
+import { useApiGet } from '../../shared/hooks/useApi.js'
+import { Card, CardHeader, CardBody } from '../../shared/ui/Card.jsx'
+import Button from '../../shared/ui/Button.jsx'
+import Badge from '../../shared/ui/Badge.jsx'
+import Spinner from '../../shared/ui/Spinner.jsx'
+import EmptyState from '../../shared/ui/EmptyState.jsx'
+
+const INPUT_CLASS =
+  'block w-full rounded-control border-0 py-2 px-3 bg-surface-raised text-ink ring-1 ring-inset ring-border focus:ring-2 focus:ring-primary-500 sm:text-sm'
+
+const TABS = [
+  { key: 'students', label: 'Eleves' },
+  { key: 'parents', label: 'Parents' },
+  { key: 'guardianships', label: 'Tutelle' },
+  { key: 'enrollments', label: 'Inscriptions' },
+]
+
+/**
+ * Secretary's registration flow: create a Student, create a Parent,
+ * link them via Guardianship, then Enrollment places the student into
+ * a classroom for an academic year - the same four-step sequence
+ * documented on EnrollmentListCreateView's own docstring (marketplace
+ * enrollment requests, once accepted, turn into exactly this).
+ */
+export default function SecretaryPortal() {
+  const [tab, setTab] = useState('students')
+
+  return (
+    <div className="space-y-4">
+      <div>
+        <h1 className="text-xl font-semibold text-ink">Secretariat</h1>
+        <p className="mt-1 text-sm text-ink-muted">Inscription des eleves, parents, et affectation en classe.</p>
+      </div>
+
+      <div className="flex gap-1 border-b border-border">
+        {TABS.map((t) => (
+          <button
+            key={t.key}
+            onClick={() => setTab(t.key)}
+            className={`px-4 py-2 text-sm font-medium transition ${
+              tab === t.key ? 'border-b-2 border-primary-600 text-primary-700' : 'text-ink-muted hover:text-ink'
+            }`}
+          >
+            {t.label}
+          </button>
+        ))}
+      </div>
+
+      {tab === 'students' && <StudentsTab />}
+      {tab === 'parents' && <ParentsTab />}
+      {tab === 'guardianships' && <GuardianshipsTab />}
+      {tab === 'enrollments' && <EnrollmentsTab />}
+    </div>
+  )
+}
+
+function StudentsTab() {
+  const students = useApiGet('/api/students/students/')
+  const [showForm, setShowForm] = useState(false)
+  const [form, setForm] = useState({ matricule: '', first_name: '', last_name: '', sex: 'M', date_of_birth: '', birth_place: '' })
+  const [error, setError] = useState(null)
+  const [submitting, setSubmitting] = useState(false)
+
+  const submit = async (e) => {
+    e.preventDefault()
+    setSubmitting(true)
+    setError(null)
+    try {
+      await api.post('/api/students/students/', form)
+      setForm({ matricule: '', first_name: '', last_name: '', sex: 'M', date_of_birth: '', birth_place: '' })
+      setShowForm(false)
+      students.refetch()
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'Erreur inattendue.')
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="flex justify-end">
+        <Button size="sm" onClick={() => setShowForm((v) => !v)}>{showForm ? 'Fermer' : '+ Nouvel eleve'}</Button>
+      </div>
+
+      {showForm && (
+        <Card>
+          <CardHeader title="Nouvel eleve" />
+          <CardBody>
+            <form onSubmit={submit} className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <input required className={INPUT_CLASS} placeholder="Matricule (ex: STU-0002)" value={form.matricule} onChange={(e) => setForm({ ...form, matricule: e.target.value })} />
+              <select className={INPUT_CLASS} value={form.sex} onChange={(e) => setForm({ ...form, sex: e.target.value })}>
+                <option value="M">Masculin</option>
+                <option value="F">Feminin</option>
+              </select>
+              <input required className={INPUT_CLASS} placeholder="Prenom" value={form.first_name} onChange={(e) => setForm({ ...form, first_name: e.target.value })} />
+              <input required className={INPUT_CLASS} placeholder="Nom" value={form.last_name} onChange={(e) => setForm({ ...form, last_name: e.target.value })} />
+              <input type="date" className={INPUT_CLASS} value={form.date_of_birth} onChange={(e) => setForm({ ...form, date_of_birth: e.target.value })} />
+              <input className={INPUT_CLASS} placeholder="Lieu de naissance" value={form.birth_place} onChange={(e) => setForm({ ...form, birth_place: e.target.value })} />
+              {error && <p className="text-sm text-danger-600 sm:col-span-2">{error}</p>}
+              <div className="sm:col-span-2">
+                <Button type="submit" disabled={submitting}>{submitting ? 'Enregistrement...' : 'Enregistrer'}</Button>
+              </div>
+            </form>
+          </CardBody>
+        </Card>
+      )}
+
+      <Card>
+        <CardBody className="p-0">
+          {students.loading && <div className="flex justify-center py-8"><Spinner /></div>}
+          {!students.loading && students.data?.length === 0 && (
+            <div className="p-4"><EmptyState title="Aucun eleve enregistre" /></div>
+          )}
+          <ul className="divide-y divide-border">
+            {students.data?.map((s) => (
+              <li key={s.id} className="flex items-center justify-between p-4">
+                <div>
+                  <p className="text-sm font-medium text-ink">{s.last_name} {s.first_name}</p>
+                  <p className="text-xs text-ink-muted">{s.matricule} {s.date_of_birth && `- ne(e) le ${s.date_of_birth}`}</p>
+                </div>
+                <Badge tone={s.status === 'active' ? 'success' : 'neutral'}>{s.status || 'active'}</Badge>
+              </li>
+            ))}
+          </ul>
+        </CardBody>
+      </Card>
+    </div>
+  )
+}
+
+function ParentsTab() {
+  const parents = useApiGet('/api/students/parents/')
+  const [showForm, setShowForm] = useState(false)
+  const [form, setForm] = useState({ full_name: '', phone_primary: '', phone_whatsapp: '', profession: '', address: '' })
+  const [error, setError] = useState(null)
+  const [submitting, setSubmitting] = useState(false)
+
+  const submit = async (e) => {
+    e.preventDefault()
+    setSubmitting(true)
+    setError(null)
+    try {
+      await api.post('/api/students/parents/', form)
+      setForm({ full_name: '', phone_primary: '', phone_whatsapp: '', profession: '', address: '' })
+      setShowForm(false)
+      parents.refetch()
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'Erreur inattendue.')
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="flex justify-end">
+        <Button size="sm" onClick={() => setShowForm((v) => !v)}>{showForm ? 'Fermer' : '+ Nouveau parent'}</Button>
+      </div>
+
+      {showForm && (
+        <Card>
+          <CardHeader title="Nouveau parent / tuteur" />
+          <CardBody>
+            <form onSubmit={submit} className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <input required className={INPUT_CLASS} placeholder="Nom complet" value={form.full_name} onChange={(e) => setForm({ ...form, full_name: e.target.value })} />
+              <input required className={INPUT_CLASS} placeholder="Telephone principal" value={form.phone_primary} onChange={(e) => setForm({ ...form, phone_primary: e.target.value })} />
+              <input className={INPUT_CLASS} placeholder="WhatsApp (si different)" value={form.phone_whatsapp} onChange={(e) => setForm({ ...form, phone_whatsapp: e.target.value })} />
+              <input className={INPUT_CLASS} placeholder="Profession" value={form.profession} onChange={(e) => setForm({ ...form, profession: e.target.value })} />
+              <input className={`sm:col-span-2 ${INPUT_CLASS}`} placeholder="Adresse" value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} />
+              {error && <p className="text-sm text-danger-600 sm:col-span-2">{error}</p>}
+              <div className="sm:col-span-2">
+                <Button type="submit" disabled={submitting}>{submitting ? 'Enregistrement...' : 'Enregistrer'}</Button>
+              </div>
+            </form>
+          </CardBody>
+        </Card>
+      )}
+
+      <Card>
+        <CardBody className="p-0">
+          {parents.loading && <div className="flex justify-center py-8"><Spinner /></div>}
+          {!parents.loading && parents.data?.length === 0 && (
+            <div className="p-4"><EmptyState title="Aucun parent enregistre" /></div>
+          )}
+          <ul className="divide-y divide-border">
+            {parents.data?.map((p) => (
+              <li key={p.id} className="p-4">
+                <p className="text-sm font-medium text-ink">{p.full_name}</p>
+                <p className="text-xs text-ink-muted">{p.phone_primary} {p.profession && `- ${p.profession}`}</p>
+              </li>
+            ))}
+          </ul>
+        </CardBody>
+      </Card>
+    </div>
+  )
+}
+
+function GuardianshipsTab() {
+  const students = useApiGet('/api/students/students/')
+  const parents = useApiGet('/api/students/parents/')
+  const [studentId, setStudentId] = useState('')
+  const [parentId, setParentId] = useState('')
+  const [relation, setRelation] = useState('mother')
+  const [isPrimaryPayer, setIsPrimaryPayer] = useState(true)
+  const [error, setError] = useState(null)
+  const [success, setSuccess] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
+
+  const submit = async (e) => {
+    e.preventDefault()
+    setSubmitting(true)
+    setError(null)
+    setSuccess(false)
+    try {
+      await api.post('/api/students/guardianships/', {
+        student: Number(studentId), parent: Number(parentId), relation, is_primary_payer: isPrimaryPayer,
+      })
+      setSuccess(true)
+      setStudentId(''); setParentId('')
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'Erreur inattendue.')
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  return (
+    <Card>
+      <CardHeader title="Lier un eleve a un parent" subtitle="Les deux doivent deja etre enregistres." />
+      <CardBody>
+        <form onSubmit={submit} className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <select required className={INPUT_CLASS} value={studentId} onChange={(e) => setStudentId(e.target.value)}>
+            <option value="">Choisir l'eleve...</option>
+            {students.data?.map((s) => <option key={s.id} value={s.id}>{s.last_name} {s.first_name} ({s.matricule})</option>)}
+          </select>
+          <select required className={INPUT_CLASS} value={parentId} onChange={(e) => setParentId(e.target.value)}>
+            <option value="">Choisir le parent...</option>
+            {parents.data?.map((p) => <option key={p.id} value={p.id}>{p.full_name}</option>)}
+          </select>
+          <select className={INPUT_CLASS} value={relation} onChange={(e) => setRelation(e.target.value)}>
+            <option value="mother">Mere</option>
+            <option value="father">Pere</option>
+            <option value="guardian">Tuteur</option>
+            <option value="other">Autre</option>
+          </select>
+          <label className="flex items-center gap-2 text-sm text-ink">
+            <input type="checkbox" checked={isPrimaryPayer} onChange={(e) => setIsPrimaryPayer(e.target.checked)} />
+            Payeur principal
+          </label>
+          {error && <p className="text-sm text-danger-600 sm:col-span-2">{error}</p>}
+          {success && <p className="text-sm text-success-600 sm:col-span-2">Lien cree avec succes.</p>}
+          <div className="sm:col-span-2">
+            <Button type="submit" disabled={submitting}>{submitting ? 'Enregistrement...' : 'Lier'}</Button>
+          </div>
+        </form>
+      </CardBody>
+    </Card>
+  )
+}
+
+function EnrollmentsTab() {
+  const enrollments = useApiGet('/api/students/enrollments/')
+  const students = useApiGet('/api/students/students/')
+  const classrooms = useApiGet('/api/students/classrooms/')
+  const [showForm, setShowForm] = useState(false)
+  const [studentId, setStudentId] = useState('')
+  const [classroomId, setClassroomId] = useState('')
+  const [error, setError] = useState(null)
+  const [submitting, setSubmitting] = useState(false)
+
+  const submit = async (e) => {
+    e.preventDefault()
+    setSubmitting(true)
+    setError(null)
+    try {
+      const classroom = classrooms.data?.find((c) => c.id === Number(classroomId))
+      await api.post('/api/students/enrollments/', {
+        student: Number(studentId), classroom: Number(classroomId), academic_year: classroom?.academic_year, kind: 'normal',
+      })
+      setStudentId(''); setClassroomId(''); setShowForm(false)
+      enrollments.refetch()
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'Erreur inattendue.')
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="flex justify-end">
+        <Button size="sm" onClick={() => setShowForm((v) => !v)}>{showForm ? 'Fermer' : '+ Nouvelle inscription'}</Button>
+      </div>
+
+      {showForm && (
+        <Card>
+          <CardHeader title="Inscrire un eleve dans une classe" />
+          <CardBody>
+            <form onSubmit={submit} className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <select required className={INPUT_CLASS} value={studentId} onChange={(e) => setStudentId(e.target.value)}>
+                <option value="">Choisir l'eleve...</option>
+                {students.data?.map((s) => <option key={s.id} value={s.id}>{s.last_name} {s.first_name} ({s.matricule})</option>)}
+              </select>
+              <select required className={INPUT_CLASS} value={classroomId} onChange={(e) => setClassroomId(e.target.value)}>
+                <option value="">Choisir la classe...</option>
+                {classrooms.data?.map((c) => <option key={c.id} value={c.id}>{c.name} ({c.academic_year_label})</option>)}
+              </select>
+              {classrooms.data?.length === 0 && (
+                <p className="text-xs text-warning-600 sm:col-span-2">
+                  Aucune classe n'existe encore - demandez au Fondateur/Directeur d'en creer une.
+                </p>
+              )}
+              {error && <p className="text-sm text-danger-600 sm:col-span-2">{error}</p>}
+              <div className="sm:col-span-2">
+                <Button type="submit" disabled={submitting || !classroomId}>{submitting ? 'Enregistrement...' : 'Inscrire'}</Button>
+              </div>
+            </form>
+          </CardBody>
+        </Card>
+      )}
+
+      <Card>
+        <CardBody className="p-0">
+          {enrollments.loading && <div className="flex justify-center py-8"><Spinner /></div>}
+          {!enrollments.loading && enrollments.data?.length === 0 && (
+            <div className="p-4"><EmptyState title="Aucune inscription" /></div>
+          )}
+          <ul className="divide-y divide-border">
+            {enrollments.data?.map((e) => (
+              <li key={e.id} className="flex items-center justify-between p-4">
+                <div>
+                  <p className="text-sm font-medium text-ink">{e.student_name}</p>
+                  <p className="text-xs text-ink-muted">{e.classroom_name} - inscrit le {e.enrolled_on}</p>
+                </div>
+                <Badge tone={e.is_active ? 'success' : 'neutral'}>{e.is_active ? 'Actif' : 'Inactif'}</Badge>
+              </li>
+            ))}
+          </ul>
+        </CardBody>
+      </Card>
+    </div>
+  )
+}

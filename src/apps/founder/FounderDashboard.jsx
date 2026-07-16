@@ -23,7 +23,7 @@ export default function FounderDashboard() {
   useEffect(() => {
     if (!schoolId) return
     let cancelled = false
-    getDoc(doc(db, 'schools', schoolId)).then((snap) => {
+    getDoc(doc(db, 'schools', String(schoolId))).then((snap) => {
       if (!cancelled) setSchool(snap.exists() ? { id: snap.id, ...snap.data() } : null)
     })
     return () => { cancelled = true }
