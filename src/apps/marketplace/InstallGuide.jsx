@@ -48,6 +48,23 @@ export default function InstallGuide() {
   return (
     <div className="mx-auto max-w-4xl px-6 py-16">
       <h1 className="text-3xl font-extrabold text-ink mb-4">Installation d'Ardoise (Pour les Écoles)</h1>
+
+      <div className="mb-8 p-6 bg-primary-50 rounded-2xl border border-primary-100 flex flex-col md:flex-row items-center justify-between gap-4">
+        <div>
+          <h2 className="text-lg font-bold text-primary-900 mb-1">Nouveau : L'Expérience Zéro Technique ! 🚀</h2>
+          <p className="text-primary-700 text-sm">
+            Vous ne voulez pas vous embêter avec des serveurs ou des lignes de commande ? 
+            Souscrivez à notre offre SaaS et nous déployons votre infrastructure automatiquement.
+          </p>
+        </div>
+        <a 
+          href="https://saas.ardoise.soyames.com/" 
+          className="whitespace-nowrap px-6 py-3 bg-primary-600 text-white font-bold rounded-full hover:bg-primary-500 transition shadow-sm"
+        >
+          Découvrir l'offre SaaS
+        </a>
+      </div>
+
       <p className="text-lg text-ink-muted mb-8">
         Ardoise utilise une architecture décentralisée : votre école héberge et possède ses
         propres données, sur son propre matériel. Il n'existe aucune base de données centrale -
