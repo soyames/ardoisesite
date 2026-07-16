@@ -24,6 +24,7 @@ import SettingsPage from './shared/settings/SettingsPage.jsx'
 
 // Public Marketplace Layout & Pages
 import PublicLayout from './shared/layout/PublicLayout.jsx'
+import SaasLanding from './apps/saas/SaasLanding.jsx'
 import Home from './apps/marketplace/Home.jsx'
 import SchoolList from './apps/marketplace/SchoolList.jsx'
 import SchoolDetail from './apps/marketplace/SchoolDetail.jsx'
@@ -111,6 +112,11 @@ function Shell({ children }) {
   )
 }
 
+function DomainRouter() {
+  const isSaas = window.location.hostname.includes('saas') || (window.location.hostname === 'localhost' && window.location.search.includes('saas=1'))
+  return isSaas ? <SaasLanding /> : <Home />
+}
+
 export default function App() {
   return (
     <AuthProvider>
@@ -120,7 +126,7 @@ export default function App() {
         
         {/* Public Marketplace Routes */}
         <Route element={<PublicLayout />}>
-          <Route path="/" element={<Home />} />
+          <Route path="/" element={<DomainRouter />} />
           <Route path="/schools" element={<SchoolList />} />
           <Route path="/schools/:id" element={<SchoolDetail />} />
           <Route path="/schools/:id/enroll" element={<SchoolEnrollment />} />

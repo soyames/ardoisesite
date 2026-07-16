@@ -9,6 +9,8 @@ export default function PublicLayout() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [showIosInstructions, setShowIosInstructions] = useState(false)
 
+  const isSaas = window.location.hostname.includes('saas') || (window.location.hostname === 'localhost' && window.location.search.includes('saas=1'))
+
   const handleInstallClick = () => {
     if (isIOS) {
       setShowIosInstructions((v) => !v)
@@ -27,20 +29,22 @@ export default function PublicLayout() {
           </Link>
 
           {/* Desktop Nav */}
-          <nav className="hidden md:flex gap-6">
-            <Link to="/schools" className="text-sm font-semibold text-ink-muted transition hover:text-primary-600">
-              Écoles
-            </Link>
-            <Link to="/teachers" className="text-sm font-semibold text-ink-muted transition hover:text-primary-600">
-              Tuteurs à domicile
-            </Link>
-            <Link to="/jobs" className="text-sm font-semibold text-ink-muted transition hover:text-primary-600">
-              Recrutement
-            </Link>
-            <Link to="/how-it-works" className="text-sm font-semibold text-ink-muted transition hover:text-primary-600">
-              Comment ça marche
-            </Link>
-          </nav>
+          {!isSaas && (
+            <nav className="hidden md:flex gap-6">
+              <Link to="/schools" className="text-sm font-semibold text-ink-muted transition hover:text-primary-600">
+                Écoles
+              </Link>
+              <Link to="/teachers" className="text-sm font-semibold text-ink-muted transition hover:text-primary-600">
+                Tuteurs à domicile
+              </Link>
+              <Link to="/jobs" className="text-sm font-semibold text-ink-muted transition hover:text-primary-600">
+                Recrutement
+              </Link>
+              <Link to="/how-it-works" className="text-sm font-semibold text-ink-muted transition hover:text-primary-600">
+                Comment ça marche
+              </Link>
+            </nav>
+          )}
         </div>
 
         <div className="relative flex items-center gap-4">
@@ -143,11 +147,15 @@ export default function PublicLayout() {
           )}
 
           <nav className="flex flex-col gap-4 pt-2">
-            <Link to="/schools" className="text-base font-semibold text-ink" onClick={() => setMobileMenuOpen(false)}>Écoles</Link>
-            <Link to="/teachers" className="text-base font-semibold text-ink" onClick={() => setMobileMenuOpen(false)}>Tuteurs à domicile</Link>
-            <Link to="/jobs" className="text-base font-semibold text-ink" onClick={() => setMobileMenuOpen(false)}>Recrutement</Link>
-            <Link to="/how-it-works" className="text-base font-semibold text-ink" onClick={() => setMobileMenuOpen(false)}>Comment ça marche</Link>
-            <hr className="border-border" />
+            {!isSaas && (
+              <>
+                <Link to="/schools" className="text-base font-semibold text-ink" onClick={() => setMobileMenuOpen(false)}>Écoles</Link>
+                <Link to="/teachers" className="text-base font-semibold text-ink" onClick={() => setMobileMenuOpen(false)}>Tuteurs à domicile</Link>
+                <Link to="/jobs" className="text-base font-semibold text-ink" onClick={() => setMobileMenuOpen(false)}>Recrutement</Link>
+                <Link to="/how-it-works" className="text-base font-semibold text-ink" onClick={() => setMobileMenuOpen(false)}>Comment ça marche</Link>
+                <hr className="border-border" />
+              </>
+            )}
 
             {user ? (
               <>
