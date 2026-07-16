@@ -84,6 +84,12 @@ export function AuthProvider({ children }) {
               if (res && res.id) {
                 userData = userData || {}
                 userData.id = res.id // Store the Django user ID for frontend resolution
+                // cycle_scope: which cycle (primaire/secondaire) this Director/
+                // Censeur oversees, blank = both - see the 2026-07-17-cycle-
+                // scope-wiring CEO plan. Needed client-side to decide whether
+                // to show a CycleBadge (cycle-scoped) or a CycleSwitcher
+                // (blank - oversees both).
+                userData.cycle_scope = res.cycle_scope || ''
               }
             } catch (authErr) {
               // Re-throw real Django errors (500, etc) so they aren't silently swallowed
