@@ -18,11 +18,14 @@ const TABS = [
 ]
 
 /**
- * Secretary's registration flow: create a Student, create a Parent,
- * link them via Guardianship, then Enrollment places the student into
- * a classroom for an academic year - the same four-step sequence
- * documented on EnrollmentListCreateView's own docstring (marketplace
- * enrollment requests, once accepted, turn into exactly this).
+ * Secretary's registration flow: create a Student, link them to an
+ * existing Parent via Guardianship, then Enrollment places the student
+ * into a classroom for an academic year. Parents are never created
+ * here - they register themselves on the marketplace, and accepting
+ * that request (Founder/Director's "Demandes d'inscription" panel) is
+ * what creates the Parent + Student + Guardianship + Enrollment rows
+ * together (see core/api_views.py:MarketplaceEnrollmentAcceptView).
+ * The Parents tab below is a read-only directory for front-desk lookup.
  */
 export default function SecretaryPortal() {
   const [tab, setTab] = useState('students')
@@ -133,51 +136,13 @@ function StudentsTab() {
 
 function ParentsTab() {
   const parents = useApiGet('/api/students/parents/')
-  const [showForm, setShowForm] = useState(false)
-  const [form, setForm] = useState({ full_name: '', phone_primary: '', phone_whatsapp: '', profession: '', address: '' })
-  const [error, setError] = useState(null)
-  const [submitting, setSubmitting] = useState(false)
-
-  const submit = async (e) => {
-    e.preventDefault()
-    setSubmitting(true)
-    setError(null)
-    try {
-      await api.post('/api/students/parents/', form)
-      setForm({ full_name: '', phone_primary: '', phone_whatsapp: '', profession: '', address: '' })
-      setShowForm(false)
-      parents.refetch()
-    } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'Erreur inattendue.')
-    } finally {
-      setSubmitting(false)
-    }
-  }
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-end">
-        <Button size="sm" onClick={() => setShowForm((v) => !v)}>{showForm ? 'Fermer' : '+ Nouveau parent'}</Button>
-      </div>
-
-      {showForm && (
-        <Card>
-          <CardHeader title="Nouveau parent / tuteur" />
-          <CardBody>
-            <form onSubmit={submit} className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              <input required className={INPUT_CLASS} placeholder="Nom complet" value={form.full_name} onChange={(e) => setForm({ ...form, full_name: e.target.value })} />
-              <input required className={INPUT_CLASS} placeholder="Telephone principal" value={form.phone_primary} onChange={(e) => setForm({ ...form, phone_primary: e.target.value })} />
-              <input className={INPUT_CLASS} placeholder="WhatsApp (si different)" value={form.phone_whatsapp} onChange={(e) => setForm({ ...form, phone_whatsapp: e.target.value })} />
-              <input className={INPUT_CLASS} placeholder="Profession" value={form.profession} onChange={(e) => setForm({ ...form, profession: e.target.value })} />
-              <input className={`sm:col-span-2 ${INPUT_CLASS}`} placeholder="Adresse" value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} />
-              {error && <p className="text-sm text-danger-600 sm:col-span-2">{error}</p>}
-              <div className="sm:col-span-2">
-                <Button type="submit" disabled={submitting}>{submitting ? 'Enregistrement...' : 'Enregistrer'}</Button>
-              </div>
-            </form>
-          </CardBody>
-        </Card>
-      )}
+      <p className="text-xs text-ink-muted">
+        Annuaire en lecture seule - un parent cree son propre compte sur la marketplace et
+        rejoint l'ecole en soumettant une demande d'inscription, acceptee depuis le Command Center.
+      </p>
 
       <Card>
         <CardBody className="p-0">
