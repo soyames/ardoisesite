@@ -8,6 +8,7 @@ import SurveillantPortal from '../surveillant/SurveillantPortal.jsx'
 import CanteenPortal from '../canteen/CanteenPortal.jsx'
 import LibrarianPortal from '../librarian/LibrarianPortal.jsx'
 import AuditorPortal from '../auditor/AuditorPortal.jsx'
+import CyclesPanel from './CyclesPanel.jsx'
 
 /**
  * Founder/Director oversight into every department, reusing the same
@@ -30,6 +31,7 @@ const DEPARTMENTS = [
   { key: 'canteen', label: 'Cantine', description: 'Ventes, portefeuilles, stock', icon: '\u{1F37D}️', Component: CanteenPortal },
   { key: 'librarian', label: 'Librairie', description: 'Catalogue, ventes, stock', icon: '\u{1F4DA}', Component: LibrarianPortal },
   { key: 'auditor', label: 'Audit', description: 'Journal, finances, RH, communications', icon: '\u{1F50D}', Component: AuditorPortal },
+  { key: 'cycles', label: 'Cycles', description: 'Attribuer Primaire/Secondaire aux Directeurs et Censeurs', icon: '\u{1F501}', Component: CyclesPanel },
 ]
 
 export default function DepartmentsHub() {

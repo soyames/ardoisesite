@@ -1,11 +1,13 @@
 import { useState } from 'react'
 import { api, ApiError } from '../../shared/api/client.js'
 import { useApiGet } from '../../shared/hooks/useApi.js'
+import { useAuth } from '../../shared/auth/AuthContext.jsx'
 import { Card, CardHeader, CardBody } from '../../shared/ui/Card.jsx'
 import Button from '../../shared/ui/Button.jsx'
 import Badge from '../../shared/ui/Badge.jsx'
 import Spinner from '../../shared/ui/Spinner.jsx'
 import EmptyState from '../../shared/ui/EmptyState.jsx'
+import CycleSwitcher from '../../shared/ui/CycleSwitcher.jsx'
 
 const INPUT_CLASS =
   'block w-full rounded-control border-0 py-2 px-3 bg-surface-raised text-ink ring-1 ring-inset ring-border focus:ring-2 focus:ring-primary-500 sm:text-sm'
@@ -61,7 +63,9 @@ export default function CenseurPortal() {
 }
 
 function BulletinsTab() {
-  const pending = useApiGet('/api/academics/bulletins/pending-approval/')
+  const { user } = useAuth()
+  const [cycle, setCycle] = useState('')
+  const pending = useApiGet(`/api/academics/bulletins/pending-approval/?cycle=${cycle}`)
   const [busy, setBusy] = useState(null)
   const [error, setError] = useState(null)
 
@@ -80,6 +84,9 @@ function BulletinsTab() {
 
   return (
     <div className="space-y-3">
+      <div className="flex justify-end">
+        <CycleSwitcher userCycleScope={user?.cycle_scope} value={cycle} onChange={setCycle} />
+      </div>
       {error && <p className="text-sm text-danger-600">{error}</p>}
       {pending.loading && <div className="flex justify-center py-8"><Spinner /></div>}
       {!pending.loading && pending.data?.length === 0 && <EmptyState title="Aucun bulletin en attente" />}
@@ -101,7 +108,9 @@ function BulletinsTab() {
 }
 
 function DisciplineTab() {
-  const pending = useApiGet('/api/academics/discipline/pending-approval/')
+  const { user } = useAuth()
+  const [cycle, setCycle] = useState('')
+  const pending = useApiGet(`/api/academics/discipline/pending-approval/?cycle=${cycle}`)
   const [busy, setBusy] = useState(null)
   const [error, setError] = useState(null)
   const [rejectReason, setRejectReason] = useState({})
@@ -134,6 +143,9 @@ function DisciplineTab() {
 
   return (
     <div className="space-y-3">
+      <div className="flex justify-end">
+        <CycleSwitcher userCycleScope={user?.cycle_scope} value={cycle} onChange={setCycle} />
+      </div>
       {error && <p className="text-sm text-danger-600">{error}</p>}
       {pending.loading && <div className="flex justify-center py-8"><Spinner /></div>}
       {!pending.loading && pending.data?.length === 0 && <EmptyState title="Aucune mesure en attente" />}
