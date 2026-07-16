@@ -13,8 +13,18 @@ const INPUT_CLASS =
 const TABS = [
   { key: 'bulletins', label: 'Bulletins' },
   { key: 'discipline', label: 'Discipline' },
+  { key: 'calendrier', label: 'Calendrier' },
   { key: 'timelogs', label: 'Heures vacataires' },
   { key: 'exams', label: 'Epreuves' },
+]
+
+const DAYS = [
+  { value: 0, label: 'Lundi' },
+  { value: 1, label: 'Mardi' },
+  { value: 2, label: 'Mercredi' },
+  { value: 3, label: 'Jeudi' },
+  { value: 4, label: 'Vendredi' },
+  { value: 5, label: 'Samedi' },
 ]
 
 export default function CenseurPortal() {
@@ -43,6 +53,7 @@ export default function CenseurPortal() {
 
       {tab === 'bulletins' && <BulletinsTab />}
       {tab === 'discipline' && <DisciplineTab />}
+      {tab === 'calendrier' && <CalendrierTab />}
       {tab === 'timelogs' && <TimeLogsTab />}
       {tab === 'exams' && <ExamsTab />}
     </div>
@@ -150,6 +161,154 @@ function DisciplineTab() {
           </CardBody>
         </Card>
       ))}
+    </div>
+  )
+}
+
+function CalendrierTab() {
+  const classrooms = useApiGet('/api/students/classrooms/')
+  const classSubjects = useApiGet('/api/academics/class-subjects/')
+  const staff = useApiGet('/api/hr/staff/')
+  const academicYears = useApiGet('/api/auth/academic-years/')
+  const [classroomId, setClassroomId] = useState('')
+  const [teacherId, setTeacherId] = useState('')
+
+  const currentYear = academicYears.data?.find((y) => y.is_current) || academicYears.data?.[0]
+
+  const slotsQuery = new URLSearchParams()
+  if (classroomId) slotsQuery.set('classroom', classroomId)
+  if (teacherId) slotsQuery.set('teacher', teacherId)
+  const slots = useApiGet(`/api/academics/timetable-slots/?${slotsQuery.toString()}`)
+  const events = useApiGet(`/api/academics/calendar-events/?academic_year=${currentYear?.id || ''}`, { skip: !currentYear })
+
+  const [showSlotForm, setShowSlotForm] = useState(false)
+  const [slotForm, setSlotForm] = useState({ class_subject: '', day_of_week: '0', start_time: '08:00', end_time: '09:00' })
+  const [slotError, setSlotError] = useState(null)
+  const [submittingSlot, setSubmittingSlot] = useState(false)
+
+  const classSubjectOptions = classSubjects.data || []
+
+  const submitSlot = async (e) => {
+    e.preventDefault()
+    if (!currentYear) return
+    setSubmittingSlot(true)
+    setSlotError(null)
+    try {
+      await api.post('/api/academics/timetable-slots/', {
+        academic_year: currentYear.id,
+        class_subject: Number(slotForm.class_subject),
+        day_of_week: Number(slotForm.day_of_week),
+        start_time: slotForm.start_time,
+        end_time: slotForm.end_time,
+      })
+      setShowSlotForm(false)
+      slots.refetch()
+    } catch (err) {
+      setSlotError(err instanceof ApiError ? err.message : 'Erreur inattendue.')
+    } finally {
+      setSubmittingSlot(false)
+    }
+  }
+
+  const upcomingEvents = (events.data || [])
+    .filter((ev) => new Date(ev.date) >= new Date(new Date().toDateString()))
+    .slice(0, 5)
+
+  return (
+    <div className="space-y-4">
+      <div className="flex flex-wrap items-end gap-3">
+        <div>
+          <label className="block text-xs font-medium text-ink-muted mb-1">Classe</label>
+          <select className={INPUT_CLASS} value={classroomId} onChange={(e) => setClassroomId(e.target.value)}>
+            <option value="">Toutes les classes</option>
+            {classrooms.data?.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+          </select>
+        </div>
+        <div>
+          <label className="block text-xs font-medium text-ink-muted mb-1">Enseignant</label>
+          <select className={INPUT_CLASS} value={teacherId} onChange={(e) => setTeacherId(e.target.value)}>
+            <option value="">Tous les enseignants</option>
+            {staff.data?.map((s) => <option key={s.id} value={s.id}>{s.last_name} {s.first_name}</option>)}
+          </select>
+        </div>
+        <div className="ml-auto">
+          <Button size="sm" onClick={() => setShowSlotForm((v) => !v)}>{showSlotForm ? 'Fermer' : '+ Nouveau creneau'}</Button>
+        </div>
+      </div>
+
+      {showSlotForm && (
+        <Card>
+          <CardHeader title="Nouveau creneau" subtitle="La classe et l'enseignant sont deduits de la matiere choisie." />
+          <CardBody>
+            <form onSubmit={submitSlot} className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <select
+                required className={`sm:col-span-2 ${INPUT_CLASS}`}
+                value={slotForm.class_subject}
+                onChange={(e) => setSlotForm({ ...slotForm, class_subject: e.target.value })}
+              >
+                <option value="">Choisir classe + matiere...</option>
+                {classSubjectOptions.map((cs) => (
+                  <option key={cs.id} value={cs.id}>{cs.classroom_name} - {cs.subject_name}</option>
+                ))}
+              </select>
+              <select className={INPUT_CLASS} value={slotForm.day_of_week} onChange={(e) => setSlotForm({ ...slotForm, day_of_week: e.target.value })}>
+                {DAYS.map((d) => <option key={d.value} value={d.value}>{d.label}</option>)}
+              </select>
+              <div className="flex gap-2">
+                <input type="time" className={INPUT_CLASS} value={slotForm.start_time} onChange={(e) => setSlotForm({ ...slotForm, start_time: e.target.value })} />
+                <input type="time" className={INPUT_CLASS} value={slotForm.end_time} onChange={(e) => setSlotForm({ ...slotForm, end_time: e.target.value })} />
+              </div>
+              {slotError && <p className="text-sm text-danger-600 sm:col-span-2">{slotError}</p>}
+              <div className="sm:col-span-2">
+                <Button type="submit" disabled={submittingSlot || !currentYear}>{submittingSlot ? 'Enregistrement...' : 'Enregistrer'}</Button>
+              </div>
+            </form>
+          </CardBody>
+        </Card>
+      )}
+
+      {upcomingEvents.length > 0 && (
+        <Card>
+          <CardHeader title="Jours non enseignes a venir" />
+          <CardBody className="flex flex-wrap gap-2">
+            {upcomingEvents.map((ev) => (
+              <Badge key={ev.id} tone={ev.kind === 'holiday' ? 'neutral' : 'warning'}>
+                {ev.date} - {ev.label}
+              </Badge>
+            ))}
+          </CardBody>
+        </Card>
+      )}
+
+      <Card>
+        <CardBody className="p-0">
+          {slots.loading && <div className="flex justify-center py-8"><Spinner /></div>}
+          {!slots.loading && slots.data?.length === 0 && (
+            <div className="p-4"><EmptyState title="Aucun creneau" description="Aucun creneau ne correspond a ces filtres." /></div>
+          )}
+          <div className="divide-y divide-border">
+            {DAYS.map((day) => {
+              const dayRows = (slots.data || [])
+                .filter((s) => s.day_of_week === day.value)
+                .sort((a, b) => a.start_time.localeCompare(b.start_time))
+              if (dayRows.length === 0) return null
+              return (
+                <div key={day.value} className="p-4">
+                  <p className="text-sm font-semibold text-ink mb-2">{day.label}</p>
+                  <ul className="space-y-2">
+                    {dayRows.map((s) => (
+                      <li key={s.id} className="flex items-center justify-between text-sm">
+                        <span className="text-ink">{s.start_time.slice(0, 5)}-{s.end_time.slice(0, 5)} - {s.classroom_name} - {s.subject_name}</span>
+                        <span className="text-ink-muted text-xs">{s.teacher_name || 'Sans enseignant'}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )
+            })}
+          </div>
+        </CardBody>
+      </Card>
     </div>
   )
 }
