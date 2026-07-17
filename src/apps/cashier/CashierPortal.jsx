@@ -6,6 +6,12 @@ import Badge from '../../shared/ui/Badge.jsx'
 import Button from '../../shared/ui/Button.jsx'
 import Spinner from '../../shared/ui/Spinner.jsx'
 import EmptyState from '../../shared/ui/EmptyState.jsx'
+import MonEspaceRH from '../../shared/components/MonEspaceRH.jsx'
+
+const TABS = [
+  { key: 'cashier', label: 'Encaissement' },
+  { key: 'rh', label: 'Mon espace RH' },
+]
 
 const STATUS_TONE = { paid: 'success', partial: 'warning', unpaid: 'neutral', overdue: 'danger' }
 
@@ -26,6 +32,7 @@ const METHODS = [
  * server-side, not just assumed client-side.
  */
 export default function CashierPortal() {
+  const [tab, setTab] = useState('cashier')
   const [matricule, setMatricule] = useState('')
   const [searched, setSearched] = useState('')
   const invoices = useApiGet(searched ? `/api/finance/invoices/?student_matricule=${searched}` : null, {
@@ -44,6 +51,24 @@ export default function CashierPortal() {
         <p className="mt-1 text-sm text-ink-muted">Rechercher un eleve pour consulter et encaisser ses factures.</p>
       </div>
 
+      <div className="flex gap-1 border-b border-border">
+        {TABS.map((t) => (
+          <button
+            key={t.key}
+            onClick={() => setTab(t.key)}
+            className={`px-4 py-2 text-sm font-medium transition ${
+              tab === t.key ? 'border-b-2 border-primary-600 text-primary-700' : 'text-ink-muted hover:text-ink'
+            }`}
+          >
+            {t.label}
+          </button>
+        ))}
+      </div>
+
+      {tab === 'rh' && <MonEspaceRH />}
+
+      {tab === 'cashier' && (
+        <>
       <Card>
         <CardBody>
           <form onSubmit={handleSearch} className="flex gap-2">
@@ -79,6 +104,8 @@ export default function CashierPortal() {
             )}
           </CardBody>
         </Card>
+      )}
+        </>
       )}
     </div>
   )
