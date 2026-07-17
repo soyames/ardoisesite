@@ -6,11 +6,13 @@ import Button from '../../shared/ui/Button.jsx'
 import Badge from '../../shared/ui/Badge.jsx'
 import Spinner from '../../shared/ui/Spinner.jsx'
 import EmptyState from '../../shared/ui/EmptyState.jsx'
+import MonEspaceRH from '../../shared/components/MonEspaceRH.jsx'
 
 const TABS = [
   { key: 'grades', label: 'Notes' },
   { key: 'attendance', label: 'Presences' },
   { key: 'exampaper', label: "Epreuve" },
+  { key: 'rh', label: 'Mon espace RH' },
 ]
 
 /**
@@ -49,28 +51,23 @@ export default function TeacherPortal() {
         </div>
       )}
 
-      {!myClasses.loading && (!myClasses.data || myClasses.data.length === 0) && (
-        <EmptyState
-          title="Aucune classe assignee"
-          description="Contactez le Censeur si vous devriez avoir des classes ici."
-        />
-      )}
-
-      {!myClasses.loading && myClasses.data?.length > 0 && (
+      {!myClasses.loading && (
         <>
-          <div className="flex flex-wrap gap-2">
-            {myClasses.data.map((c) => (
-              <button
-                key={c.id}
-                onClick={() => setClassSubjectId(c.id)}
-                className={`rounded-control px-4 py-2 text-sm font-medium transition ${
-                  classSubjectId === c.id ? 'bg-primary-600 text-white' : 'bg-primary-50 text-primary-700 hover:bg-primary-100'
-                }`}
-              >
-                {c.classroom_name} - {c.subject_name}
-              </button>
-            ))}
-          </div>
+          {myClasses.data?.length > 0 && (
+            <div className="flex flex-wrap gap-2">
+              {myClasses.data.map((c) => (
+                <button
+                  key={c.id}
+                  onClick={() => setClassSubjectId(c.id)}
+                  className={`rounded-control px-4 py-2 text-sm font-medium transition ${
+                    classSubjectId === c.id ? 'bg-primary-600 text-white' : 'bg-primary-50 text-primary-700 hover:bg-primary-100'
+                  }`}
+                >
+                  {c.classroom_name} - {c.subject_name}
+                </button>
+              ))}
+            </div>
+          )}
 
           <div className="flex gap-1 border-b border-border">
             {TABS.map((t) => (
@@ -86,6 +83,13 @@ export default function TeacherPortal() {
             ))}
           </div>
 
+          {tab !== 'rh' && (!myClasses.data || myClasses.data.length === 0) && (
+            <EmptyState
+              title="Aucune classe assignee"
+              description="Contactez le Censeur si vous devriez avoir des classes ici."
+            />
+          )}
+
           {selectedClass && tab === 'grades' && (
             <GradesPanel classSubject={selectedClass} examPeriods={examPeriods.data} />
           )}
@@ -93,6 +97,7 @@ export default function TeacherPortal() {
           {selectedClass && tab === 'exampaper' && (
             <ExamPaperPanel classSubject={selectedClass} examPeriods={examPeriods.data} />
           )}
+          {tab === 'rh' && <MonEspaceRH />}
         </>
       )}
     </div>

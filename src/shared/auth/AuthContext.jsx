@@ -90,6 +90,12 @@ export function AuthProvider({ children }) {
                 // to show a CycleBadge (cycle-scoped) or a CycleSwitcher
                 // (blank - oversees both).
                 userData.cycle_scope = res.cycle_scope || ''
+                // staff_id: the caller's own hr.StaffProfile id, when
+                // linked - needed by "Mon espace RH" (see the 2026-07-16
+                // ERP-gap CEO plan's "Employee self-service" expansion)
+                // to file a leave request/log hours as themselves,
+                // since those endpoints require an explicit `staff`.
+                userData.staff_id = res.staff_id || null
               }
             } catch (authErr) {
               // Re-throw real Django errors (500, etc) so they aren't silently swallowed
