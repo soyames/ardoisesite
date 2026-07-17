@@ -13,6 +13,7 @@ const INPUT_CLASS =
 
 const TABS = [
   { key: 'reports', label: 'Rapports' },
+  { key: 'batch-invoices', label: 'Facturation groupee' },
   { key: 'payroll', label: 'Validation paie' },
   { key: 'advances', label: 'Avances' },
   { key: 'leave', label: 'Conges (sans solde)' },
@@ -44,10 +45,85 @@ export default function ComptablePortal() {
       </div>
 
       {tab === 'reports' && <ReportsTab />}
+      {tab === 'batch-invoices' && <BatchInvoicesTab />}
       {tab === 'payroll' && <PayrollValidationTab />}
       {tab === 'advances' && <AdvancesApprovalTab />}
       {tab === 'leave' && <LeaveApprovalTab />}
       {tab === 'vendors' && <VendorsTab />}
+    </div>
+  )
+}
+
+function BatchInvoicesTab() {
+  const feeStructures = useApiGet('/api/finance/fee-structures/')
+  const [feeStructureId, setFeeStructureId] = useState('')
+  const [trancheId, setTrancheId] = useState('')
+  const [result, setResult] = useState(null)
+  const [error, setError] = useState(null)
+  const [submitting, setSubmitting] = useState(false)
+
+  const selectedFeeStructure = feeStructures.data?.find((fs) => String(fs.id) === feeStructureId)
+  const tranches = selectedFeeStructure?.tranches || []
+
+  const run = async (e) => {
+    e.preventDefault()
+    setSubmitting(true)
+    setError(null)
+    setResult(null)
+    try {
+      const data = await api.post('/api/finance/invoices/batch-generate/', { tranche: Number(trancheId) })
+      setResult(data)
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'Erreur inattendue.')
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  return (
+    <div className="space-y-4">
+      <Card>
+        <CardHeader
+          title="Generer les factures manquantes"
+          subtitle="Cree une facture pour chaque eleve inscrit qui n'en a pas encore pour cette tranche - sans risque de doublon si vous relancez."
+        />
+        <CardBody>
+          <form onSubmit={run} className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <select
+              required className={INPUT_CLASS} value={feeStructureId}
+              onChange={(e) => { setFeeStructureId(e.target.value); setTrancheId('') }}
+            >
+              <option value="">Choisir une structure de frais...</option>
+              {feeStructures.data?.map((fs) => (
+                <option key={fs.id} value={fs.id}>{fs.label} ({fs.level_display})</option>
+              ))}
+            </select>
+            <select required className={INPUT_CLASS} value={trancheId} onChange={(e) => setTrancheId(e.target.value)} disabled={!feeStructureId}>
+              <option value="">Choisir une tranche...</option>
+              {tranches.map((t) => (
+                <option key={t.id} value={t.id}>{t.label} - {t.amount} FCFA (echeance {t.due_date})</option>
+              ))}
+            </select>
+            {error && <p className="text-sm text-danger-600 sm:col-span-2">{error}</p>}
+            <div className="sm:col-span-2">
+              <Button type="submit" disabled={submitting || !trancheId}>
+                {submitting ? 'Generation...' : 'Generer les factures manquantes'}
+              </Button>
+            </div>
+          </form>
+        </CardBody>
+      </Card>
+
+      {result && (
+        <Card>
+          <CardHeader title="Resultat" />
+          <CardBody className="flex flex-wrap gap-3">
+            <Badge tone="success">{result.created} facture(s) creee(s)</Badge>
+            <Badge tone="neutral">{result.skipped} deja facturee(s)</Badge>
+            {result.failed > 0 && <Badge tone="danger">{result.failed} echec(s)</Badge>}
+          </CardBody>
+        </Card>
+      )}
     </div>
   )
 }
