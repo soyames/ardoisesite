@@ -6,6 +6,7 @@ import Button from '../../shared/ui/Button.jsx'
 import Badge from '../../shared/ui/Badge.jsx'
 import Spinner from '../../shared/ui/Spinner.jsx'
 import EmptyState from '../../shared/ui/EmptyState.jsx'
+import QrScanner from '../../shared/components/QrScanner.jsx'
 
 const INPUT_CLASS =
   'block w-full rounded-control border-0 py-2 px-3 bg-surface-raised text-ink ring-1 ring-inset ring-border focus:ring-2 focus:ring-primary-500 sm:text-sm'
@@ -71,6 +72,17 @@ function AttendanceTab() {
   const [success, setSuccess] = useState(false)
 
   const roster = useApiGet(`/api/students/roster/?classroom=${classroomId}`, { skip: !classroomId })
+  const [scanError, setScanError] = useState(null)
+
+  const markPresentByScan = (idCardCode) => {
+    setScanError(null)
+    const match = (roster.data || []).find((r) => r.id_card_code && r.id_card_code === idCardCode)
+    if (!match) {
+      setScanError("Cette carte ne correspond a aucun eleve de la classe selectionnee.")
+      return
+    }
+    setStates({ ...states, [match.id]: 'present' })
+  }
 
   const submit = async () => {
     setSubmitting(true)
@@ -113,6 +125,8 @@ function AttendanceTab() {
             <input type="date" className={INPUT_CLASS} value={date} onChange={(e) => setDate(e.target.value)} />
           </div>
 
+          {classroomId && <QrScanner onScan={markPresentByScan} />}
+          {scanError && <p className="text-sm text-danger-600">{scanError}</p>}
           {error && <p className="text-sm text-danger-600">{error}</p>}
           {success && <p className="text-sm text-success-600">Appel enregistre.</p>}
 
