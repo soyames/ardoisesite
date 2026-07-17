@@ -6,6 +6,7 @@ import Button from '../../shared/ui/Button.jsx'
 import Badge from '../../shared/ui/Badge.jsx'
 import Spinner from '../../shared/ui/Spinner.jsx'
 import EmptyState from '../../shared/ui/EmptyState.jsx'
+import QrScanner from '../../shared/components/QrScanner.jsx'
 
 const INPUT_CLASS =
   'block w-full rounded-control border-0 py-2 px-3 bg-surface-raised text-ink ring-1 ring-inset ring-border focus:ring-2 focus:ring-primary-500 sm:text-sm'
@@ -183,6 +184,17 @@ function WalletsTab() {
     }
   }
 
+  const lookupByScan = async (idCardCode) => {
+    setLookupError(null)
+    setWallet(null)
+    try {
+      const res = await api.get(`/api/shop/wallets/?id_card_code=${encodeURIComponent(idCardCode)}`)
+      setWallet(res)
+    } catch (err) {
+      setLookupError(err instanceof ApiError ? err.message : 'Carte non reconnue - utilisez le matricule.')
+    }
+  }
+
   const submitTopup = async (e) => {
     e.preventDefault()
     setSubmitting(true)
@@ -201,8 +213,9 @@ function WalletsTab() {
   return (
     <div className="space-y-4">
       <Card>
-        <CardHeader title="Rechercher un portefeuille" />
-        <CardBody>
+        <CardHeader title="Rechercher un portefeuille" subtitle="Scannez la carte de l'eleve, ou saisissez son matricule." />
+        <CardBody className="space-y-3">
+          <QrScanner onScan={lookupByScan} />
           <form onSubmit={lookup} className="flex gap-2">
             <input className={INPUT_CLASS} placeholder="Matricule eleve" value={matricule} onChange={(e) => setMatricule(e.target.value)} />
             <Button type="submit">Rechercher</Button>
