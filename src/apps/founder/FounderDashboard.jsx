@@ -6,6 +6,7 @@ import EnrollmentPanel from './EnrollmentPanel.jsx'
 import ApiIntegrations from './ApiIntegrations.jsx'
 import SubscriptionPanel from './SubscriptionPanel.jsx'
 import DepartmentsHub from './DepartmentsHub.jsx'
+import AnalyticsDashboard from './AnalyticsDashboard.jsx'
 
 export default function FounderDashboard() {
   const { user } = useAuth()
@@ -17,6 +18,7 @@ export default function FounderDashboard() {
 
   const tabs = [
     { id: 'departments', label: 'Departements (ERP)' },
+    { id: 'analytics', label: 'Analytique' },
     { id: 'overview', label: "Vue d'ensemble (Inscriptions)" },
     { id: 'recruitment', label: 'Recrutement' },
     { id: 'settings', label: "Paramètres de l'école" },
@@ -53,6 +55,7 @@ export default function FounderDashboard() {
 
       <div className="mt-6">
         {activeTab === 'departments' && <DepartmentsHub />}
+        {activeTab === 'analytics' && <AnalyticsDashboard />}
         {activeTab === 'overview' && <EnrollmentPanel />}
         {activeTab === 'recruitment' && <RecruitmentPanel />}
         {activeTab === 'settings' && <SchoolSettings />}
