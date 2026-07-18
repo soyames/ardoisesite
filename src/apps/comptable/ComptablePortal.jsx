@@ -313,26 +313,37 @@ function ExpensesTab() {
           {expenses.loading && <div className="flex justify-center py-8"><Spinner /></div>}
           {!expenses.loading && expenses.data?.length === 0 && <div className="p-4"><EmptyState title="Aucune demande" /></div>}
           <ul className="divide-y divide-border">
-            {expenses.data?.map((e) => (
-              <li key={e.id} className="flex items-center justify-between p-4">
-                <div>
-                  <p className="text-sm font-medium text-ink">{e.description}</p>
-                  <p className="text-xs text-ink-muted">{e.budget_department} - {e.requested_by_name} - {Number(e.amount).toLocaleString()} F</p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Badge tone={STATUS_TONE[e.status]}>{e.status}</Badge>
-                  {e.status === 'pending' && (
-                    <>
-                      <Button size="sm" variant="danger" onClick={() => act(e.id, 'reject')} disabled={busy === e.id}>Rejeter</Button>
-                      <Button size="sm" onClick={() => act(e.id, 'approve')} disabled={busy === e.id}>Approuver</Button>
-                    </>
+            {expenses.data?.map((e) => {
+              const budget = budgets.data?.find((b) => b.id === e.budget)
+              const remainingAfter = budget ? Number(budget.allocated_amount) - Number(budget.spent_amount) - Number(e.amount) : null
+              return (
+                <li key={e.id} className="p-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-ink">{e.description}</p>
+                      <p className="text-xs text-ink-muted">{e.budget_department} - {e.requested_by_name} - {Number(e.amount).toLocaleString()} F</p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Badge tone={STATUS_TONE[e.status]}>{e.status}</Badge>
+                      {e.status === 'pending' && (
+                        <>
+                          <Button size="sm" variant="danger" onClick={() => act(e.id, 'reject')} disabled={busy === e.id}>Rejeter</Button>
+                          <Button size="sm" onClick={() => act(e.id, 'approve')} disabled={busy === e.id}>Approuver</Button>
+                        </>
+                      )}
+                      {e.status === 'approved' && e.vendor && (
+                        <Button size="sm" onClick={() => act(e.id, 'pay')} disabled={busy === e.id}>Payer</Button>
+                      )}
+                    </div>
+                  </div>
+                  {e.status === 'pending' && budget && (
+                    <p className={`mt-2 text-xs ${remainingAfter < 0 ? 'text-danger-600' : 'text-ink-muted'}`}>
+                      Impact budgetaire : {remainingAfter < 0 ? 'depasse le budget' : `${remainingAfter.toLocaleString()} F restant apres approbation`}
+                    </p>
                   )}
-                  {e.status === 'approved' && e.vendor && (
-                    <Button size="sm" onClick={() => act(e.id, 'pay')} disabled={busy === e.id}>Payer</Button>
-                  )}
-                </div>
-              </li>
-            ))}
+                </li>
+              )
+            })}
           </ul>
         </CardBody>
       </Card>
