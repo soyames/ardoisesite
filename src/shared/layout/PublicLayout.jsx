@@ -2,6 +2,20 @@ import { useState } from 'react'
 import { Link, Outlet } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext.jsx'
 import { usePwaInstall } from '../hooks/usePwaInstall.js'
+import Icon from '../ui/Icon.jsx'
+
+// Real official education portals for Benin - not made up. Verified
+// against each ministry's own site before linking (see the ardoisesite
+// footer redesign task): MEMP covers nursery/primary, the "secondaire"
+// ministry also covers technical/vocational (METFP), MESRS is higher
+// education, and EducMaster is the national cross-level data portal -
+// four genuinely distinct destinations, not padding.
+const OFFICIAL_RESOURCES = [
+  { label: 'EducMaster', description: 'Portail national de l’éducation', href: 'https://educmaster.bj/' },
+  { label: 'MEMP', description: 'Enseignements Maternel et Primaire', href: 'https://memp.gouv.bj/' },
+  { label: 'Enseignement Secondaire', description: 'Secondaire, Technique et Formation Pro.', href: 'https://enseignementsecondaire.gouv.bj/' },
+  { label: 'Enseignement Supérieur', description: 'Enseignement Supérieur et Recherche', href: 'https://enseignementsuperieur.gouv.bj/' },
+]
 
 export default function PublicLayout() {
   const { user, logout } = useAuth()
@@ -176,28 +190,66 @@ export default function PublicLayout() {
         <Outlet />
       </main>
 
-      <footer className="mt-auto border-t border-border bg-surface-raised py-12">
-        <div className="mx-auto max-w-[1600px] px-6 lg:px-12 flex flex-col items-center gap-6">
-          <nav className="flex flex-wrap justify-center gap-x-8 gap-y-4">
-            <Link to="/install" className="text-sm font-medium text-ink-muted hover:text-ink">
-              Pour les Écoles (Installation)
-            </Link>
-            <Link to="/how-it-works" className="text-sm font-medium text-ink-muted hover:text-ink">
-              Comment ça marche
-            </Link>
-            <Link to="/contact" className="text-sm font-medium text-ink-muted hover:text-ink">
-              Contact / Support
-            </Link>
-            <Link to="/privacy" className="text-sm font-medium text-ink-muted hover:text-ink">
-              Confidentialité
-            </Link>
-            <Link to="/terms" className="text-sm font-medium text-ink-muted hover:text-ink">
-              Conditions d'Utilisation
-            </Link>
-          </nav>
-          <p className="text-sm font-medium text-ink-muted">
-            © 2026 Ardoise Platform. Tous droits réservés.
-          </p>
+      <footer className="mt-auto border-t border-border bg-surface-raised">
+        <div className="mx-auto max-w-[1600px] px-6 py-16 lg:px-12">
+          <div className="grid grid-cols-1 gap-10 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="sm:col-span-2 lg:col-span-1">
+              <Link to="/" className="inline-flex items-center gap-2">
+                <img src="/images/ardoise_lockup_horizontal.png" alt="Ardoise" className="h-9 w-auto mix-blend-multiply" />
+              </Link>
+              <p className="mt-4 max-w-xs text-sm text-ink-muted">
+                La plateforme qui connecte les familles beninoises aux meilleures ecoles et aux tuteurs qualifies, avec des classements transparents et un annuaire par region.
+              </p>
+            </div>
+
+            <div>
+              <h3 className="text-xs font-semibold uppercase tracking-wide text-ink">Plateforme</h3>
+              <ul className="mt-4 space-y-3">
+                <li><Link to="/schools" className="text-sm text-ink-muted hover:text-ink">Écoles</Link></li>
+                <li><Link to="/teachers" className="text-sm text-ink-muted hover:text-ink">Tuteurs à domicile</Link></li>
+                <li><Link to="/jobs" className="text-sm text-ink-muted hover:text-ink">Recrutement</Link></li>
+                <li><Link to="/how-it-works" className="text-sm text-ink-muted hover:text-ink">Comment ça marche</Link></li>
+                <li><Link to="/install" className="text-sm text-ink-muted hover:text-ink">Pour les Écoles (Installation)</Link></li>
+              </ul>
+            </div>
+
+            <div>
+              <h3 className="text-xs font-semibold uppercase tracking-wide text-ink">Ressources officielles</h3>
+              <ul className="mt-4 space-y-3">
+                {OFFICIAL_RESOURCES.map((r) => (
+                  <li key={r.href}>
+                    <a
+                      href={r.href}
+                      target="_blank"
+                      rel="noreferrer noopener"
+                      className="group inline-flex items-start gap-1 text-sm text-ink-muted hover:text-ink"
+                    >
+                      <span>
+                        {r.label}
+                        <span className="block text-xs text-ink-muted/70">{r.description}</span>
+                      </span>
+                      <Icon name="open_in_new" className="mt-0.5 shrink-0 text-[14px] opacity-0 transition-opacity group-hover:opacity-100" />
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            <div>
+              <h3 className="text-xs font-semibold uppercase tracking-wide text-ink">Légal &amp; Support</h3>
+              <ul className="mt-4 space-y-3">
+                <li><Link to="/contact" className="text-sm text-ink-muted hover:text-ink">Contact / Support</Link></li>
+                <li><Link to="/privacy" className="text-sm text-ink-muted hover:text-ink">Confidentialité</Link></li>
+                <li><Link to="/terms" className="text-sm text-ink-muted hover:text-ink">Conditions d'Utilisation</Link></li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <div className="border-t border-border">
+          <div className="mx-auto max-w-[1600px] px-6 py-6 lg:px-12">
+            <p className="text-sm text-ink-muted">© 2026 Ardoise Platform. Tous droits réservés.</p>
+          </div>
         </div>
       </footer>
     </div>
