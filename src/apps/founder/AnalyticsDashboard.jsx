@@ -2,6 +2,7 @@ import { useApiGet } from '../../shared/hooks/useApi.js'
 import { Card, CardHeader, CardBody } from '../../shared/ui/Card.jsx'
 import StatCard from '../../shared/ui/StatCard.jsx'
 import Spinner from '../../shared/ui/Spinner.jsx'
+import EmptyState from '../../shared/ui/EmptyState.jsx'
 
 /**
  * Founder Command Center analytics - a read-only aggregation pulling
@@ -22,9 +23,12 @@ export default function AnalyticsDashboard({ onNavigate }) {
   const pendingDiscipline = useApiGet('/api/academics/discipline/pending-approval/')
   const pendingLeave = useApiGet('/api/hr/leave-requests/pending-approval/')
   const payrollRuns = useApiGet('/api/hr/payroll-runs/')
+  const staff = useApiGet('/api/hr/staff/')
+  const auditLogs = useApiGet('/api/audit/logs/')
 
   const loading = enrollments.loading || income.loading || pendingBulletins.loading
     || pendingDiscipline.loading || pendingLeave.loading || payrollRuns.loading
+    || staff.loading || auditLogs.loading
 
   const activeEnrollments = (enrollments.data || []).filter((e) => e.is_active).length
   const pendingPayroll = (payrollRuns.data || []).filter((p) => p.status === 'draft').length
@@ -73,6 +77,37 @@ export default function AnalyticsDashboard({ onNavigate }) {
               <PendingRow label="Discipline" count={pendingDiscipline.data?.length || 0} />
               <PendingRow label="Conges" count={pendingLeave.data?.length || 0} />
               <PendingRow label="Cycles de paie" count={pendingPayroll} />
+            </CardBody>
+          </Card>
+
+          {onNavigate && (
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <button onClick={() => onNavigate('settings')} className="rounded-card border border-border bg-surface-raised p-4 text-left transition hover:bg-surface-hover">
+                <p className="text-sm font-semibold text-ink">Configuration scolaire</p>
+                <p className="mt-1 text-xs text-ink-muted">Informations de l'ecole, lettre a en-tete</p>
+              </button>
+              <button onClick={() => onNavigate('departments')} className="rounded-card border border-border bg-surface-raised p-4 text-left transition hover:bg-surface-hover">
+                <p className="text-sm font-semibold text-ink">Utilisateurs & roles</p>
+                <p className="mt-1 text-xs text-ink-muted">{staff.data?.filter((s) => s.is_active).length || 0} membre(s) du personnel actif(s)</p>
+              </button>
+            </div>
+          )}
+
+          <Card>
+            <CardHeader title="Journaux recents" />
+            <CardBody className="p-0">
+              {(auditLogs.data || []).length === 0 && <div className="p-4"><EmptyState title="Aucune activite recente" /></div>}
+              <ul className="divide-y divide-border">
+                {(auditLogs.data || []).slice(0, 6).map((log) => (
+                  <li key={log.id} className="flex items-center justify-between p-4">
+                    <div>
+                      <p className="text-sm text-ink">{log.summary}</p>
+                      <p className="text-xs text-ink-muted">{log.actor_name}</p>
+                    </div>
+                    <p className="text-xs text-ink-muted">{new Date(log.occurred_at).toLocaleString('fr-FR')}</p>
+                  </li>
+                ))}
+              </ul>
             </CardBody>
           </Card>
         </>
