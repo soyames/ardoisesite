@@ -6,6 +6,7 @@ import Button from '../ui/Button.jsx'
 import Badge from '../ui/Badge.jsx'
 import Spinner from '../ui/Spinner.jsx'
 import EmptyState from '../ui/EmptyState.jsx'
+import SpreadsheetEditor from './SpreadsheetEditor.jsx'
 
 const INPUT_CLASS =
   'block w-full rounded-control border-0 py-2 px-3 bg-surface-raised text-ink ring-1 ring-inset ring-border focus:ring-2 focus:ring-primary-500 sm:text-sm'
@@ -77,6 +78,8 @@ export default function DocumentsPanel() {
   const [showForm, setShowForm] = useState(false)
   const [busy, setBusy] = useState(null)
   const [error, setError] = useState(null)
+  const [creatingSheet, setCreatingSheet] = useState(false)
+  const [openSheet, setOpenSheet] = useState(null)
   const documents = useApiGet('/api/collab/documents/')
 
   const filtered = (documents.data || []).filter((d) =>
@@ -111,6 +114,30 @@ export default function DocumentsPanel() {
     }
   }
 
+  const createSpreadsheet = async () => {
+    setCreatingSheet(true)
+    setError(null)
+    try {
+      const created = await api.post('/api/collab/documents/spreadsheets/', { title: 'Nouvelle feuille de calcul' })
+      await documents.refetch()
+      setOpenSheet(created)
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'Erreur inattendue.')
+    } finally {
+      setCreatingSheet(false)
+    }
+  }
+
+  if (openSheet) {
+    return (
+      <SpreadsheetEditor
+        document={openSheet}
+        onClose={() => setOpenSheet(null)}
+        onSaved={() => documents.refetch()}
+      />
+    )
+  }
+
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -120,7 +147,12 @@ export default function DocumentsPanel() {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
-        <Button size="sm" onClick={() => setShowForm((v) => !v)}>{showForm ? 'Fermer' : '+ Deposer un document'}</Button>
+        <div className="flex flex-wrap gap-2">
+          <Button size="sm" variant="secondary" onClick={createSpreadsheet} disabled={creatingSheet}>
+            {creatingSheet ? 'Creation...' : '+ Nouvelle feuille de calcul'}
+          </Button>
+          <Button size="sm" onClick={() => setShowForm((v) => !v)}>{showForm ? 'Fermer' : '+ Deposer un document'}</Button>
+        </div>
       </div>
 
       {showForm && (
@@ -147,29 +179,37 @@ export default function DocumentsPanel() {
               </div>
               <div className="flex shrink-0 flex-wrap items-center gap-2">
                 <Badge tone={STATUS_TONE[doc.status] || 'neutral'}>{STATUS_LABEL[doc.status] || doc.status}</Badge>
-                <a href={doc.file} target="_blank" rel="noreferrer" className="inline-flex items-center justify-center rounded-control bg-surface-raised px-3 py-1.5 text-xs font-medium text-ink ring-1 ring-inset ring-border hover:bg-surface-hover">
-                  Telecharger
-                </a>
-                {doc.status === 'draft' && (
-                  <Button size="sm" variant="secondary" onClick={() => act(doc.id, 'checkout')} disabled={busy === doc.id}>
-                    Modifier (Word/Excel)
+                {doc.kind === 'spreadsheet' ? (
+                  <Button size="sm" onClick={() => setOpenSheet(doc)}>
+                    Ouvrir
                   </Button>
-                )}
-                {doc.status === 'checked_out' && (
-                  <label className="inline-flex cursor-pointer items-center justify-center rounded-control bg-primary-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-primary-700">
-                    Reteleverser la version modifiee
-                    <input
-                      type="file"
-                      className="hidden"
-                      disabled={busy === doc.id}
-                      onChange={(e) => e.target.files?.[0] && releaseWithFile(doc.id, e.target.files[0])}
-                    />
-                  </label>
-                )}
-                {doc.status === 'checked_out' && (
-                  <Button size="sm" variant="ghost" onClick={() => releaseWithFile(doc.id, null)} disabled={busy === doc.id}>
-                    Annuler sans modifier
-                  </Button>
+                ) : (
+                  <>
+                    <a href={doc.file} target="_blank" rel="noreferrer" className="inline-flex items-center justify-center rounded-control bg-surface-raised px-3 py-1.5 text-xs font-medium text-ink ring-1 ring-inset ring-border hover:bg-surface-hover">
+                      Telecharger
+                    </a>
+                    {doc.status === 'draft' && (
+                      <Button size="sm" variant="secondary" onClick={() => act(doc.id, 'checkout')} disabled={busy === doc.id}>
+                        Modifier (Word/Excel)
+                      </Button>
+                    )}
+                    {doc.status === 'checked_out' && (
+                      <label className="inline-flex cursor-pointer items-center justify-center rounded-control bg-primary-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-primary-700">
+                        Reteleverser la version modifiee
+                        <input
+                          type="file"
+                          className="hidden"
+                          disabled={busy === doc.id}
+                          onChange={(e) => e.target.files?.[0] && releaseWithFile(doc.id, e.target.files[0])}
+                        />
+                      </label>
+                    )}
+                    {doc.status === 'checked_out' && (
+                      <Button size="sm" variant="ghost" onClick={() => releaseWithFile(doc.id, null)} disabled={busy === doc.id}>
+                        Annuler sans modifier
+                      </Button>
+                    )}
+                  </>
                 )}
                 {doc.kind === 'templated' && doc.status !== 'signed' && (
                   <Button size="sm" onClick={() => act(doc.id, 'sign')} disabled={busy === doc.id}>
