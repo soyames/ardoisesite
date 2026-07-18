@@ -8,6 +8,8 @@ import Spinner from '../../shared/ui/Spinner.jsx'
 import EmptyState from '../../shared/ui/EmptyState.jsx'
 import PortalTabs from '../../shared/ui/PortalTabs.jsx'
 import StatCard from '../../shared/ui/StatCard.jsx'
+import ActivityList from '../../shared/ui/ActivityList.jsx'
+import QuickActionButton from '../../shared/ui/QuickActionButton.jsx'
 
 const INPUT_CLASS =
   'block w-full rounded-control border-0 py-2 px-3 bg-surface-raised text-ink ring-1 ring-inset ring-border focus:ring-2 focus:ring-primary-500 sm:text-sm'
@@ -66,22 +68,30 @@ function DashboardTab({ onNavigate }) {
   const pendingLeaves = (leaves.data || []).filter((l) => l.status === 'pending')
   const draftRuns = (runs.data || []).filter((r) => r.status === 'draft')
 
+  const requestItems = [
+    ...pendingAdvances.slice(0, 4).map((a) => ({
+      id: `adv-${a.id}`, icon: 'payments', iconTone: 'warning',
+      title: `${a.staff_name} - Avance`, subtitle: 'Avance sur salaire',
+      badge: `${a.amount} FCFA`, badgeTone: 'warning',
+    })),
+    ...pendingLeaves.slice(0, 4).map((l) => ({
+      id: `leave-${l.id}`, icon: 'event_busy', iconTone: 'warning',
+      title: `${l.staff_name} - Conge`, subtitle: `${l.start_date} au ${l.end_date}`,
+      badge: 'En attente', badgeTone: 'warning',
+    })),
+  ]
+
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       <div>
-        <h2 className="text-lg font-semibold text-ink">Bonjour</h2>
+        <p className="text-xs font-semibold uppercase tracking-wider text-accent-700">RH &amp; Paie</p>
+        <h2 className="mt-1 text-xl font-bold text-ink">Bonjour</h2>
         <p className="mt-1 text-sm text-ink-muted">Vue d'ensemble du personnel et de la paie.</p>
       </div>
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        <button onClick={() => onNavigate('staff')} className="rounded-card border border-border bg-primary-950 p-4 text-left text-white transition hover:bg-primary-900">
-          <p className="text-sm font-semibold">Ajouter un membre</p>
-          <p className="mt-1 text-xs text-white/70">Nouveau personnel</p>
-        </button>
-        <button onClick={() => onNavigate('payroll')} className="rounded-card border border-border bg-accent-600 p-4 text-left text-white transition hover:bg-accent-700">
-          <p className="text-sm font-semibold">Cycles de paie</p>
-          <p className="mt-1 text-xs text-white/70">{draftRuns.length} en brouillon</p>
-        </button>
+        <QuickActionButton icon="person_add" title="Ajouter un membre" description="Nouveau personnel" onClick={() => onNavigate('staff')} />
+        <QuickActionButton icon="payments" title="Cycles de paie" description={`${draftRuns.length} en brouillon`} onClick={() => onNavigate('payroll')} />
       </div>
 
       {loading && <div className="flex justify-center py-8"><Spinner /></div>}
@@ -89,31 +99,15 @@ function DashboardTab({ onNavigate }) {
       {!loading && (
         <>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <StatCard label="Personnel actif" value={activeStaff.length} />
-            <StatCard label="Avances en attente" value={pendingAdvances.length} tone={pendingAdvances.length > 0 ? 'accent' : 'success'} />
-            <StatCard label="Conges en attente" value={pendingLeaves.length} tone={pendingLeaves.length > 0 ? 'accent' : 'success'} />
-            <StatCard label="Cycles de paie en brouillon" value={draftRuns.length} tone={draftRuns.length > 0 ? 'accent' : 'success'} />
+            <StatCard icon="badge" label="Personnel actif" value={activeStaff.length} />
+            <StatCard icon="account_balance_wallet" label="Avances en attente" value={pendingAdvances.length} tone={pendingAdvances.length > 0 ? 'warning' : 'success'} />
+            <StatCard icon="event_busy" label="Conges en attente" value={pendingLeaves.length} tone={pendingLeaves.length > 0 ? 'warning' : 'success'} />
+            <StatCard icon="contract" label="Cycles de paie en brouillon" value={draftRuns.length} tone={draftRuns.length > 0 ? 'warning' : 'success'} />
           </div>
 
           <Card>
             <CardHeader title="Demandes en attente" action={<button onClick={() => onNavigate('advances')} className="text-xs font-medium text-primary-600 hover:text-primary-700">Voir les avances</button>} />
-            <CardBody className="p-0">
-              {pendingAdvances.length === 0 && pendingLeaves.length === 0 && <div className="p-4"><EmptyState title="Aucune demande en attente" /></div>}
-              <ul className="divide-y divide-border">
-                {pendingAdvances.slice(0, 3).map((a) => (
-                  <li key={`adv-${a.id}`} className="flex items-center justify-between p-4">
-                    <p className="text-sm text-ink">{a.staff_name} - Avance</p>
-                    <Badge tone="warning">{a.amount} FCFA</Badge>
-                  </li>
-                ))}
-                {pendingLeaves.slice(0, 3).map((l) => (
-                  <li key={`leave-${l.id}`} className="flex items-center justify-between p-4">
-                    <p className="text-sm text-ink">{l.staff_name} - Conge</p>
-                    <Badge tone="warning">{l.start_date} au {l.end_date}</Badge>
-                  </li>
-                ))}
-              </ul>
-            </CardBody>
+            <ActivityList items={requestItems} emptyLabel="Aucune demande en attente." />
           </Card>
         </>
       )}
