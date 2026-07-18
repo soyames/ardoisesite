@@ -5,6 +5,7 @@ import { Card, CardHeader, CardBody } from '../../shared/ui/Card.jsx'
 import Badge from '../../shared/ui/Badge.jsx'
 import Spinner from '../../shared/ui/Spinner.jsx'
 import EmptyState from '../../shared/ui/EmptyState.jsx'
+import Icon from '../../shared/ui/Icon.jsx'
 
 const INPUT_CLASS =
   'block w-full rounded-control border-0 py-2 px-3 bg-surface-raised text-ink ring-1 ring-inset ring-border focus:ring-2 focus:ring-primary-500 sm:text-sm'
@@ -41,11 +42,13 @@ export default function CyclesPanel() {
     }
   }
 
-  const primaryCoverage = scopableStaff.filter((s) => s.cycle_scope === 'primary').length
-  const secondaryCoverage = scopableStaff.filter((s) => s.cycle_scope === 'secondary').length
+  const primaryStaff = scopableStaff.filter((s) => s.cycle_scope === 'primary')
+  const secondaryStaff = scopableStaff.filter((s) => s.cycle_scope === 'secondary')
+  const primaryCoverage = primaryStaff.length
+  const secondaryCoverage = secondaryStaff.length
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       <div>
         <h1 className="text-xl font-semibold text-ink">Cycles</h1>
         <p className="mt-1 text-sm text-ink-muted">
@@ -54,22 +57,32 @@ export default function CyclesPanel() {
         </p>
       </div>
 
-      {(primaryCoverage === 0 || secondaryCoverage === 0) && scopableStaff.length > 0 && (
-        <Card>
-          <CardBody className="bg-warning-50">
-            <p className="text-sm text-warning-700">
-              {primaryCoverage === 0 && 'Aucun Directeur/Censeur n’est actuellement assigne au Primaire. '}
-              {secondaryCoverage === 0 && 'Aucun Directeur/Censeur n’est actuellement assigne au Secondaire. '}
-              Tant qu’aucun compte n’est assigne, ce cycle reste visible uniquement par le Fondateur.
-            </p>
-          </CardBody>
-        </Card>
+      {!staff.loading && scopableStaff.length > 0 && (
+        <div className="flex flex-wrap gap-3">
+          <StatusChip
+            ok={primaryCoverage > 0}
+            okLabel="Primaire couvert"
+            badLabel="Primaire non assigne"
+          />
+          <StatusChip
+            ok={secondaryCoverage > 0}
+            okLabel="Secondaire couvert"
+            badLabel="Secondaire non assigne"
+          />
+        </div>
       )}
 
       {error && <p className="text-sm text-danger-600">{error}</p>}
 
+      {!staff.loading && scopableStaff.length > 0 && (
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+          <CycleCard title="Section Primaire" icon="child_care" staffList={primaryStaff} />
+          <CycleCard title="Section Secondaire" icon="history_edu" staffList={secondaryStaff} />
+        </div>
+      )}
+
       <Card>
-        <CardHeader title="Directeurs & Censeurs" />
+        <CardHeader title="Registre des affectations" subtitle="Directeurs et Censeurs" />
         <CardBody className="p-0">
           {staff.loading && <div className="flex justify-center py-8"><Spinner /></div>}
           {!staff.loading && scopableStaff.length === 0 && (
@@ -107,6 +120,55 @@ export default function CyclesPanel() {
           </ul>
         </CardBody>
       </Card>
+    </div>
+  )
+}
+
+function StatusChip({ ok, okLabel, badLabel }) {
+  return (
+    <div
+      className={`flex items-center gap-2 rounded-control border px-3 py-2 text-xs font-semibold uppercase tracking-wide ${
+        ok ? 'border-success-200 bg-success-50 text-success-700' : 'border-warning-200 bg-warning-50 text-warning-700'
+      }`}
+    >
+      <Icon name={ok ? 'check_circle' : 'warning'} filled className="text-[20px]" />
+      {ok ? okLabel : badLabel}
+    </div>
+  )
+}
+
+function CycleCard({ title, icon, staffList }) {
+  const director = staffList.find((s) => s.role === 'director')
+  const censeur = staffList.find((s) => s.role === 'censeur')
+
+  return (
+    <Card>
+      <CardBody className="space-y-4 p-5">
+        <div className="flex items-center gap-3">
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-control bg-accent-50 text-accent-700">
+            <Icon name={icon} className="text-[28px]" />
+          </div>
+          <h4 className="text-base font-semibold text-ink">{title}</h4>
+        </div>
+        <div className="space-y-2">
+          <CycleRow label="Directeur" person={director} />
+          <CycleRow label="Censeur" person={censeur} />
+        </div>
+      </CardBody>
+    </Card>
+  )
+}
+
+function CycleRow({ label, person }) {
+  return (
+    <div className="flex items-center justify-between rounded-control border border-border bg-surface p-3">
+      <div>
+        <p className="text-xs font-semibold uppercase tracking-wide text-accent-700">{label}</p>
+        <p className={`text-sm font-medium ${person ? 'text-ink' : 'italic text-ink-muted'}`}>
+          {person ? person.full_name : 'Non assigne'}
+        </p>
+      </div>
+      {!person && <Badge tone="warning">A affecter</Badge>}
     </div>
   )
 }
