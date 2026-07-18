@@ -11,8 +11,16 @@ import MonEspaceRH from '../../shared/components/MonEspaceRH.jsx'
 const TABS = [
   { key: 'grades', label: 'Notes' },
   { key: 'attendance', label: 'Presences' },
+  { key: 'discipline', label: 'Discipline' },
   { key: 'exampaper', label: "Epreuve" },
   { key: 'rh', label: 'Mon espace RH' },
+]
+
+const MEASURES = [
+  { value: 'warning', label: 'Avertissement' },
+  { value: 'detention', label: "Heure(s) de colle" },
+  { value: 'suspension', label: 'Suspension' },
+  { value: 'expulsion', label: 'Renvoi' },
 ]
 
 /**
@@ -94,6 +102,7 @@ export default function TeacherPortal() {
             <GradesPanel classSubject={selectedClass} examPeriods={examPeriods.data} />
           )}
           {selectedClass && tab === 'attendance' && <AttendancePanel classSubject={selectedClass} />}
+          {selectedClass && tab === 'discipline' && <DisciplinePanel classSubject={selectedClass} />}
           {selectedClass && tab === 'exampaper' && (
             <ExamPaperPanel classSubject={selectedClass} examPeriods={examPeriods.data} />
           )}
@@ -176,6 +185,11 @@ function GradesPanel({ classSubject, examPeriods }) {
               <div key={student.id} className="flex items-center justify-between gap-3 rounded-control border border-border p-2.5">
                 <p className="text-sm text-ink">
                   {student.student_name} <span className="text-ink-muted">({student.matricule})</span>
+                  {student.discipline_score != null && (
+                    <span className={`ml-2 text-xs ${student.discipline_score < 10 ? 'text-danger-600' : 'text-ink-muted'}`}>
+                      &bull; {student.discipline_score} pts discipline
+                    </span>
+                  )}
                 </p>
                 <input
                   type="number"
@@ -370,6 +384,74 @@ function ExamPaperPanel({ classSubject, examPeriods }) {
             Soumettre pour saisie
           </Button>
         </div>
+      </CardBody>
+    </Card>
+  )
+}
+
+function DisciplinePanel({ classSubject }) {
+  const roster = useRoster(classSubject.classroom_id)
+  const [form, setForm] = useState({ enrollment: '', date: new Date().toISOString().slice(0, 10), measure: 'warning', reason: '', hours: '', points_deducted: '' })
+  const [error, setError] = useState(null)
+  const [submitting, setSubmitting] = useState(false)
+  const [success, setSuccess] = useState(false)
+
+  const selectedStudent = roster.data?.find((r) => String(r.id) === String(form.enrollment))
+
+  const submit = async (e) => {
+    e.preventDefault()
+    setSubmitting(true)
+    setError(null)
+    setSuccess(false)
+    try {
+      await api.post('/api/academics/discipline/', {
+        enrollment: Number(form.enrollment),
+        date: form.date,
+        measure: form.measure,
+        reason: form.reason,
+        hours: form.measure === 'detention' && form.hours ? Number(form.hours) : null,
+        points_deducted: form.points_deducted ? Number(form.points_deducted) : 0,
+      })
+      setForm({ enrollment: '', date: new Date().toISOString().slice(0, 10), measure: 'warning', reason: '', hours: '', points_deducted: '' })
+      setSuccess(true)
+      roster.refetch()
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'Erreur inattendue.')
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  return (
+    <Card>
+      <CardHeader title="Signaler une mesure disciplinaire" subtitle="Avertissement/colle prennent effet immediatement; suspension/renvoi passent par l'approbation du Censeur ou du Surveillant." />
+      <CardBody>
+        <form onSubmit={submit} className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <select required className="rounded-control border border-border bg-surface px-3 py-2 text-sm" value={form.enrollment} onChange={(e) => setForm({ ...form, enrollment: e.target.value })}>
+            <option value="">Choisir l'eleve...</option>
+            {roster.data?.map((r) => <option key={r.id} value={r.id}>{r.student_name}</option>)}
+          </select>
+          {selectedStudent && (
+            <p className="text-xs text-ink-muted">
+              Points de discipline actuels : <span className="font-semibold text-ink">{selectedStudent.discipline_score}</span>
+            </p>
+          )}
+          <input required type="date" className="rounded-control border border-border bg-surface px-3 py-2 text-sm" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} />
+          <select className="rounded-control border border-border bg-surface px-3 py-2 text-sm" value={form.measure} onChange={(e) => setForm({ ...form, measure: e.target.value })}>
+            {MEASURES.map((m) => <option key={m.value} value={m.value}>{m.label}</option>)}
+          </select>
+          {form.measure === 'detention' && (
+            <input type="number" className="rounded-control border border-border bg-surface px-3 py-2 text-sm" placeholder="Nombre d'heures" value={form.hours} onChange={(e) => setForm({ ...form, hours: e.target.value })} />
+          )}
+          <div>
+            <label className="mb-1 block text-xs font-medium text-ink-muted">Points a deduire (selon la gravite)</label>
+            <input type="number" min="0" className="w-full rounded-control border border-border bg-surface px-3 py-2 text-sm" placeholder="ex: 2" value={form.points_deducted} onChange={(e) => setForm({ ...form, points_deducted: e.target.value })} />
+          </div>
+          <textarea required className="rounded-control border border-border bg-surface px-3 py-2 text-sm sm:col-span-2" placeholder="Motif" value={form.reason} onChange={(e) => setForm({ ...form, reason: e.target.value })} />
+          {error && <p className="text-sm text-danger-600 sm:col-span-2">{error}</p>}
+          {success && <p className="text-sm text-success-600 sm:col-span-2">Mesure enregistree.</p>}
+          <div className="sm:col-span-2"><Button type="submit" disabled={submitting}>{submitting ? 'Enregistrement...' : 'Enregistrer'}</Button></div>
+        </form>
       </CardBody>
     </Card>
   )

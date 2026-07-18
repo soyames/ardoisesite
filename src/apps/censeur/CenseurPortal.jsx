@@ -8,11 +8,14 @@ import Badge from '../../shared/ui/Badge.jsx'
 import Spinner from '../../shared/ui/Spinner.jsx'
 import EmptyState from '../../shared/ui/EmptyState.jsx'
 import CycleSwitcher from '../../shared/ui/CycleSwitcher.jsx'
+import PortalTabs from '../../shared/ui/PortalTabs.jsx'
+import StatCard from '../../shared/ui/StatCard.jsx'
 
 const INPUT_CLASS =
   'block w-full rounded-control border-0 py-2 px-3 bg-surface-raised text-ink ring-1 ring-inset ring-border focus:ring-2 focus:ring-primary-500 sm:text-sm'
 
 const TABS = [
+  { key: 'dashboard', label: 'Tableau de bord' },
   { key: 'bulletins', label: 'Bulletins' },
   { key: 'discipline', label: 'Discipline' },
   { key: 'calendrier', label: 'Calendrier' },
@@ -30,7 +33,7 @@ const DAYS = [
 ]
 
 export default function CenseurPortal() {
-  const [tab, setTab] = useState('bulletins')
+  const [tab, setTab] = useState('dashboard')
 
   return (
     <div className="space-y-4">
@@ -39,25 +42,74 @@ export default function CenseurPortal() {
         <p className="mt-1 text-sm text-ink-muted">Approbation des bulletins, discipline, heures vacataires et epreuves.</p>
       </div>
 
-      <div className="flex flex-wrap gap-1 border-b border-border">
-        {TABS.map((t) => (
-          <button
-            key={t.key}
-            onClick={() => setTab(t.key)}
-            className={`px-4 py-2 text-sm font-medium transition ${
-              tab === t.key ? 'border-b-2 border-primary-600 text-primary-700' : 'text-ink-muted hover:text-ink'
-            }`}
-          >
-            {t.label}
-          </button>
-        ))}
-      </div>
+      <PortalTabs tabs={TABS} active={tab} onChange={setTab} />
 
+      {tab === 'dashboard' && <DashboardTab onNavigate={setTab} />}
       {tab === 'bulletins' && <BulletinsTab />}
       {tab === 'discipline' && <DisciplineTab />}
       {tab === 'calendrier' && <CalendrierTab />}
       {tab === 'timelogs' && <TimeLogsTab />}
       {tab === 'exams' && <ExamsTab />}
+    </div>
+  )
+}
+
+function DashboardTab({ onNavigate }) {
+  const pendingBulletins = useApiGet('/api/academics/bulletins/pending-approval/')
+  const pendingDiscipline = useApiGet('/api/academics/discipline/pending-approval/')
+  const openIncidents = useApiGet('/api/academics/incidents/?status=open')
+  const pendingTimeLogs = useApiGet('/api/hr/time-logs/?is_confirmed=false')
+
+  const loading = pendingBulletins.loading || pendingDiscipline.loading || openIncidents.loading || pendingTimeLogs.loading
+
+  return (
+    <div className="space-y-4">
+      <div>
+        <h2 className="text-lg font-semibold text-ink">Bonjour</h2>
+        <p className="mt-1 text-sm text-ink-muted">Vue d'ensemble academique et disciplinaire.</p>
+      </div>
+
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <button onClick={() => onNavigate('bulletins')} className="rounded-card border border-border bg-primary-950 p-4 text-left text-white transition hover:bg-primary-900">
+          <p className="text-sm font-semibold">Approuver les bulletins</p>
+          <p className="mt-1 text-xs text-white/70">{pendingBulletins.data?.length || 0} en attente</p>
+        </button>
+        <button onClick={() => onNavigate('discipline')} className="rounded-card border border-border bg-accent-600 p-4 text-left text-white transition hover:bg-accent-700">
+          <p className="text-sm font-semibold">Revue disciplinaire</p>
+          <p className="mt-1 text-xs text-white/70">{pendingDiscipline.data?.length || 0} en attente</p>
+        </button>
+      </div>
+
+      {loading && <div className="flex justify-center py-8"><Spinner /></div>}
+
+      {!loading && (
+        <>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <StatCard label="Bulletins en attente" value={pendingBulletins.data?.length || 0} tone={pendingBulletins.data?.length > 0 ? 'accent' : 'success'} />
+            <StatCard label="Discipline en attente" value={pendingDiscipline.data?.length || 0} tone={pendingDiscipline.data?.length > 0 ? 'accent' : 'success'} />
+            <StatCard label="Incidents ouverts" value={openIncidents.data?.length || 0} tone={openIncidents.data?.length > 0 ? 'accent' : 'success'} />
+            <StatCard label="Heures a confirmer" value={pendingTimeLogs.data?.length || 0} tone={pendingTimeLogs.data?.length > 0 ? 'accent' : 'success'} />
+          </div>
+
+          <Card>
+            <CardHeader title="Incidents recents" subtitle="Signales par la surveillance" />
+            <CardBody className="p-0">
+              {(openIncidents.data || []).length === 0 && <div className="p-4"><EmptyState title="Aucun incident ouvert" /></div>}
+              <ul className="divide-y divide-border">
+                {(openIncidents.data || []).slice(0, 5).map((inc) => (
+                  <li key={inc.id} className="flex items-center justify-between p-4">
+                    <div>
+                      <p className="text-sm font-medium text-ink">{inc.description}</p>
+                      <p className="text-xs text-ink-muted">{inc.location} - {new Date(inc.occurred_at).toLocaleString('fr-FR')}</p>
+                    </div>
+                    <Badge tone="warning">{inc.kind}</Badge>
+                  </li>
+                ))}
+              </ul>
+            </CardBody>
+          </Card>
+        </>
+      )}
     </div>
   )
 }
@@ -156,7 +208,10 @@ function DisciplineTab() {
               <div>
                 <p className="text-sm font-medium text-ink">{d.student_name}</p>
                 <p className="text-xs text-ink-muted">{d.date} - {d.measure} - {d.reason}</p>
-                <p className="text-xs text-ink-muted">Signale par {d.issued_by_name}</p>
+                <p className="text-xs text-ink-muted">
+                  Signale par {d.issued_by_name}
+                  {d.points_deducted > 0 && <span> &bull; -{d.points_deducted} pts discipline</span>}
+                </p>
               </div>
               <Badge tone="warning">{d.measure}</Badge>
             </div>
