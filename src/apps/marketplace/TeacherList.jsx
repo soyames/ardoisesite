@@ -4,7 +4,7 @@ import EmptyState from '../../shared/ui/EmptyState.jsx'
 import { FRANCOPHONE_AFRICA_DATA } from '../../shared/constants/locations.js'
 import { BENIN_COMMUNE_DEPARTMENT } from '../../shared/constants/beninGeoCommunes.js'
 
-const TEACHERS_DATA = [
+export const TEACHERS_DATA = [
   { id: 1, name: 'Dr. Jean Dupont', subject: 'Mathématiques', country: 'Benin', city: 'Cotonou', rating: 4.9, price: '15 000 F / mois', image: 'https://images.unsplash.com/photo-1568602471122-7832951cc4c5?w=400&q=80', description: 'Docteur en mathématiques appliquées, 10 ans d\'expérience.' },
   { id: 2, name: 'Marie Mensah', subject: 'SVT', country: 'Benin', city: 'Abomey-Calavi', rating: 4.8, price: '12 000 F / mois', image: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400&q=80', description: 'Professeur certifiée, excellente approche pédagogique.' },
   { id: 3, name: 'Paul Kossi', subject: 'Philosophie', country: 'Benin', city: 'Porto-Novo', rating: 5.0, price: '10 000 F / mois', image: 'https://images.unsplash.com/photo-1531427186611-ecfd6d936c79?w=400&q=80', description: 'Spécialiste de la préparation au Baccalauréat.' },

@@ -4,6 +4,8 @@ import { collection, onSnapshot } from 'firebase/firestore'
 import { db } from '../../shared/api/firebase.js'
 import Badge from '../../shared/ui/Badge.jsx'
 import BeninMap from '../../shared/ui/BeninMap.jsx'
+import { BENIN_COMMUNE_DEPARTMENT } from '../../shared/constants/beninGeoCommunes.js'
+import { TEACHERS_DATA } from './TeacherList.jsx'
 
 // Tutors aren't wired to Firestore yet - TeacherList/TeacherDetail still
 // resolve profiles from TeacherDetail.jsx's TEACHER_DB mock, so pointing
@@ -54,6 +56,20 @@ export default function Home() {
       ? `/teachers?department=${encodeURIComponent(selectedDepartment)}`
       : '/teachers'
 
+  // Auto-filtered the moment a region is picked on the map - no extra
+  // click needed to see who's actually there. The "Voir tout" links below
+  // still go to /schools and /teachers for deeper per-commune/ville
+  // browsing (those pages have their own map + filters already).
+  const regionSchools = useMemo(() => {
+    if (!regionLabel) return []
+    return schools.filter((s) => (selectedCommune ? s.city === selectedCommune : BENIN_COMMUNE_DEPARTMENT[s.city] === selectedDepartment))
+  }, [schools, selectedCommune, selectedDepartment, regionLabel])
+
+  const regionTeachers = useMemo(() => {
+    if (!regionLabel) return []
+    return TEACHERS_DATA.filter((t) => (selectedCommune ? t.city === selectedCommune : BENIN_COMMUNE_DEPARTMENT[t.city] === selectedDepartment))
+  }, [selectedCommune, selectedDepartment, regionLabel])
+
   return (
     <div className="flex flex-col bg-surface">
       {/* Premium Hero Section - the map itself is the hero now */}
@@ -63,18 +79,16 @@ export default function Home() {
         </div>
 
         <div className="mx-auto max-w-7xl px-6 lg:px-8">
-          <div className="text-center">
-            <h1 className="mx-auto max-w-4xl font-display text-5xl font-extrabold tracking-tight text-white sm:text-7xl">
-              L'excellence éducative, <br />
-              <span className="text-accent-400">à portée de clic</span>
-            </h1>
-            <p className="mx-auto mt-6 max-w-2xl text-lg tracking-tight text-primary-200">
-              Parcourez les écoles partenaires et les encadreurs (enseignant) par département. Cliquez une région pour voir les établissements et les enseignants qui s'y trouvent. Vous pouvez aussi filtrer par communes.
-            </p>
-          </div>
-
-          <div className="mt-14 grid grid-cols-1 items-start gap-8 lg:grid-cols-[1fr_320px]">
-            <div className="rounded-card bg-surface-raised p-6 shadow-elevated sm:p-8">
+          <div className="grid grid-cols-1 gap-10 rounded-card border border-white/10 bg-surface-raised p-8 shadow-elevated lg:grid-cols-[1fr_320px] lg:items-center">
+            <div>
+              <h1 className="font-display text-4xl font-extrabold tracking-tight text-ink sm:text-5xl">
+                L'excellence éducative, <span className="text-accent-600">à portée de clic</span>
+              </h1>
+              <p className="mt-4 max-w-xl text-ink-muted">
+                Parcourez les écoles partenaires et les encadreurs (enseignant) par département. Cliquez une région pour voir les établissements et les enseignants qui s'y trouvent. Vous pouvez aussi filtrer par communes.
+              </p>
+            </div>
+            <div className="flex justify-center">
               <BeninMap
                 schoolCounts={cityCounts}
                 selectedDepartment={selectedDepartment}
@@ -82,36 +96,57 @@ export default function Home() {
                 onSelectCommune={(commune) => setSelectedCommune(commune)}
               />
             </div>
+          </div>
 
-            <div className="flex flex-col gap-4 rounded-card bg-primary-900 p-6 ring-1 ring-white/10">
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-wide text-primary-300">Region selectionnee</p>
-                <p className="mt-1 text-xl font-bold text-white">{regionLabel || 'Tout le Benin'}</p>
-              </div>
-              <div className="flex flex-col gap-3">
-                <Link
-                  to={schoolsHref}
-                  className="rounded-full bg-accent-500 px-6 py-3 text-center text-sm font-semibold text-primary-950 shadow-sm hover:bg-accent-400 hover:-translate-y-0.5 transition-all duration-200"
-                >
-                  Voir les écoles{regionLabel ? ` - ${regionLabel}` : ''}
-                </Link>
-                <Link
-                  to={teachersHref}
-                  className="rounded-full px-6 py-3 text-center text-sm font-semibold text-white ring-1 ring-inset ring-primary-700 hover:bg-primary-800 hover:-translate-y-0.5 transition-all duration-200"
-                >
-                  Voir les enseignants{regionLabel ? ` - ${regionLabel}` : ''}
-                </Link>
-              </div>
-              {regionLabel && (
+          {regionLabel && (
+            <div className="mt-8">
+              <div className="mb-4 flex items-center justify-between">
+                <p className="text-sm text-primary-200">
+                  Resultats pour <span className="font-semibold text-white">{regionLabel}</span>
+                </p>
                 <button
                   onClick={() => { setSelectedDepartment(null); setSelectedCommune(null) }}
-                  className="text-left text-xs font-semibold text-primary-300 hover:text-primary-200"
+                  className="text-xs font-semibold text-primary-300 hover:text-primary-200"
                 >
                   &larr; Effacer la selection
                 </button>
-              )}
+              </div>
+              <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+                <RegionResultsCard
+                  title={`Écoles - ${regionLabel}`}
+                  items={regionSchools}
+                  emptyLabel={`Aucune école partenaire à ${regionLabel} pour le moment.`}
+                  seeAllHref={schoolsHref}
+                  renderItem={(school) => (
+                    <Link key={school.id} to={`/schools/${school.id}`} className="flex items-center justify-between gap-2 rounded-control border border-border bg-surface p-3 hover:border-primary-200">
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-medium text-ink">{school.name}</p>
+                        <p className="text-xs text-ink-muted">{school.city}</p>
+                      </div>
+                      {school.successRate != null && <Badge tone="success">{school.successRate}%</Badge>}
+                    </Link>
+                  )}
+                />
+                <RegionResultsCard
+                  title={`Enseignants - ${regionLabel}`}
+                  items={regionTeachers}
+                  emptyLabel={`Aucun enseignant a ${regionLabel} pour le moment.`}
+                  seeAllHref={teachersHref}
+                  renderItem={(teacher) => (
+                    <Link key={teacher.id} to={`/teachers/${teacher.id}`} className="flex items-center justify-between gap-2 rounded-control border border-border bg-surface p-3 hover:border-primary-200">
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-medium text-ink">{teacher.name}</p>
+                        <p className="text-xs text-ink-muted">{teacher.subject} - {teacher.city}</p>
+                      </div>
+                      <div className="flex items-center gap-1 text-xs font-semibold text-ink">
+                        <span className="text-accent-500">★</span> {teacher.rating}
+                      </div>
+                    </Link>
+                  )}
+                />
+              </div>
             </div>
-          </div>
+          )}
         </div>
       </section>
 
@@ -190,6 +225,26 @@ export default function Home() {
           </div>
         </div>
       </section>
+    </div>
+  )
+}
+
+function RegionResultsCard({ title, items, emptyLabel, seeAllHref, renderItem }) {
+  return (
+    <div className="rounded-card border border-border bg-surface-raised p-5">
+      <div className="mb-3 flex items-center justify-between gap-2">
+        <h3 className="text-sm font-semibold text-ink">{title}</h3>
+        <Link to={seeAllHref} className="text-xs font-semibold text-primary-600 hover:text-primary-500">
+          Voir tout &rarr;
+        </Link>
+      </div>
+      {items.length === 0 ? (
+        <p className="text-sm text-ink-muted">{emptyLabel}</p>
+      ) : (
+        <div className="space-y-2">
+          {items.slice(0, 4).map((item) => renderItem(item))}
+        </div>
+      )}
     </div>
   )
 }
