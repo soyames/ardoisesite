@@ -6,10 +6,29 @@ import Button from '../ui/Button.jsx'
 import Badge from '../ui/Badge.jsx'
 import Spinner from '../ui/Spinner.jsx'
 import EmptyState from '../ui/EmptyState.jsx'
+import Icon from '../ui/Icon.jsx'
 import SpreadsheetEditor from './SpreadsheetEditor.jsx'
 import NoteEditor from './NoteEditor.jsx'
 
 const isNote = (doc) => doc.kind === 'freeform' && doc.content_type === 'text/html'
+
+const ICON_CHIP_TONE = {
+  primary: 'bg-primary-100 text-primary-700',
+  accent: 'bg-accent-100 text-accent-700',
+  danger: 'bg-danger-50 text-danger-700',
+}
+
+function docIconInfo(doc) {
+  if (doc.kind === 'spreadsheet') return { icon: 'table_chart', tone: 'accent' }
+  if (isNote(doc)) return { icon: 'article', tone: 'primary' }
+  if (doc.kind === 'templated') return { icon: 'receipt_long', tone: 'primary' }
+  const ct = doc.content_type || ''
+  if (ct.includes('pdf')) return { icon: 'picture_as_pdf', tone: 'danger' }
+  if (ct.startsWith('image/')) return { icon: 'image', tone: 'primary' }
+  if (ct.includes('word') || ct.includes('document')) return { icon: 'description', tone: 'primary' }
+  if (ct.includes('sheet') || ct.includes('excel')) return { icon: 'table_chart', tone: 'accent' }
+  return { icon: 'draft', tone: 'primary' }
+}
 
 const INPUT_CLASS =
   'block w-full rounded-control border-0 py-2 px-3 bg-surface-raised text-ink ring-1 ring-inset ring-border focus:ring-2 focus:ring-primary-500 sm:text-sm'
@@ -199,62 +218,15 @@ export default function DocumentsPanel() {
 
       <div className="space-y-2">
         {filtered.map((doc) => (
-          <Card key={doc.id}>
-            <CardBody className="flex flex-wrap items-center justify-between gap-3">
-              <div className="min-w-0">
-                <p className="truncate text-sm font-medium text-ink">{doc.title}</p>
-                <p className="text-xs text-ink-muted">
-                  {doc.uploaded_by?.full_name} - {formatSize(doc.file_size)}
-                  {doc.document_template_name && ` - ${doc.document_template_name}`}
-                  {doc.status === 'checked_out' && doc.checked_out_by && ` - Verrouille par ${doc.checked_out_by.full_name}`}
-                </p>
-              </div>
-              <div className="flex shrink-0 flex-wrap items-center gap-2">
-                <Badge tone={STATUS_TONE[doc.status] || 'neutral'}>{STATUS_LABEL[doc.status] || doc.status}</Badge>
-                {doc.kind === 'spreadsheet' ? (
-                  <Button size="sm" onClick={() => setOpenSheet(doc)}>
-                    Ouvrir
-                  </Button>
-                ) : isNote(doc) ? (
-                  <Button size="sm" onClick={() => setOpenNote(doc)}>
-                    Ouvrir
-                  </Button>
-                ) : (
-                  <>
-                    <a href={doc.file} target="_blank" rel="noreferrer" className="inline-flex items-center justify-center rounded-control bg-surface-raised px-3 py-1.5 text-xs font-medium text-ink ring-1 ring-inset ring-border hover:bg-surface-hover">
-                      Telecharger
-                    </a>
-                    {doc.status === 'draft' && (
-                      <Button size="sm" variant="secondary" onClick={() => act(doc.id, 'checkout')} disabled={busy === doc.id}>
-                        Modifier (Word/Excel)
-                      </Button>
-                    )}
-                    {doc.status === 'checked_out' && (
-                      <label className="inline-flex cursor-pointer items-center justify-center rounded-control bg-primary-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-primary-700">
-                        Reteleverser la version modifiee
-                        <input
-                          type="file"
-                          className="hidden"
-                          disabled={busy === doc.id}
-                          onChange={(e) => e.target.files?.[0] && releaseWithFile(doc.id, e.target.files[0])}
-                        />
-                      </label>
-                    )}
-                    {doc.status === 'checked_out' && (
-                      <Button size="sm" variant="ghost" onClick={() => releaseWithFile(doc.id, null)} disabled={busy === doc.id}>
-                        Annuler sans modifier
-                      </Button>
-                    )}
-                  </>
-                )}
-                {doc.kind === 'templated' && doc.status !== 'signed' && (
-                  <Button size="sm" onClick={() => act(doc.id, 'sign')} disabled={busy === doc.id}>
-                    Signer
-                  </Button>
-                )}
-              </div>
-            </CardBody>
-          </Card>
+          <DocumentRow
+            key={doc.id}
+            doc={doc}
+            busy={busy}
+            onOpenSheet={() => setOpenSheet(doc)}
+            onOpenNote={() => setOpenNote(doc)}
+            onAct={(action) => act(doc.id, action)}
+            onReleaseWithFile={(file) => releaseWithFile(doc.id, file)}
+          />
         ))}
       </div>
       <p className="text-xs text-ink-muted">
@@ -262,5 +234,73 @@ export default function DocumentsPanel() {
         aucun editeur en ligne requis. Reteleversez la version modifiee pour l'enregistrer et deverrouiller le document.
       </p>
     </div>
+  )
+}
+
+function DocumentRow({ doc, busy, onOpenSheet, onOpenNote, onAct, onReleaseWithFile }) {
+  const { icon, tone } = docIconInfo(doc)
+
+  return (
+    <Card>
+      <CardBody className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex min-w-0 items-center gap-3">
+          <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-control ${ICON_CHIP_TONE[tone]}`}>
+            <Icon name={icon} />
+          </div>
+          <div className="min-w-0">
+            <p className="truncate text-sm font-medium text-ink">{doc.title}</p>
+            <p className="text-xs text-ink-muted">
+              {doc.uploaded_by?.full_name} - {formatSize(doc.file_size)}
+              {doc.document_template_name && ` - ${doc.document_template_name}`}
+              {doc.status === 'checked_out' && doc.checked_out_by && ` - Verrouille par ${doc.checked_out_by.full_name}`}
+            </p>
+          </div>
+        </div>
+        <div className="flex shrink-0 flex-wrap items-center gap-2">
+          <Badge tone={STATUS_TONE[doc.status] || 'neutral'}>{STATUS_LABEL[doc.status] || doc.status}</Badge>
+          {doc.kind === 'spreadsheet' ? (
+            <Button size="sm" onClick={onOpenSheet}>
+              Ouvrir
+            </Button>
+          ) : isNote(doc) ? (
+            <Button size="sm" onClick={onOpenNote}>
+              Ouvrir
+            </Button>
+          ) : (
+            <>
+              <a href={doc.file} target="_blank" rel="noreferrer" className="inline-flex items-center justify-center rounded-control bg-surface-raised px-3 py-1.5 text-xs font-medium text-ink ring-1 ring-inset ring-border hover:bg-surface-hover">
+                Telecharger
+              </a>
+              {doc.status === 'draft' && (
+                <Button size="sm" variant="secondary" onClick={() => onAct('checkout')} disabled={busy === doc.id}>
+                  Modifier (Word/Excel)
+                </Button>
+              )}
+              {doc.status === 'checked_out' && (
+                <label className="inline-flex cursor-pointer items-center justify-center rounded-control bg-primary-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-primary-700">
+                  Reteleverser la version modifiee
+                  <input
+                    type="file"
+                    className="hidden"
+                    disabled={busy === doc.id}
+                    onChange={(e) => e.target.files?.[0] && onReleaseWithFile(e.target.files[0])}
+                  />
+                </label>
+              )}
+              {doc.status === 'checked_out' && (
+                <Button size="sm" variant="ghost" onClick={() => onReleaseWithFile(null)} disabled={busy === doc.id}>
+                  Annuler sans modifier
+                </Button>
+              )}
+            </>
+          )}
+          {doc.kind === 'templated' && doc.status !== 'signed' && (
+            <Button size="sm" onClick={() => onAct('sign')} disabled={busy === doc.id}>
+              Signer
+            </Button>
+          )}
+        </div>
+      </CardBody>
+    </Card>
   )
 }
