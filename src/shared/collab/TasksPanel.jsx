@@ -279,28 +279,56 @@ export default function TasksPanel() {
         <EmptyState title="Aucune tache" description="Assignez-en une a un collegue pour commencer." />
       )}
 
-      <div className="space-y-2">
-        {tasks.data?.map((task) => (
-          <button
-            key={task.id}
-            onClick={() => setSelectedTaskId(task.id === selectedTaskId ? null : task.id)}
-            className="flex w-full items-center justify-between gap-3 rounded-card border border-border bg-surface-raised px-4 py-3 text-left transition hover:shadow-elevated"
-          >
-            <div className="min-w-0">
-              <p className="truncate text-sm font-medium text-ink">{task.title}</p>
-              <p className="truncate text-xs text-ink-muted">
-                {task.assigned_to?.full_name}
-                {task.due_date && ` - Echeance ${task.due_date}`}
-                {task.checklist_progress && ` - ${task.checklist_progress.done}/${task.checklist_progress.total} etapes`}
-              </p>
-            </div>
-            <div className="flex shrink-0 gap-2">
-              <Badge tone={PRIORITY_TONE[task.priority]}>{task.priority}</Badge>
-              <Badge tone={STATUS_TONE[task.status]}>{STATUS_LABEL[task.status]}</Badge>
-            </div>
-          </button>
-        ))}
-      </div>
+      {!tasks.loading && tasks.data?.length > 0 && (
+        <div className="space-y-6">
+          {Object.keys(STATUS_LABEL).map((statusKey) => {
+            const group = tasks.data.filter((t) => t.status === statusKey)
+            if (group.length === 0) return null
+            return (
+              <div key={statusKey}>
+                <div className="mb-2 flex items-center gap-2">
+                  <h3 className="text-sm font-semibold text-ink">{STATUS_LABEL[statusKey]}</h3>
+                  <Badge tone="neutral">{group.length}</Badge>
+                </div>
+                <div className="space-y-2">
+                  {group.map((task) => {
+                    const progress = task.checklist_progress
+                    const pct = progress?.total > 0 ? Math.round((progress.done / progress.total) * 100) : null
+                    return (
+                      <button
+                        key={task.id}
+                        onClick={() => setSelectedTaskId(task.id === selectedTaskId ? null : task.id)}
+                        className="block w-full rounded-card border border-border bg-surface-raised px-4 py-3 text-left transition hover:shadow-elevated"
+                      >
+                        <div className="flex items-center justify-between gap-3">
+                          <div className="min-w-0">
+                            <p className="truncate text-sm font-medium text-ink">{task.title}</p>
+                            <p className="truncate text-xs text-ink-muted">
+                              {task.assigned_to?.full_name}
+                              {task.due_date && ` - Echeance ${task.due_date}`}
+                            </p>
+                          </div>
+                          <div className="flex shrink-0 gap-2">
+                            <Badge tone={PRIORITY_TONE[task.priority]}>{task.priority}</Badge>
+                          </div>
+                        </div>
+                        {pct != null && (
+                          <div className="mt-2 flex items-center gap-2">
+                            <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-surface">
+                              <div className="h-full rounded-full bg-primary-600" style={{ width: `${pct}%` }} />
+                            </div>
+                            <span className="text-xs text-ink-muted">{progress.done}/{progress.total}</span>
+                          </div>
+                        )}
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      )}
     </div>
   )
 }
