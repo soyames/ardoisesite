@@ -1,12 +1,15 @@
-import { Link } from 'react-router-dom'
+import { useEffect, useMemo, useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
+import { collection, onSnapshot } from 'firebase/firestore'
+import { db } from '../../shared/api/firebase.js'
 import Badge from '../../shared/ui/Badge.jsx'
+import BeninMap from '../../shared/ui/BeninMap.jsx'
+import { departmentForCity } from '../../shared/constants/beninDepartments.js'
 
-const TOP_SCHOOLS = [
-  { id: 1, name: 'Complexe Scolaire La Liberté', city: 'Abomey-Calavi', successRate: '98%', image: 'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=800&q=80' },
-  { id: 2, name: 'Collège Catholique Père Aupiais', city: 'Cotonou', successRate: '95%', image: 'https://images.unsplash.com/photo-1541829070764-84a7d30dd3f3?w=800&q=80' },
-  { id: 3, name: 'Lycée Béhanzin', city: 'Porto-Novo', successRate: '92%', image: 'https://images.unsplash.com/photo-1592280771190-3e2e4d571952?w=800&q=80' },
-]
-
+// Tutors aren't wired to Firestore yet - TeacherList/TeacherDetail still
+// resolve profiles from TeacherDetail.jsx's TEACHER_DB mock, so pointing
+// this teaser at real `users` docs would produce "Voir le profil" links
+// that 404. Keeping this mock until that surface is rewired together.
 const FEATURED_TUTORS = [
   { id: 1, name: 'Dr. Jean Dupont', subject: 'Mathématiques & Physique', rating: 4.9, price: '15 000 F', image: 'https://images.unsplash.com/photo-1568602471122-7832951cc4c5?w=400&q=80' },
   { id: 2, name: 'Marie Mensah', subject: 'SVT & Chimie', rating: 4.8, price: '12 000 F', image: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400&q=80' },
@@ -14,6 +17,32 @@ const FEATURED_TUTORS = [
 ]
 
 export default function Home() {
+  const navigate = useNavigate()
+  const [schools, setSchools] = useState([])
+
+  useEffect(() => {
+    const unsubscribe = onSnapshot(collection(db, 'schools'), (snapshot) => {
+      const rows = []
+      snapshot.forEach((d) => rows.push({ id: d.id, ...d.data() }))
+      setSchools(rows)
+    })
+    return () => unsubscribe()
+  }, [])
+
+  const topSchools = useMemo(
+    () => [...schools].sort((a, b) => (b.successRate || 0) - (a.successRate || 0)).slice(0, 3),
+    [schools]
+  )
+
+  const departmentCounts = useMemo(() => {
+    const counts = {}
+    schools.forEach((school) => {
+      const dept = departmentForCity(school.city)
+      if (dept) counts[dept] = (counts[dept] || 0) + 1
+    })
+    return counts
+  }, [schools])
+
   return (
     <div className="flex flex-col bg-surface">
       {/* Premium Hero Section */}
@@ -58,21 +87,50 @@ export default function Home() {
             Voir tout le classement &rarr;
           </Link>
         </div>
-        <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
-          {TOP_SCHOOLS.map(school => (
-            <Link key={school.id} to={`/schools/${school.id}`} className="group relative flex flex-col overflow-hidden rounded-card border border-border bg-surface-raised shadow-card transition-all hover:shadow-elevated hover:-translate-y-1">
-              <div className="aspect-[16/9] w-full overflow-hidden bg-primary-100">
-                <img src={school.image} alt={school.name} className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" />
-              </div>
-              <div className="p-6">
-                <div className="flex items-center justify-between gap-2">
-                  <h3 className="text-lg font-bold text-ink">{school.name}</h3>
-                  <Badge tone="success">{school.successRate} Réussite</Badge>
+        {topSchools.length > 0 ? (
+          <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
+            {topSchools.map(school => (
+              <Link key={school.id} to={`/schools/${school.id}`} className="group relative flex flex-col overflow-hidden rounded-card border border-border bg-surface-raised shadow-card transition-all hover:shadow-elevated hover:-translate-y-1">
+                <div className="aspect-[16/9] w-full overflow-hidden bg-primary-100">
+                  {school.image ? (
+                    <img src={school.image} alt={school.name} className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" />
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center text-4xl">🏫</div>
+                  )}
                 </div>
-                <p className="mt-2 text-sm text-ink-muted">{school.city}</p>
-              </div>
+                <div className="p-6">
+                  <div className="flex items-center justify-between gap-2">
+                    <h3 className="text-lg font-bold text-ink">{school.name}</h3>
+                    {school.successRate != null && <Badge tone="success">{school.successRate}% Réussite</Badge>}
+                  </div>
+                  <p className="mt-2 text-sm text-ink-muted">{school.city}</p>
+                </div>
+              </Link>
+            ))}
+          </div>
+        ) : (
+          <p className="text-sm text-ink-muted">Les écoles partenaires apparaîtront ici dès leur inscription.</p>
+        )}
+      </section>
+
+      {/* Region Map Teaser */}
+      <section className="mx-auto max-w-7xl px-6 pb-24 lg:px-8">
+        <div className="grid grid-cols-1 gap-10 rounded-card border border-border bg-surface-raised p-8 shadow-card lg:grid-cols-[1fr_280px] lg:items-center">
+          <div>
+            <h2 className="text-2xl font-bold tracking-tight text-ink sm:text-3xl">Trouvez une école près de chez vous</h2>
+            <p className="mt-3 max-w-xl text-ink-muted">
+              Parcourez les écoles partenaires par département, comme sur la carte nationale d'EducMaster. Cliquez une région pour voir les établissements qui s'y trouvent.
+            </p>
+            <Link to="/schools" className="mt-6 inline-flex items-center text-sm font-semibold text-primary-600 hover:text-primary-500">
+              Voir l'annuaire complet &rarr;
             </Link>
-          ))}
+          </div>
+          <div className="flex justify-center">
+            <BeninMap
+              counts={departmentCounts}
+              onSelect={(dept) => navigate(dept ? `/schools?department=${encodeURIComponent(dept)}` : '/schools')}
+            />
+          </div>
         </div>
       </section>
 
