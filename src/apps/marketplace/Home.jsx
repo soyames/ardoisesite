@@ -78,7 +78,7 @@ export default function Home() {
           <div className="relative left-[calc(50%-11rem)] aspect-[1155/678] w-[36.125rem] -translate-x-1/2 rotate-[30deg] bg-accent-500 opacity-10 sm:left-[calc(50%-30rem)] sm:w-[72.1875rem]" />
         </div>
 
-        <div className="mx-auto max-w-7xl px-6 lg:px-8">
+        <div className="mx-auto max-w-[1600px] px-6 lg:px-12">
           <div className="grid grid-cols-1 gap-10 rounded-card border border-white/10 bg-surface-raised p-8 shadow-elevated lg:grid-cols-[1fr_320px] lg:items-center">
             <div>
               <h1 className="font-display text-4xl font-extrabold tracking-tight text-ink sm:text-5xl">
@@ -151,7 +151,7 @@ export default function Home() {
       </section>
 
       {/* Top Ranked Schools Section */}
-      <section className="mx-auto max-w-7xl px-6 py-24 sm:py-32 lg:px-8">
+      <section className="mx-auto max-w-[1600px] px-6 py-24 sm:py-32 lg:px-12">
         <div className="mb-12 flex items-end justify-between">
           <div>
             <h2 className="text-3xl font-bold tracking-tight text-ink sm:text-4xl">Écoles d'Excellence</h2>
@@ -189,7 +189,7 @@ export default function Home() {
 
       {/* Featured Tutors Section */}
       <section className="bg-primary-950 py-24 sm:py-32">
-        <div className="mx-auto max-w-7xl px-6 lg:px-8">
+        <div className="mx-auto max-w-[1600px] px-6 lg:px-12">
           <div className="mb-12 flex items-end justify-between">
             <div>
               <h2 className="text-3xl font-bold tracking-tight text-white sm:text-4xl">Tuteurs à Domicile</h2>
