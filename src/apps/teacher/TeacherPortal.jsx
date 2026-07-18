@@ -9,6 +9,7 @@ import EmptyState from '../../shared/ui/EmptyState.jsx'
 import MonEspaceRH from '../../shared/components/MonEspaceRH.jsx'
 import PortalTabs from '../../shared/ui/PortalTabs.jsx'
 import StatCard from '../../shared/ui/StatCard.jsx'
+import QuickActionButton from '../../shared/ui/QuickActionButton.jsx'
 
 const TABS = [
   { key: 'dashboard', label: 'Tableau de bord' },
@@ -111,26 +112,21 @@ function DashboardTab({ myClasses, onNavigate }) {
   const draftPapers = (examPapers.data || []).filter((p) => p.status === 'draft')
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       <div>
-        <h2 className="text-lg font-semibold text-ink">Bonjour</h2>
+        <p className="text-xs font-semibold uppercase tracking-wider text-accent-700">Mes classes</p>
+        <h2 className="mt-1 text-xl font-bold text-ink">Bonjour</h2>
         <p className="mt-1 text-sm text-ink-muted">Vue d'ensemble de vos classes.</p>
       </div>
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        <button onClick={() => onNavigate('grades')} className="rounded-card border border-border bg-primary-950 p-4 text-left text-white transition hover:bg-primary-900">
-          <p className="text-sm font-semibold">Saisir les notes</p>
-          <p className="mt-1 text-xs text-white/70">Notes pour la classe selectionnee</p>
-        </button>
-        <button onClick={() => onNavigate('attendance')} className="rounded-card border border-border bg-accent-600 p-4 text-left text-white transition hover:bg-accent-700">
-          <p className="text-sm font-semibold">Faire l'appel</p>
-          <p className="mt-1 text-xs text-white/70">Enregistrer la presence</p>
-        </button>
+        <QuickActionButton icon="edit_note" title="Saisir les notes" description="Notes pour la classe selectionnee" onClick={() => onNavigate('grades')} />
+        <QuickActionButton icon="how_to_reg" title="Faire l'appel" description="Enregistrer la presence" onClick={() => onNavigate('attendance')} />
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <StatCard label="Classes assignees" value={myClasses?.length || 0} />
-        <StatCard label="Epreuves en brouillon" value={draftPapers.length} tone={draftPapers.length > 0 ? 'accent' : 'success'} />
+        <StatCard icon="school" label="Classes assignees" value={myClasses?.length || 0} />
+        <StatCard icon="quiz" label="Epreuves en brouillon" value={draftPapers.length} tone={draftPapers.length > 0 ? 'warning' : 'success'} />
       </div>
     </div>
   )

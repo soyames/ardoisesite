@@ -10,6 +10,7 @@ import EmptyState from '../../shared/ui/EmptyState.jsx'
 import CycleSwitcher from '../../shared/ui/CycleSwitcher.jsx'
 import PortalTabs from '../../shared/ui/PortalTabs.jsx'
 import StatCard from '../../shared/ui/StatCard.jsx'
+import QuickActionButton from '../../shared/ui/QuickActionButton.jsx'
 import LetterheadSettings from '../../shared/components/LetterheadSettings.jsx'
 
 const INPUT_CLASS =
@@ -67,21 +68,16 @@ function DashboardTab({ onNavigate }) {
   const loading = pendingBulletins.loading || pendingDiscipline.loading || openIncidents.loading || pendingTimeLogs.loading || summary.loading
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       <div>
-        <h2 className="text-lg font-semibold text-ink">Bonjour</h2>
+        <p className="text-xs font-semibold uppercase tracking-wider text-accent-700">Censorat</p>
+        <h2 className="mt-1 text-xl font-bold text-ink">Bonjour</h2>
         <p className="mt-1 text-sm text-ink-muted">Vue d'ensemble academique et disciplinaire.</p>
       </div>
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        <button onClick={() => onNavigate('bulletins')} className="rounded-card border border-border bg-primary-950 p-4 text-left text-white transition hover:bg-primary-900">
-          <p className="text-sm font-semibold">Approuver les bulletins</p>
-          <p className="mt-1 text-xs text-white/70">{pendingBulletins.data?.length || 0} en attente</p>
-        </button>
-        <button onClick={() => onNavigate('discipline')} className="rounded-card border border-border bg-accent-600 p-4 text-left text-white transition hover:bg-accent-700">
-          <p className="text-sm font-semibold">Revue disciplinaire</p>
-          <p className="mt-1 text-xs text-white/70">{pendingDiscipline.data?.length || 0} en attente</p>
-        </button>
+        <QuickActionButton icon="fact_check" title="Approuver les bulletins" description={`${pendingBulletins.data?.length || 0} en attente`} onClick={() => onNavigate('bulletins')} />
+        <QuickActionButton icon="gavel" title="Revue disciplinaire" description={`${pendingDiscipline.data?.length || 0} en attente`} onClick={() => onNavigate('discipline')} />
       </div>
 
       {loading && <div className="flex justify-center py-8"><Spinner /></div>}
@@ -89,10 +85,10 @@ function DashboardTab({ onNavigate }) {
       {!loading && (
         <>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <StatCard label="Bulletins en attente" value={pendingBulletins.data?.length || 0} tone={pendingBulletins.data?.length > 0 ? 'accent' : 'success'} />
-            <StatCard label="Discipline en attente" value={pendingDiscipline.data?.length || 0} tone={pendingDiscipline.data?.length > 0 ? 'accent' : 'success'} />
-            <StatCard label="Incidents ouverts" value={openIncidents.data?.length || 0} tone={openIncidents.data?.length > 0 ? 'accent' : 'success'} />
-            <StatCard label="Heures a confirmer" value={pendingTimeLogs.data?.length || 0} tone={pendingTimeLogs.data?.length > 0 ? 'accent' : 'success'} />
+            <StatCard icon="fact_check" label="Bulletins en attente" value={pendingBulletins.data?.length || 0} tone={pendingBulletins.data?.length > 0 ? 'warning' : 'success'} />
+            <StatCard icon="gavel" label="Discipline en attente" value={pendingDiscipline.data?.length || 0} tone={pendingDiscipline.data?.length > 0 ? 'warning' : 'success'} />
+            <StatCard icon="emergency" label="Incidents ouverts" value={openIncidents.data?.length || 0} tone={openIncidents.data?.length > 0 ? 'warning' : 'success'} />
+            <StatCard icon="schedule" label="Heures a confirmer" value={pendingTimeLogs.data?.length || 0} tone={pendingTimeLogs.data?.length > 0 ? 'warning' : 'success'} />
           </div>
 
           {summary.data?.overall_average != null && (

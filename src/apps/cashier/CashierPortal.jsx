@@ -5,6 +5,7 @@ import MonEspaceRH from '../../shared/components/MonEspaceRH.jsx'
 import Encaissement from '../../shared/components/Encaissement.jsx'
 import PortalTabs from '../../shared/ui/PortalTabs.jsx'
 import StatCard from '../../shared/ui/StatCard.jsx'
+import QuickActionButton from '../../shared/ui/QuickActionButton.jsx'
 
 const TABS = [
   { key: 'dashboard', label: 'Tableau de bord' },
@@ -49,23 +50,23 @@ function DashboardTab({ onNavigate }) {
   const todayTotal = todayPayments.reduce((sum, p) => sum + Number(p.amount), 0)
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       <div>
-        <h2 className="text-lg font-semibold text-ink">Bonjour</h2>
+        <p className="text-xs font-semibold uppercase tracking-wider text-accent-700">Encaissement</p>
+        <h2 className="mt-1 text-xl font-bold text-ink">Bonjour</h2>
         <p className="mt-1 text-sm text-ink-muted">Vue d'ensemble des encaissements.</p>
       </div>
 
-      <button onClick={() => onNavigate('cashier')} className="block w-full rounded-card border border-border bg-primary-950 p-4 text-left text-white transition hover:bg-primary-900 sm:w-auto">
-        <p className="text-sm font-semibold">Rechercher un eleve</p>
-        <p className="mt-1 text-xs text-white/70">Consulter et encaisser une facture</p>
-      </button>
+      <div className="sm:w-80">
+        <QuickActionButton icon="point_of_sale" title="Rechercher un eleve" description="Consulter et encaisser une facture" onClick={() => onNavigate('cashier')} />
+      </div>
 
       {payments.loading && <div className="flex justify-center py-8"><Spinner /></div>}
 
       {!payments.loading && (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <StatCard label="Paiements du jour" value={todayPayments.length} />
-          <StatCard label="Total encaisse aujourd'hui" value={`${todayTotal.toLocaleString()} FCFA`} />
+          <StatCard icon="receipt_long" label="Paiements du jour" value={todayPayments.length} />
+          <StatCard icon="payments" label="Total encaisse aujourd'hui" value={`${todayTotal.toLocaleString()} FCFA`} />
         </div>
       )}
     </div>
