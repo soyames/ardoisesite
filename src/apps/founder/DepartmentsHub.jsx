@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Card, CardBody } from '../../shared/ui/Card.jsx'
+import QuickActionButton from '../../shared/ui/QuickActionButton.jsx'
 import SecretaryPortal from '../secretary/SecretaryPortal.jsx'
 import HrPortal from '../hr/HrPortal.jsx'
 import ComptablePortal from '../comptable/ComptablePortal.jsx'
@@ -23,15 +23,15 @@ import CyclesPanel from './CyclesPanel.jsx'
  * between "oversight" and "operating the till", not a bug.
  */
 const DEPARTMENTS = [
-  { key: 'secretary', label: 'Secretariat', description: 'Eleves, parents, inscriptions', icon: '\u{1F4CB}', Component: SecretaryPortal },
-  { key: 'hr', label: 'RH & Paie', description: 'Personnel, contrats, paie, conges', icon: '\u{1F465}', Component: HrPortal },
-  { key: 'comptable', label: 'Comptabilite', description: 'Grand livre, validation paie, fournisseurs', icon: '\u{1F4B0}', Component: ComptablePortal },
-  { key: 'censeur', label: 'Censorat', description: 'Bulletins, discipline, heures vacataires', icon: '\u{1F393}', Component: CenseurPortal },
-  { key: 'surveillant', label: 'Surveillance', description: 'Appel, discipline', icon: '\u{1F440}', Component: SurveillantPortal },
-  { key: 'canteen', label: 'Cantine', description: 'Ventes, portefeuilles, stock', icon: '\u{1F37D}️', Component: CanteenPortal },
-  { key: 'librarian', label: 'Librairie', description: 'Catalogue, ventes, stock', icon: '\u{1F4DA}', Component: LibrarianPortal },
-  { key: 'auditor', label: 'Audit', description: 'Journal, finances, RH, communications', icon: '\u{1F50D}', Component: AuditorPortal },
-  { key: 'cycles', label: 'Cycles', description: 'Attribuer Primaire/Secondaire aux Directeurs et Censeurs', icon: '\u{1F501}', Component: CyclesPanel },
+  { key: 'secretary', label: 'Secretariat', description: 'Eleves, parents, inscriptions', icon: 'contact_page', Component: SecretaryPortal },
+  { key: 'hr', label: 'RH & Paie', description: 'Personnel, contrats, paie, conges', icon: 'badge', Component: HrPortal },
+  { key: 'comptable', label: 'Comptabilite', description: 'Grand livre, validation paie, fournisseurs', icon: 'account_balance', Component: ComptablePortal },
+  { key: 'censeur', label: 'Censorat', description: 'Bulletins, discipline, heures vacataires', icon: 'insights', Component: CenseurPortal },
+  { key: 'surveillant', label: 'Surveillance', description: 'Appel, discipline', icon: 'shield', Component: SurveillantPortal },
+  { key: 'canteen', label: 'Cantine', description: 'Ventes, portefeuilles, stock', icon: 'restaurant', Component: CanteenPortal },
+  { key: 'librarian', label: 'Librairie', description: 'Catalogue, ventes, stock', icon: 'menu_book', Component: LibrarianPortal },
+  { key: 'auditor', label: 'Audit', description: 'Journal, finances, RH, communications', icon: 'fact_check', Component: AuditorPortal },
+  { key: 'cycles', label: 'Cycles', description: 'Attribuer Primaire/Secondaire aux Directeurs et Censeurs', icon: 'sync', Component: CyclesPanel },
 ]
 
 export default function DepartmentsHub() {
@@ -56,13 +56,7 @@ export default function DepartmentsHub() {
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
       {DEPARTMENTS.map((d) => (
-        <Card key={d.key} className="cursor-pointer transition hover:-translate-y-0.5 hover:shadow-elevated" onClick={() => setActiveKey(d.key)}>
-          <CardBody className="flex flex-col items-start gap-2 p-5">
-            <span className="text-2xl">{d.icon}</span>
-            <h3 className="text-sm font-semibold text-ink">{d.label}</h3>
-            <p className="text-xs text-ink-muted">{d.description}</p>
-          </CardBody>
-        </Card>
+        <QuickActionButton key={d.key} icon={d.icon} title={d.label} description={d.description} onClick={() => setActiveKey(d.key)} />
       ))}
     </div>
   )
