@@ -1,8 +1,9 @@
 import { useApiGet } from '../../shared/hooks/useApi.js'
 import { Card, CardHeader, CardBody } from '../../shared/ui/Card.jsx'
-import Badge from '../../shared/ui/Badge.jsx'
 import Spinner from '../../shared/ui/Spinner.jsx'
 import EmptyState from '../../shared/ui/EmptyState.jsx'
+import StatCard from '../../shared/ui/StatCard.jsx'
+import ActivityList from '../../shared/ui/ActivityList.jsx'
 
 /**
  * Read-only self-view for a Role.STUDENT account - own bulletins and
@@ -39,70 +40,59 @@ export default function StudentPortal() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-xl font-semibold text-ink">Mon espace</h1>
-        <p className="mt-1 text-sm text-ink-muted">Bulletins et presence.</p>
+        <p className="text-xs font-semibold uppercase tracking-wider text-accent-700">Mon espace</p>
+        <h1 className="mt-1 text-2xl font-bold text-ink">{me.data.first_name} {me.data.last_name}</h1>
+        <p className="mt-1 text-sm text-ink-muted">
+          {me.data.current_enrollment?.classroom_name} · {me.data.current_enrollment?.academic_year_label} · Matricule {me.data.matricule}
+        </p>
       </div>
-
-      <Card>
-        <CardBody className="flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <p className="text-sm font-semibold text-ink">{me.data.first_name} {me.data.last_name}</p>
-            <p className="text-xs text-ink-muted">
-              {me.data.current_enrollment?.classroom_name} · {me.data.current_enrollment?.academic_year_label} · Matricule {me.data.matricule}
-            </p>
-          </div>
-        </CardBody>
-      </Card>
 
       {!enrollmentId && (
         <EmptyState title="Aucune inscription active" description="Vos bulletins et votre presence apparaitront ici une fois inscrit." />
       )}
 
       {enrollmentId && (
-        <div className="grid gap-6 lg:grid-cols-2">
-          <Card>
-            <CardHeader title="Bulletins" subtitle="Publies par l'ecole" />
-            <CardBody>
-              {bulletins.loading && <Spinner />}
-              {!bulletins.loading && (!bulletins.data || bulletins.data.length === 0) && (
-                <EmptyState title="Aucun bulletin publie pour l'instant" />
-              )}
-              <ul className="space-y-2">
-                {bulletins.data?.map((b) => (
-                  <li key={b.id} className="flex items-center justify-between rounded-control border border-border p-3">
-                    <div>
-                      <p className="text-sm font-medium text-ink">{b.exam_period_label}</p>
-                      <p className="text-xs text-ink-muted">
-                        Moyenne {b.average} · Rang {b.class_rank}/{b.class_size}
-                      </p>
-                    </div>
-                    <Badge tone="success">Publie</Badge>
-                  </li>
-                ))}
-              </ul>
-            </CardBody>
-          </Card>
+        <>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <StatCard icon="fact_check" label="Bulletins publies" value={bulletins.data?.length || 0} />
+            <StatCard icon="event_busy" label="Absences enregistrees" value={absenceCount} tone={absenceCount > 0 ? 'warning' : 'success'} />
+          </div>
 
-          <Card>
-            <CardHeader title="Presence" subtitle={`${absenceCount} absence(s) enregistree(s)`} />
-            <CardBody>
-              {attendance.loading && <Spinner />}
-              {!attendance.loading && (!attendance.data || attendance.data.length === 0) && (
-                <EmptyState title="Aucun enregistrement de presence" />
+          <div className="grid gap-6 lg:grid-cols-2">
+            <Card>
+              <CardHeader title="Bulletins" subtitle="Publies par l'ecole" />
+              {bulletins.loading && <div className="flex justify-center py-8"><Spinner /></div>}
+              {!bulletins.loading && (
+                <ActivityList
+                  emptyLabel="Aucun bulletin publie pour l'instant."
+                  items={(bulletins.data || []).map((b) => ({
+                    id: b.id, icon: 'fact_check', iconTone: 'success',
+                    title: b.exam_period_label, subtitle: `Moyenne ${b.average} - Rang ${b.class_rank}/${b.class_size}`,
+                    badge: 'Publie', badgeTone: 'success',
+                  }))}
+                />
               )}
-              <ul className="max-h-64 space-y-2 overflow-y-auto">
-                {attendance.data?.slice(0, 20).map((a) => (
-                  <li key={a.id} className="flex items-center justify-between rounded-control border border-border p-3">
-                    <p className="text-sm text-ink">{a.date}</p>
-                    <Badge tone={a.state === 'present' ? 'success' : a.state.startsWith('absent') ? 'danger' : 'warning'}>
-                      {a.state}
-                    </Badge>
-                  </li>
-                ))}
-              </ul>
-            </CardBody>
-          </Card>
-        </div>
+            </Card>
+
+            <Card>
+              <CardHeader title="Presence" subtitle={`${absenceCount} absence(s) enregistree(s)`} />
+              {attendance.loading && <div className="flex justify-center py-8"><Spinner /></div>}
+              {!attendance.loading && (
+                <div className="max-h-64 overflow-y-auto">
+                  <ActivityList
+                    emptyLabel="Aucun enregistrement de presence."
+                    items={(attendance.data || []).slice(0, 20).map((a) => ({
+                      id: a.id, icon: a.state === 'present' ? 'check_circle' : a.state.startsWith('absent') ? 'cancel' : 'schedule',
+                      iconTone: a.state === 'present' ? 'success' : a.state.startsWith('absent') ? 'danger' : 'warning',
+                      title: a.date,
+                      badge: a.state, badgeTone: a.state === 'present' ? 'success' : a.state.startsWith('absent') ? 'danger' : 'warning',
+                    }))}
+                  />
+                </div>
+              )}
+            </Card>
+          </div>
+        </>
       )}
     </div>
   )

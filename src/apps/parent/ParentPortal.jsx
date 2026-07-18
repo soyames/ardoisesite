@@ -10,6 +10,8 @@ import Button from '../../shared/ui/Button.jsx'
 import Badge from '../../shared/ui/Badge.jsx'
 import Spinner from '../../shared/ui/Spinner.jsx'
 import EmptyState from '../../shared/ui/EmptyState.jsx'
+import StatCard from '../../shared/ui/StatCard.jsx'
+import ActivityList from '../../shared/ui/ActivityList.jsx'
 
 /**
  * Everything a parent can see about their own children -- bulletins,
@@ -141,69 +143,59 @@ function ChildDetail({ child, parentId }) {
         </CardBody>
       </Card>
 
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <StatCard icon="fact_check" label="Bulletins publies" value={bulletins.data?.length || 0} />
+        <StatCard icon="event_busy" label="Absences enregistrees" value={absenceCount} tone={absenceCount > 0 ? 'warning' : 'success'} />
+        <StatCard icon="gavel" label="Mesures disciplinaires" value={discipline.data?.length || 0} tone={discipline.data?.length > 0 ? 'warning' : 'success'} />
+      </div>
+
       <div className="grid gap-6 lg:grid-cols-2">
         <Card>
           <CardHeader title="Bulletins" subtitle="Publies par l'ecole" />
-          <CardBody>
-            {bulletins.loading && <Spinner />}
-            {!bulletins.loading && (!bulletins.data || bulletins.data.length === 0) && (
-              <EmptyState title="Aucun bulletin publie pour l'instant" />
-            )}
-            <ul className="space-y-2">
-              {bulletins.data?.map((b) => (
-                <li key={b.id} className="flex items-center justify-between rounded-control border border-border p-3">
-                  <div>
-                    <p className="text-sm font-medium text-ink">{b.exam_period_label}</p>
-                    <p className="text-xs text-ink-muted">
-                      Moyenne {b.average} · Rang {b.class_rank}/{b.class_size}
-                    </p>
-                  </div>
-                  <Badge tone="success">Publie</Badge>
-                </li>
-              ))}
-            </ul>
-          </CardBody>
+          {bulletins.loading && <div className="flex justify-center py-8"><Spinner /></div>}
+          {!bulletins.loading && (
+            <ActivityList
+              emptyLabel="Aucun bulletin publie pour l'instant."
+              items={(bulletins.data || []).map((b) => ({
+                id: b.id, icon: 'fact_check', iconTone: 'success',
+                title: b.exam_period_label, subtitle: `Moyenne ${b.average} - Rang ${b.class_rank}/${b.class_size}`,
+                badge: 'Publie', badgeTone: 'success',
+              }))}
+            />
+          )}
         </Card>
 
         <Card>
           <CardHeader title="Presence" subtitle={`${absenceCount} absence(s) enregistree(s)`} />
-          <CardBody>
-            {attendance.loading && <Spinner />}
-            {!attendance.loading && (!attendance.data || attendance.data.length === 0) && (
-              <EmptyState title="Aucun enregistrement de presence" />
-            )}
-            <ul className="max-h-64 space-y-2 overflow-y-auto">
-              {attendance.data?.slice(0, 20).map((a) => (
-                <li key={a.id} className="flex items-center justify-between rounded-control border border-border p-3">
-                  <p className="text-sm text-ink">{a.date}</p>
-                  <Badge tone={a.state === 'present' ? 'success' : a.state.startsWith('absent') ? 'danger' : 'warning'}>
-                    {a.state}
-                  </Badge>
-                </li>
-              ))}
-            </ul>
-          </CardBody>
+          {attendance.loading && <div className="flex justify-center py-8"><Spinner /></div>}
+          {!attendance.loading && (
+            <div className="max-h-64 overflow-y-auto">
+              <ActivityList
+                emptyLabel="Aucun enregistrement de presence."
+                items={(attendance.data || []).slice(0, 20).map((a) => ({
+                  id: a.id, icon: a.state === 'present' ? 'check_circle' : a.state.startsWith('absent') ? 'cancel' : 'schedule',
+                  iconTone: a.state === 'present' ? 'success' : a.state.startsWith('absent') ? 'danger' : 'warning',
+                  title: a.date,
+                  badge: a.state, badgeTone: a.state === 'present' ? 'success' : a.state.startsWith('absent') ? 'danger' : 'warning',
+                }))}
+              />
+            </div>
+          )}
         </Card>
 
         <Card>
           <CardHeader title="Discipline" subtitle="Mesures approuvees" />
-          <CardBody>
-            {discipline.loading && <Spinner />}
-            {!discipline.loading && (!discipline.data || discipline.data.length === 0) && (
-              <EmptyState title="Aucune mesure disciplinaire" description="C'est une bonne nouvelle." />
-            )}
-            <ul className="space-y-2">
-              {discipline.data?.map((d) => (
-                <li key={d.id} className="rounded-control border border-border p-3">
-                  <div className="flex items-center justify-between">
-                    <p className="text-sm font-medium text-ink">{d.measure}</p>
-                    <Badge tone="warning">{d.date}</Badge>
-                  </div>
-                  <p className="mt-1 text-xs text-ink-muted">{d.reason}</p>
-                </li>
-              ))}
-            </ul>
-          </CardBody>
+          {discipline.loading && <div className="flex justify-center py-8"><Spinner /></div>}
+          {!discipline.loading && (
+            <ActivityList
+              emptyLabel="Aucune mesure disciplinaire - c'est une bonne nouvelle."
+              items={(discipline.data || []).map((d) => ({
+                id: d.id, icon: 'gavel', iconTone: 'warning',
+                title: d.measure, subtitle: d.reason,
+                badge: d.date, badgeTone: 'warning',
+              }))}
+            />
+          )}
         </Card>
 
         <Card>
