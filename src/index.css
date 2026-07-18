@@ -12,9 +12,20 @@
   would carry it, since nothing downstream hardcodes a color).
 
   Palette reasoning: "ardoise" is French for slate/chalkboard, so
-  primary is a deep slate-blue (the board), and accent is a warm
-  chalk-gold (the chalk) -- legible, professional, not generic SaaS
-  blue-and-nothing-else.
+  primary is a deep warm charcoal (the board), and accent is a
+  terracotta-gold (the chalk) -- legible, professional, not generic
+  SaaS blue-and-nothing-else.
+
+  Palette source: brand/DESIGN.md ("Academic Precision") in the
+  ardoise backend repo. Primary derives from anchor #2B2621, accent
+  from #B37640, background from #F7F3EA, surface from #FFFFFF,
+  neutral (ink-muted) from #6B6661, and the danger ramp from the
+  Material-style error token #ba1a1a. Tonal ramps are generated in
+  OKLCH by holding each anchor's hue constant (or following its
+  original hue-twist curve, for accent) and scaling the chroma
+  envelope to match the anchor's chroma at the closest lightness
+  step -- see the ramp comments below for the exact anchor + scale
+  factor used.
 */
 /*
   Explicit source scoping: Tailwind v4's automatic content detection
@@ -28,32 +39,45 @@
 @import "tailwindcss" source("./");
 
 @theme {
-  --font-sans: "Inter", ui-sans-serif, system-ui, "Segoe UI", Roboto, sans-serif;
+  --font-sans: "Hanken Grotesk", ui-sans-serif, system-ui, "Segoe UI", Roboto, sans-serif;
 
-  /* Primary -- the chalkboard. Used for nav, primary actions, headers. */
-  --color-primary-50: oklch(0.97 0.012 240);
-  --color-primary-100: oklch(0.93 0.024 240);
-  --color-primary-200: oklch(0.86 0.045 240);
-  --color-primary-300: oklch(0.76 0.065 240);
-  --color-primary-400: oklch(0.64 0.08 240);
-  --color-primary-500: oklch(0.53 0.085 240);
-  --color-primary-600: oklch(0.44 0.08 240);
-  --color-primary-700: oklch(0.36 0.07 240);
-  --color-primary-800: oklch(0.28 0.055 240);
-  --color-primary-900: oklch(0.21 0.04 240);
-  --color-primary-950: oklch(0.15 0.03 240);
+  /* Primary -- the chalkboard, a deep warm charcoal (Academic Precision
+     anchor #2B2621 -> oklch(0.2724 0.0117 67.3)). Used for nav, primary
+     actions, headers. Ramp holds the anchor's hue (67.3) constant and
+     scales the old ramp's chroma envelope by 0.2129 (anchor chroma /
+     old chroma at the 800 step, the closest lightness match) so the
+     shape of the tonal curve is preserved but the saturation matches
+     this much more desaturated, near-neutral warm gray. */
+  --color-primary-50: oklch(0.97 0.0026 67.3);
+  --color-primary-100: oklch(0.93 0.0051 67.3);
+  --color-primary-200: oklch(0.86 0.0096 67.3);
+  --color-primary-300: oklch(0.76 0.0138 67.3);
+  --color-primary-400: oklch(0.64 0.017 67.3);
+  --color-primary-500: oklch(0.53 0.0181 67.3);
+  --color-primary-600: oklch(0.44 0.017 67.3);
+  --color-primary-700: oklch(0.36 0.0149 67.3);
+  --color-primary-800: oklch(0.28 0.0117 67.3);
+  --color-primary-900: oklch(0.21 0.0085 67.3);
+  --color-primary-950: oklch(0.15 0.0064 67.3);
 
-  /* Accent -- the chalk. Used sparingly: CTAs, highlights, active states. */
-  --color-accent-50: oklch(0.97 0.03 85);
-  --color-accent-100: oklch(0.93 0.06 85);
-  --color-accent-200: oklch(0.87 0.1 85);
-  --color-accent-300: oklch(0.8 0.13 82);
-  --color-accent-400: oklch(0.74 0.15 78);
-  --color-accent-500: oklch(0.68 0.16 72);
-  --color-accent-600: oklch(0.58 0.15 62);
-  --color-accent-700: oklch(0.48 0.13 55);
-  --color-accent-800: oklch(0.38 0.1 50);
-  --color-accent-900: oklch(0.3 0.08 48);
+  /* Accent -- the chalk, a terracotta-gold (Academic Precision anchor
+     #B37640 -> oklch(0.6188 0.1038 60.5)). Used sparingly: CTAs,
+     highlights, active states. The original ramp already used a hue
+     twist (85 at the light end down to 48 at the dark end, i.e. gold
+     lightening to terracotta darkening); that curve happens to pass
+     within ~1.5deg of the anchor's hue at the closest lightness step
+     (600), so it's kept as-is. Chroma is scaled by 0.6922 (anchor
+     chroma / old chroma at that same 600 step). */
+  --color-accent-50: oklch(0.97 0.0208 85);
+  --color-accent-100: oklch(0.93 0.0415 85);
+  --color-accent-200: oklch(0.87 0.0692 85);
+  --color-accent-300: oklch(0.8 0.09 82);
+  --color-accent-400: oklch(0.74 0.1038 78);
+  --color-accent-500: oklch(0.68 0.1108 72);
+  --color-accent-600: oklch(0.58 0.1038 62);
+  --color-accent-700: oklch(0.48 0.09 55);
+  --color-accent-800: oklch(0.38 0.0692 50);
+  --color-accent-900: oklch(0.3 0.0554 48);
 
   /* Semantic status colors -- used for badges, alerts, approval states
      (pending/approved/rejected show up a lot across the school's
@@ -68,10 +92,15 @@
   --color-warning-600: oklch(0.6 0.15 75);
   --color-warning-700: oklch(0.48 0.13 65);
 
-  --color-danger-50: oklch(0.96 0.03 25);
-  --color-danger-500: oklch(0.58 0.19 25);
-  --color-danger-600: oklch(0.5 0.19 25);
-  --color-danger-700: oklch(0.42 0.18 25);
+  /* Danger -- mapped to Academic Precision's error token (#ba1a1a ->
+     oklch(0.506 0.1927 27.7)), which sits almost exactly on the old
+     600 step already (old L 0.5 vs anchor L 0.506). Hue nudged from
+     25 to 27.7 and chroma scaled by 1.014 (near-identity) to land
+     the anchor precisely at 600. */
+  --color-danger-50: oklch(0.96 0.0304 27.7);
+  --color-danger-500: oklch(0.58 0.1927 27.7);
+  --color-danger-600: oklch(0.5 0.1927 27.7);
+  --color-danger-700: oklch(0.42 0.1825 27.7);
 
   --color-info-50: oklch(0.96 0.02 235);
   --color-info-500: oklch(0.58 0.12 235);
@@ -87,8 +116,12 @@
   --radius-card: 0.75rem;
   --radius-control: 0.5rem;
 
-  --shadow-card: 0 1px 2px 0 oklch(0.2 0 0 / 0.04), 0 1px 3px 0 oklch(0.2 0 0 / 0.06);
-  --shadow-elevated: 0 4px 8px -2px oklch(0.2 0 0 / 0.08), 0 2px 4px -2px oklch(0.2 0 0 / 0.04);
+  /* DESIGN.md: "Shadows should be low-opacity (10%) using the Primary
+     color (#2B2621) as the tint, never pure black." Same alpha/blur
+     values as before, tint swapped from neutral black to primary's
+     hue. */
+  --shadow-card: 0 1px 2px 0 oklch(0.27 0.012 67.3 / 0.04), 0 1px 3px 0 oklch(0.27 0.012 67.3 / 0.06);
+  --shadow-elevated: 0 4px 8px -2px oklch(0.27 0.012 67.3 / 0.08), 0 2px 4px -2px oklch(0.27 0.012 67.3 / 0.04);
 }
 
 @layer base {
@@ -97,24 +130,69 @@
   }
 
   :root {
-    --theme-surface: oklch(0.99 0.002 240);
+    /* Light theme, mapped straight from DESIGN.md's own tokens:
+       surface = Background #F7F3EA, surface-raised = Surface #FFFFFF
+       (cards/tables/inputs), border = the #E5E1D8 card-border value
+       from the Components section, ink = Primary #2B2621 (headings/
+       nav/text), ink-muted = Neutral #6B6661 (secondary text/icons). */
+    --theme-surface: oklch(0.9648 0.0127 86.83);
     --theme-surface-raised: oklch(1 0 0);
-    --theme-border: oklch(0.9 0.006 240);
-    --theme-ink: oklch(0.22 0.015 240);
-    --theme-ink-muted: oklch(0.48 0.012 240);
-    
-    --shadow-card: 0 4px 6px -1px oklch(0 0 0 / 0.05), 0 2px 4px -2px oklch(0 0 0 / 0.05);
-    --shadow-elevated: 0 10px 15px -3px oklch(0 0 0 / 0.08), 0 4px 6px -4px oklch(0 0 0 / 0.08);
+    --theme-border: oklch(0.9104 0.0129 86.83);
+    --theme-ink: oklch(0.2724 0.0117 67.3);
+    --theme-ink-muted: oklch(0.5133 0.01 67.6);
+
+    --shadow-card: 0 4px 6px -1px oklch(0.27 0.012 67.3 / 0.05), 0 2px 4px -2px oklch(0.27 0.012 67.3 / 0.05);
+    --shadow-elevated: 0 10px 15px -3px oklch(0.27 0.012 67.3 / 0.08), 0 4px 6px -4px oklch(0.27 0.012 67.3 / 0.08);
   }
 
   @media (prefers-color-scheme: dark) {
     :root {
-      --theme-surface: oklch(0.12 0.02 240);
-      --theme-surface-raised: oklch(0.17 0.03 240);
-      --theme-border: oklch(0.24 0.04 240);
-      --theme-ink: oklch(0.97 0.01 240);
-      --theme-ink-muted: oklch(0.7 0.03 240);
-      
+      /* Dark theme -- not a value-invert. Luminance relationship is
+         flipped properly: base surface is the darkest layer, raised
+         surfaces (cards/inputs) step UP in lightness above it (the
+         opposite of light mode, where raised is brighter/white and
+         base is the dimmer cream). Hue stays the same warm ~60-67deg
+         family as the light palette so it still reads as the same
+         charcoal/terracotta system, just re-lit.
+
+         ink/ink-muted are taken directly from DESIGN.md's own dark-
+         surface YAML tokens: inverse-on-surface (#f7efe9, a warm
+         off-white -- never pure #fff, per the brief) for primary
+         text, inverse-primary (#cec5bd, a muted warm light gray) for
+         secondary text. surface/surface-raised/border don't have a
+         DESIGN.md dark equivalent to source from (the brief only
+         defines a light scheme), so they're hand-tuned: L 0.16 for
+         the page background, L 0.23 for raised cards (a full step up
+         so cards actually read as "elevated" against the page, not
+         near-invisible), L 0.44 for borders/dividers.
+
+         Contrast checked against WCAG relative luminance: ink on
+         surface ~17:1, ink-muted on surface ~11:1, ink on raised
+         ~15:1 -- all comfortably AAA for body text in a data-dense
+         table/form UI. Border-on-surface lands ~2.4-2.7:1, which is
+         below the strict 3:1 non-text-contrast guideline, but it
+         matches the light theme's own border, which is even more
+         subtle (~1.3:1 against its raised surface) by deliberate
+         "structure without visual clutter" design intent -- see
+         DESIGN.md's Outlines guidance. Flagging this as a judgment
+         call rather than silently deciding: if dark-mode dividers
+         prove too faint in practice, --theme-border's L can be
+         raised (e.g. to ~0.50-0.54) to clear 3:1 without touching
+         hue/chroma. */
+      --theme-surface: oklch(0.16 0.008 67);
+      --theme-surface-raised: oklch(0.23 0.012 67);
+      --theme-border: oklch(0.44 0.022 58);
+      --theme-ink: oklch(0.9567 0.0118 59.57);
+      --theme-ink-muted: oklch(0.8285 0.015 64.3);
+
+      /* Dark-mode shadows are left as neutral black (unlike the
+         primary-tinted light-mode shadows above) -- DESIGN.md's
+         "never pure black" shadow guidance is written for elevation
+         on a light cream background; against an already-dark warm
+         charcoal surface a primary-tinted shadow would barely
+         register, and plain black remains the standard, correct
+         choice for dark-UI elevation. Alpha values unchanged from
+         before. */
       --shadow-card: 0 4px 6px -1px oklch(0 0 0 / 0.3), 0 2px 4px -2px oklch(0 0 0 / 0.3);
       --shadow-elevated: 0 10px 15px -3px oklch(0 0 0 / 0.4), 0 4px 6px -4px oklch(0 0 0 / 0.4);
     }
