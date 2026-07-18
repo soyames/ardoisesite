@@ -62,8 +62,9 @@ function DashboardTab({ onNavigate }) {
   const pendingDiscipline = useApiGet('/api/academics/discipline/pending-approval/')
   const openIncidents = useApiGet('/api/academics/incidents/?status=open')
   const pendingTimeLogs = useApiGet('/api/hr/time-logs/?is_confirmed=false')
+  const summary = useApiGet('/api/academics/bulletins/school-summary/')
 
-  const loading = pendingBulletins.loading || pendingDiscipline.loading || openIncidents.loading || pendingTimeLogs.loading
+  const loading = pendingBulletins.loading || pendingDiscipline.loading || openIncidents.loading || pendingTimeLogs.loading || summary.loading
 
   return (
     <div className="space-y-4">
@@ -93,6 +94,53 @@ function DashboardTab({ onNavigate }) {
             <StatCard label="Incidents ouverts" value={openIncidents.data?.length || 0} tone={openIncidents.data?.length > 0 ? 'accent' : 'success'} />
             <StatCard label="Heures a confirmer" value={pendingTimeLogs.data?.length || 0} tone={pendingTimeLogs.data?.length > 0 ? 'accent' : 'success'} />
           </div>
+
+          {summary.data?.overall_average != null && (
+            <Card>
+              <CardHeader title="Performance moyenne" subtitle="Derniere periode d'examen avec bulletins" />
+              <CardBody>
+                <div className="flex items-baseline justify-between">
+                  <p className="text-3xl font-bold text-ink">{summary.data.overall_average}<span className="text-base font-normal text-ink-muted">/20</span></p>
+                </div>
+                <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-surface">
+                  <div
+                    className="h-full rounded-full bg-primary-600"
+                    style={{ width: `${Math.min(100, (summary.data.overall_average / 20) * 100)}%` }}
+                  />
+                </div>
+              </CardBody>
+            </Card>
+          )}
+
+          {summary.data?.levels?.length > 0 && (
+            <Card>
+              <CardHeader title="Repartition des notes par niveau" />
+              <CardBody className="overflow-x-auto p-0">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-border text-left text-xs text-ink-muted">
+                      <th className="p-3">Niveau</th>
+                      <th className="p-3">Moyenne</th>
+                      <th className="p-3">Statut</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border">
+                    {summary.data.levels.map((row) => (
+                      <tr key={row.level}>
+                        <td className="p-3 text-ink">{row.level_label}</td>
+                        <td className="p-3 tabular-nums text-ink">{row.average}/20</td>
+                        <td className="p-3">
+                          <Badge tone={row.status === 'on_track' ? 'success' : 'warning'}>
+                            {row.status === 'on_track' ? 'Sur la bonne voie' : 'A surveiller'}
+                          </Badge>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </CardBody>
+            </Card>
+          )}
 
           <Card>
             <CardHeader title="Incidents recents" subtitle="Signales par la surveillance" />
