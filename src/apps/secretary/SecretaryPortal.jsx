@@ -11,6 +11,7 @@ import PortalTabs from '../../shared/ui/PortalTabs.jsx'
 import StatCard from '../../shared/ui/StatCard.jsx'
 import ActivityList from '../../shared/ui/ActivityList.jsx'
 import QuickActionButton from '../../shared/ui/QuickActionButton.jsx'
+import Icon from '../../shared/ui/Icon.jsx'
 import LetterheadSettings from '../../shared/components/LetterheadSettings.jsx'
 import Encaissement from '../../shared/components/Encaissement.jsx'
 
@@ -167,6 +168,7 @@ function DashboardTab({ onNavigate }) {
 function StudentsTab() {
   const students = useApiGet('/api/students/students/')
   const [showForm, setShowForm] = useState(false)
+  const [selectedId, setSelectedId] = useState(null)
   const [form, setForm] = useState({ matricule: '', first_name: '', last_name: '', sex: 'M', date_of_birth: '', birth_place: '' })
   const [error, setError] = useState(null)
   const [submitting, setSubmitting] = useState(false)
@@ -185,6 +187,10 @@ function StudentsTab() {
     } finally {
       setSubmitting(false)
     }
+  }
+
+  if (selectedId) {
+    return <StudentProfile studentId={selectedId} onBack={() => setSelectedId(null)} onUpdated={students.refetch} />
   }
 
   return (
@@ -224,17 +230,193 @@ function StudentsTab() {
           )}
           <ul className="divide-y divide-border">
             {students.data?.map((s) => (
-              <li key={s.id} className="flex items-center justify-between p-4">
-                <div>
-                  <p className="text-sm font-medium text-ink">{s.last_name} {s.first_name}</p>
-                  <p className="text-xs text-ink-muted">{s.matricule} {s.date_of_birth && `- ne(e) le ${s.date_of_birth}`}</p>
+              <li
+                key={s.id}
+                onClick={() => setSelectedId(s.id)}
+                className="flex cursor-pointer items-center justify-between p-4 transition hover:bg-surface-hover"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary-100 text-xs font-bold text-primary-700">
+                    {s.first_name?.[0]}{s.last_name?.[0]}
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-ink">{s.last_name} {s.first_name}</p>
+                    <p className="text-xs text-ink-muted">{s.matricule} {s.date_of_birth && `- ne(e) le ${s.date_of_birth}`}</p>
+                  </div>
                 </div>
-                <Badge tone={s.status === 'active' ? 'success' : 'neutral'}>{s.status || 'active'}</Badge>
+                <div className="flex items-center gap-2">
+                  <Badge tone={s.status === 'active' ? 'success' : 'neutral'}>{s.status || 'active'}</Badge>
+                  <Icon name="chevron_right" className="text-ink-muted" />
+                </div>
               </li>
             ))}
           </ul>
         </CardBody>
       </Card>
+    </div>
+  )
+}
+
+function StudentProfile({ studentId, onBack, onUpdated }) {
+  const student = useApiGet(`/api/students/students/${studentId}/`)
+  const enrollments = useApiGet(`/api/students/enrollments/?student=${studentId}`)
+  const guardianships = useApiGet(`/api/students/guardianships/?student=${studentId}`)
+  const currentEnrollment = enrollments.data?.find((e) => e.is_active) || enrollments.data?.[0]
+  const bulletins = useApiGet(currentEnrollment ? `/api/academics/bulletins/?enrollment=${currentEnrollment.id}` : null, { skip: !currentEnrollment })
+  const attendance = useApiGet(currentEnrollment ? `/api/academics/attendance/?enrollment=${currentEnrollment.id}` : null, { skip: !currentEnrollment })
+
+  const [editing, setEditing] = useState(false)
+  const [form, setForm] = useState(null)
+  const [error, setError] = useState(null)
+  const [saving, setSaving] = useState(false)
+
+  const startEditing = () => {
+    setForm({
+      matricule: student.data.matricule, first_name: student.data.first_name, last_name: student.data.last_name,
+      sex: student.data.sex, date_of_birth: student.data.date_of_birth || '', birth_place: student.data.birth_place || '',
+    })
+    setEditing(true)
+  }
+
+  const save = async (e) => {
+    e.preventDefault()
+    setSaving(true)
+    setError(null)
+    try {
+      await api.patch(`/api/students/students/${studentId}/`, form)
+      setEditing(false)
+      student.refetch()
+      onUpdated()
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'Erreur inattendue.')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const absenceCount = attendance.data?.filter((a) => a.state.startsWith('absent')).length ?? 0
+
+  if (student.loading) {
+    return <div className="flex justify-center py-10"><Spinner /></div>
+  }
+  if (!student.data) {
+    return <EmptyState title="Eleve introuvable" />
+  }
+
+  return (
+    <div className="space-y-6">
+      <button onClick={onBack} className="flex items-center gap-1 text-sm font-medium text-primary-600 hover:text-primary-700">
+        <Icon name="arrow_back" className="text-base" /> Retour aux eleves
+      </button>
+
+      <Card>
+        <CardBody className="flex flex-wrap items-center justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary-100 text-xl font-bold text-primary-700">
+              {student.data.first_name?.[0]}{student.data.last_name?.[0]}
+            </div>
+            <div>
+              <h2 className="text-xl font-bold text-ink">{student.data.last_name} {student.data.first_name}</h2>
+              <p className="text-sm text-ink-muted">
+                {student.data.matricule} - {currentEnrollment?.classroom_name || 'Non inscrit(e)'}
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <Badge tone={student.data.status === 'active' ? 'success' : 'neutral'}>{student.data.status || 'active'}</Badge>
+            <Button size="sm" variant="secondary" onClick={startEditing}>Modifier</Button>
+          </div>
+        </CardBody>
+      </Card>
+
+      {editing && (
+        <Card>
+          <CardHeader title="Modifier la fiche eleve" />
+          <CardBody>
+            <form onSubmit={save} className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <input required className={INPUT_CLASS} placeholder="Matricule" value={form.matricule} onChange={(e) => setForm({ ...form, matricule: e.target.value })} />
+              <select className={INPUT_CLASS} value={form.sex} onChange={(e) => setForm({ ...form, sex: e.target.value })}>
+                <option value="M">Masculin</option>
+                <option value="F">Feminin</option>
+              </select>
+              <input required className={INPUT_CLASS} placeholder="Prenom" value={form.first_name} onChange={(e) => setForm({ ...form, first_name: e.target.value })} />
+              <input required className={INPUT_CLASS} placeholder="Nom" value={form.last_name} onChange={(e) => setForm({ ...form, last_name: e.target.value })} />
+              <input type="date" className={INPUT_CLASS} value={form.date_of_birth} onChange={(e) => setForm({ ...form, date_of_birth: e.target.value })} />
+              <input className={INPUT_CLASS} placeholder="Lieu de naissance" value={form.birth_place} onChange={(e) => setForm({ ...form, birth_place: e.target.value })} />
+              {error && <p className="text-sm text-danger-600 sm:col-span-2">{error}</p>}
+              <div className="flex gap-2 sm:col-span-2">
+                <Button type="submit" disabled={saving}>{saving ? 'Enregistrement...' : 'Enregistrer'}</Button>
+                <Button type="button" variant="ghost" onClick={() => setEditing(false)}>Annuler</Button>
+              </div>
+            </form>
+          </CardBody>
+        </Card>
+      )}
+
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <StatCard icon="school" label="Inscriptions" value={enrollments.data?.length || 0} />
+        <StatCard icon="fact_check" label="Bulletins publies" value={bulletins.data?.length || 0} />
+        <StatCard icon="event_busy" label="Absences" value={absenceCount} tone={absenceCount > 0 ? 'warning' : 'success'} />
+      </div>
+
+      <div className="grid gap-6 lg:grid-cols-2">
+        <Card>
+          <CardHeader title="Tuteurs lies" />
+          <ActivityList
+            emptyLabel="Aucun tuteur lie a cet eleve."
+            items={(guardianships.data || []).map((g) => ({
+              id: g.id, icon: 'family_restroom', iconTone: 'primary',
+              title: g.parent_name, subtitle: g.relation,
+              badge: g.is_primary_payer ? 'Payeur principal' : undefined, badgeTone: 'neutral',
+            }))}
+          />
+        </Card>
+
+        <Card>
+          <CardHeader title="Historique des inscriptions" />
+          <ActivityList
+            emptyLabel="Aucune inscription enregistree."
+            items={(enrollments.data || []).map((e) => ({
+              id: e.id, icon: 'school', iconTone: e.is_active ? 'success' : 'primary',
+              title: e.classroom_name, subtitle: `Inscrit le ${e.enrolled_on}`,
+              badge: e.is_active ? 'Actif' : 'Inactif', badgeTone: e.is_active ? 'success' : 'neutral',
+            }))}
+          />
+        </Card>
+
+        <Card>
+          <CardHeader title="Bulletins" subtitle="Publies par l'ecole" />
+          {bulletins.loading && <div className="flex justify-center py-8"><Spinner /></div>}
+          {!bulletins.loading && (
+            <ActivityList
+              emptyLabel="Aucun bulletin publie pour l'instant."
+              items={(bulletins.data || []).map((b) => ({
+                id: b.id, icon: 'fact_check', iconTone: 'success',
+                title: b.exam_period_label, subtitle: `Moyenne ${b.average} - Rang ${b.class_rank}/${b.class_size}`,
+                badge: 'Publie', badgeTone: 'success',
+              }))}
+            />
+          )}
+        </Card>
+
+        <Card>
+          <CardHeader title="Presence" subtitle={`${absenceCount} absence(s) enregistree(s)`} />
+          {attendance.loading && <div className="flex justify-center py-8"><Spinner /></div>}
+          {!attendance.loading && (
+            <div className="max-h-64 overflow-y-auto">
+              <ActivityList
+                emptyLabel="Aucun enregistrement de presence."
+                items={(attendance.data || []).slice(0, 20).map((a) => ({
+                  id: a.id, icon: a.state === 'present' ? 'check_circle' : a.state.startsWith('absent') ? 'cancel' : 'schedule',
+                  iconTone: a.state === 'present' ? 'success' : a.state.startsWith('absent') ? 'danger' : 'warning',
+                  title: a.date,
+                  badge: a.state, badgeTone: a.state === 'present' ? 'success' : a.state.startsWith('absent') ? 'danger' : 'warning',
+                }))}
+              />
+            </div>
+          )}
+        </Card>
+      </div>
     </div>
   )
 }
