@@ -2,11 +2,13 @@ import { useState } from 'react'
 import MessagesPanel from './MessagesPanel.jsx'
 import TasksPanel from './TasksPanel.jsx'
 import DocumentsPanel from './DocumentsPanel.jsx'
+import SignaturesPanel from './SignaturesPanel.jsx'
 
 const TABS = [
   { key: 'messages', label: 'Messages' },
   { key: 'tasks', label: 'Taches' },
   { key: 'documents', label: 'Documents' },
+  { key: 'signatures', label: 'Signatures' },
 ]
 
 /**
@@ -47,6 +49,7 @@ export default function CollabHub() {
         {tab === 'messages' && <MessagesPanel />}
         {tab === 'tasks' && <TasksPanel />}
         {tab === 'documents' && <DocumentsPanel />}
+        {tab === 'signatures' && <SignaturesPanel />}
       </div>
     </div>
   )
