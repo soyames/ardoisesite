@@ -12,6 +12,11 @@ const INPUT_CLASS =
 
 const CYCLE_LABELS = { primary: 'Primaire', secondary: 'Secondaire', '': 'Les deux cycles' }
 
+const CREATABLE_ROLES = [
+  { value: 'director', label: 'Directeur' },
+  { value: 'censeur', label: 'Censeur' },
+]
+
 /**
  * Founder assigns which cycle (Primaire/Secondaire) each Director/
  * Censeur oversees - see the 2026-07-17-cycle-scope-wiring CEO plan.
@@ -26,6 +31,8 @@ export default function CyclesPanel() {
   const staff = useApiGet('/api/collab/staff-directory/')
   const [busyId, setBusyId] = useState(null)
   const [error, setError] = useState(null)
+  const [showCreateForm, setShowCreateForm] = useState(false)
+  const [createdAccount, setCreatedAccount] = useState(null)
 
   const scopableStaff = (staff.data || []).filter((s) => s.role === 'director' || s.role === 'censeur')
 
@@ -40,6 +47,12 @@ export default function CyclesPanel() {
     } finally {
       setBusyId(null)
     }
+  }
+
+  const handleAccountCreated = (account) => {
+    setCreatedAccount(account)
+    setShowCreateForm(false)
+    staff.refetch()
   }
 
   const primaryStaff = scopableStaff.filter((s) => s.cycle_scope === 'primary')
@@ -73,6 +86,30 @@ export default function CyclesPanel() {
       )}
 
       {error && <p className="text-sm text-danger-600">{error}</p>}
+      {staff.error && (
+        <p className="text-sm text-danger-600">
+          {staff.error instanceof ApiError ? staff.error.message : "Impossible de charger le registre du personnel."}
+        </p>
+      )}
+
+      {createdAccount && (
+        <div className="rounded-control border border-success-200 bg-success-50 p-4">
+          <p className="text-sm font-medium text-success-700">
+            Compte cree pour {createdAccount.full_name} ({createdAccount.email}).
+          </p>
+          {createdAccount.temporary_password ? (
+            <p className="mt-1 text-sm text-success-700">
+              Mot de passe temporaire : <span className="font-mono font-semibold">{createdAccount.temporary_password}</span>
+              {' '}- a transmettre a la personne concernee ; elle pourra le changer depuis son profil.
+            </p>
+          ) : (
+            <p className="mt-1 text-sm text-success-700">Ce compte existait deja et a ete rattache a cette ecole.</p>
+          )}
+          <button type="button" className="mt-2 text-xs font-semibold text-success-700 underline" onClick={() => setCreatedAccount(null)}>
+            Fermer
+          </button>
+        </div>
+      )}
 
       {!staff.loading && scopableStaff.length > 0 && (
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
@@ -82,11 +119,33 @@ export default function CyclesPanel() {
       )}
 
       <Card>
-        <CardHeader title="Registre des affectations" subtitle="Directeurs et Censeurs" />
+        <CardHeader
+          title="Registre des affectations"
+          subtitle="Directeurs et Censeurs"
+          action={
+            !showCreateForm && (
+              <button
+                type="button"
+                className="inline-flex items-center gap-1 rounded-control bg-primary-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-primary-700"
+                onClick={() => setShowCreateForm(true)}
+              >
+                <Icon name="add" className="text-[16px]" />
+                Creer un compte
+              </button>
+            )
+          }
+        />
+        {showCreateForm && (
+          <CardBody className="border-b border-border">
+            <CreateAccountForm onCancel={() => setShowCreateForm(false)} onCreated={handleAccountCreated} />
+          </CardBody>
+        )}
         <CardBody className="p-0">
           {staff.loading && <div className="flex justify-center py-8"><Spinner /></div>}
           {!staff.loading && scopableStaff.length === 0 && (
-            <div className="p-4"><EmptyState title="Aucun Directeur ou Censeur" description="Ce compte n'existe pas encore pour cette ecole." /></div>
+            <div className="p-4">
+              <EmptyState title="Aucun Directeur ou Censeur" description="Ce compte n'existe pas encore pour cette ecole." />
+            </div>
           )}
           <ul className="divide-y divide-border">
             {scopableStaff.map((s) => {
@@ -170,5 +229,67 @@ function CycleRow({ label, person }) {
       </div>
       {!person && <Badge tone="warning">A affecter</Badge>}
     </div>
+  )
+}
+
+function CreateAccountForm({ onCancel, onCreated }) {
+  const [form, setForm] = useState({ first_name: '', last_name: '', email: '', role: 'censeur' })
+  const [submitting, setSubmitting] = useState(false)
+  const [formError, setFormError] = useState(null)
+
+  const update = (field) => (e) => setForm((f) => ({ ...f, [field]: e.target.value }))
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    setSubmitting(true)
+    setFormError(null)
+    try {
+      const account = await api.post('/api/auth/staff-accounts/', form)
+      onCreated(account)
+    } catch (err) {
+      setFormError(err instanceof ApiError ? err.message : 'Erreur inattendue.')
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-3">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <div>
+          <label className="block text-xs font-semibold text-ink-muted">Prenom</label>
+          <input required className={INPUT_CLASS} value={form.first_name} onChange={update('first_name')} />
+        </div>
+        <div>
+          <label className="block text-xs font-semibold text-ink-muted">Nom</label>
+          <input required className={INPUT_CLASS} value={form.last_name} onChange={update('last_name')} />
+        </div>
+        <div>
+          <label className="block text-xs font-semibold text-ink-muted">Email</label>
+          <input required type="email" className={INPUT_CLASS} value={form.email} onChange={update('email')} />
+        </div>
+        <div>
+          <label className="block text-xs font-semibold text-ink-muted">Role</label>
+          <select className={INPUT_CLASS} value={form.role} onChange={update('role')}>
+            {CREATABLE_ROLES.map((r) => (
+              <option key={r.value} value={r.value}>{r.label}</option>
+            ))}
+          </select>
+        </div>
+      </div>
+      {formError && <p className="text-sm text-danger-600">{formError}</p>}
+      <div className="flex items-center gap-2">
+        <button
+          type="submit"
+          disabled={submitting}
+          className="rounded-control bg-primary-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-primary-700 disabled:opacity-60"
+        >
+          {submitting ? 'Creation...' : 'Creer le compte'}
+        </button>
+        <button type="button" onClick={onCancel} className="text-xs font-semibold text-ink-muted hover:text-ink">
+          Annuler
+        </button>
+      </div>
+    </form>
   )
 }
