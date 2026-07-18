@@ -12,6 +12,8 @@
   },
   "dependencies": {
     "@jridgewell/trace-mapping": "^0.3.31",
+    "@univerjs/preset-sheets-core": "^0.25.1",
+    "@univerjs/presets": "^0.25.1",
     "firebase": "^12.16.0",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
