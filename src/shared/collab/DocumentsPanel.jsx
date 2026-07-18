@@ -96,6 +96,21 @@ export default function DocumentsPanel() {
     }
   }
 
+  const releaseWithFile = async (id, file) => {
+    setBusy(id)
+    setError(null)
+    try {
+      const data = new FormData()
+      if (file) data.append('file', file)
+      await api.postForm(`/api/collab/documents/${id}/release/`, data)
+      documents.refetch()
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'Erreur inattendue.')
+    } finally {
+      setBusy(null)
+    }
+  }
+
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -127,21 +142,33 @@ export default function DocumentsPanel() {
                 <p className="text-xs text-ink-muted">
                   {doc.uploaded_by?.full_name} - {formatSize(doc.file_size)}
                   {doc.document_template_name && ` - ${doc.document_template_name}`}
+                  {doc.status === 'checked_out' && doc.checked_out_by && ` - Verrouille par ${doc.checked_out_by.full_name}`}
                 </p>
               </div>
-              <div className="flex shrink-0 items-center gap-2">
+              <div className="flex shrink-0 flex-wrap items-center gap-2">
                 <Badge tone={STATUS_TONE[doc.status] || 'neutral'}>{STATUS_LABEL[doc.status] || doc.status}</Badge>
                 <a href={doc.file} target="_blank" rel="noreferrer" className="inline-flex items-center justify-center rounded-control bg-surface-raised px-3 py-1.5 text-xs font-medium text-ink ring-1 ring-inset ring-border hover:bg-surface-hover">
                   Telecharger
                 </a>
                 {doc.status === 'draft' && (
                   <Button size="sm" variant="secondary" onClick={() => act(doc.id, 'checkout')} disabled={busy === doc.id}>
-                    Verrouiller
+                    Modifier (Word/Excel)
                   </Button>
                 )}
                 {doc.status === 'checked_out' && (
-                  <Button size="sm" variant="secondary" onClick={() => act(doc.id, 'release')} disabled={busy === doc.id}>
-                    Liberer
+                  <label className="inline-flex cursor-pointer items-center justify-center rounded-control bg-primary-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-primary-700">
+                    Reteleverser la version modifiee
+                    <input
+                      type="file"
+                      className="hidden"
+                      disabled={busy === doc.id}
+                      onChange={(e) => e.target.files?.[0] && releaseWithFile(doc.id, e.target.files[0])}
+                    />
+                  </label>
+                )}
+                {doc.status === 'checked_out' && (
+                  <Button size="sm" variant="ghost" onClick={() => releaseWithFile(doc.id, null)} disabled={busy === doc.id}>
+                    Annuler sans modifier
                   </Button>
                 )}
                 {doc.kind === 'templated' && doc.status !== 'signed' && (
@@ -154,6 +181,10 @@ export default function DocumentsPanel() {
           </Card>
         ))}
       </div>
+      <p className="text-xs text-ink-muted">
+        Modifier ouvre le fichier telecharge dans Word/Excel (ou LibreOffice) deja installe sur cet ordinateur -
+        aucun editeur en ligne requis. Reteleversez la version modifiee pour l'enregistrer et deverrouiller le document.
+      </p>
     </div>
   )
 }
