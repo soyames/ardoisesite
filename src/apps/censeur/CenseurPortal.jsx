@@ -12,6 +12,7 @@ import PortalTabs from '../../shared/ui/PortalTabs.jsx'
 import StatCard from '../../shared/ui/StatCard.jsx'
 import QuickActionButton from '../../shared/ui/QuickActionButton.jsx'
 import CalendarGrid from '../../shared/ui/CalendarGrid.jsx'
+import WeeklyTimetableGrid from '../../shared/ui/WeeklyTimetableGrid.jsx'
 import LetterheadSettings from '../../shared/components/LetterheadSettings.jsx'
 
 const INPUT_CLASS =
@@ -482,35 +483,11 @@ function CalendrierTab() {
         </Card>
       )}
 
-      <Card>
-        <CardBody className="p-0">
-          {slots.loading && <div className="flex justify-center py-8"><Spinner /></div>}
-          {!slots.loading && slots.data?.length === 0 && (
-            <div className="p-4"><EmptyState title="Aucun creneau" description="Aucun creneau ne correspond a ces filtres." /></div>
-          )}
-          <div className="divide-y divide-border">
-            {DAYS.map((day) => {
-              const dayRows = (slots.data || [])
-                .filter((s) => s.day_of_week === day.value)
-                .sort((a, b) => a.start_time.localeCompare(b.start_time))
-              if (dayRows.length === 0) return null
-              return (
-                <div key={day.value} className="p-4">
-                  <p className="text-sm font-semibold text-ink mb-2">{day.label}</p>
-                  <ul className="space-y-2">
-                    {dayRows.map((s) => (
-                      <li key={s.id} className="flex items-center justify-between text-sm">
-                        <span className="text-ink">{s.start_time.slice(0, 5)}-{s.end_time.slice(0, 5)} - {s.classroom_name} - {s.subject_name}</span>
-                        <span className="text-ink-muted text-xs">{s.teacher_name || 'Sans enseignant'}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )
-            })}
-          </div>
-        </CardBody>
-      </Card>
+      {slots.loading && <div className="flex justify-center py-8"><Spinner /></div>}
+      {!slots.loading && slots.data?.length === 0 && (
+        <EmptyState title="Aucun creneau" description="Aucun creneau ne correspond a ces filtres." />
+      )}
+      {!slots.loading && slots.data?.length > 0 && <WeeklyTimetableGrid slots={slots.data} />}
     </div>
   )
 }
