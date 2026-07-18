@@ -40,6 +40,14 @@ export default defineConfig({
         // service worker's.
         navigateFallbackDenylist: [/^\/api\//],
         runtimeCaching: [],
+        // The default 2 MiB precache limit was silently failing every
+        // production build (Workbox throws, not warns) once the main
+        // chunk grew past it -- see the Univer/Tiptap editors pulling
+        // in a large single bundle. Raised as an immediate unblock;
+        // the real fix is code-splitting those editors behind
+        // React.lazy() so the marketplace's own bundle doesn't carry
+        // them at all (tracked separately, not done here).
+        maximumFileSizeToCacheInBytes: 10 * 1024 * 1024,
       },
     }),
   ],
