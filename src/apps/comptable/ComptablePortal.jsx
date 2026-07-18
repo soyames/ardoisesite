@@ -8,12 +8,14 @@ import Spinner from '../../shared/ui/Spinner.jsx'
 import EmptyState from '../../shared/ui/EmptyState.jsx'
 import StatCard from '../../shared/ui/StatCard.jsx'
 import PortalTabs from '../../shared/ui/PortalTabs.jsx'
+import Encaissement from '../../shared/components/Encaissement.jsx'
 
 const INPUT_CLASS =
   'block w-full rounded-control border-0 py-2 px-3 bg-surface-raised text-ink ring-1 ring-inset ring-border focus:ring-2 focus:ring-primary-500 sm:text-sm'
 
 const TABS = [
   { key: 'dashboard', label: 'Tableau de bord' },
+  { key: 'encaissement', label: 'Encaissement' },
   { key: 'reports', label: 'Rapports' },
   { key: 'batch-invoices', label: 'Facturation groupee' },
   { key: 'expenses', label: 'Depenses & Budgets' },
@@ -36,6 +38,7 @@ export default function ComptablePortal() {
       <PortalTabs tabs={TABS} active={tab} onChange={setTab} />
 
       {tab === 'dashboard' && <DashboardTab onNavigate={setTab} />}
+      {tab === 'encaissement' && <Encaissement />}
       {tab === 'reports' && <ReportsTab />}
       {tab === 'batch-invoices' && <BatchInvoicesTab />}
       {tab === 'expenses' && <ExpensesTab />}
@@ -66,8 +69,12 @@ function DashboardTab({ onNavigate }) {
         <p className="mt-1 text-sm text-ink-muted">Voici l'etat financier de l'ecole aujourd'hui.</p>
       </div>
 
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        <button onClick={() => onNavigate('batch-invoices')} className="rounded-card border border-border bg-primary-950 p-4 text-left text-white transition hover:bg-primary-900">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+        <button onClick={() => onNavigate('encaissement')} className="rounded-card border border-border bg-primary-950 p-4 text-left text-white transition hover:bg-primary-900">
+          <p className="text-sm font-semibold">Encaisser</p>
+          <p className="mt-1 text-xs text-white/70">Rechercher un eleve</p>
+        </button>
+        <button onClick={() => onNavigate('batch-invoices')} className="rounded-card border border-border bg-primary-800 p-4 text-left text-white transition hover:bg-primary-700">
           <p className="text-sm font-semibold">Generer des factures</p>
           <p className="mt-1 text-xs text-white/70">Facturation groupee par tranche</p>
         </button>

@@ -10,6 +10,7 @@ import EmptyState from '../../shared/ui/EmptyState.jsx'
 import PortalTabs from '../../shared/ui/PortalTabs.jsx'
 import StatCard from '../../shared/ui/StatCard.jsx'
 import LetterheadSettings from '../../shared/components/LetterheadSettings.jsx'
+import Encaissement from '../../shared/components/Encaissement.jsx'
 
 const INPUT_CLASS =
   'block w-full rounded-control border-0 py-2 px-3 bg-surface-raised text-ink ring-1 ring-inset ring-border focus:ring-2 focus:ring-primary-500 sm:text-sm'
@@ -20,6 +21,7 @@ const TABS = [
   { key: 'parents', label: 'Parents' },
   { key: 'guardianships', label: 'Tutelle' },
   { key: 'enrollments', label: 'Inscriptions' },
+  { key: 'encaissement', label: 'Encaissement' },
   { key: 'letterhead', label: 'Lettre a en-tete' },
 ]
 
@@ -50,6 +52,7 @@ export default function SecretaryPortal() {
       {tab === 'parents' && <ParentsTab />}
       {tab === 'guardianships' && <GuardianshipsTab />}
       {tab === 'enrollments' && <EnrollmentsTab />}
+      {tab === 'encaissement' && <Encaissement />}
       {tab === 'letterhead' && <LetterheadSettings />}
     </div>
   )
