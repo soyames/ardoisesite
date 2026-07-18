@@ -226,6 +226,7 @@ export default function DocumentsPanel() {
             onOpenNote={() => setOpenNote(doc)}
             onAct={(action) => act(doc.id, action)}
             onReleaseWithFile={(file) => releaseWithFile(doc.id, file)}
+            onRequestedSignatures={() => documents.refetch()}
           />
         ))}
       </div>
@@ -237,8 +238,11 @@ export default function DocumentsPanel() {
   )
 }
 
-function DocumentRow({ doc, busy, onOpenSheet, onOpenNote, onAct, onReleaseWithFile }) {
+function DocumentRow({ doc, busy, onOpenSheet, onOpenNote, onAct, onReleaseWithFile, onRequestedSignatures }) {
   const { icon, tone } = docIconInfo(doc)
+  const [showRequestForm, setShowRequestForm] = useState(false)
+  const activeChain = doc.signature_request?.status === 'pending' ? doc.signature_request : null
+  const currentStep = activeChain?.steps.find((s) => s.status === 'pending')
 
   return (
     <Card>
@@ -258,6 +262,9 @@ function DocumentRow({ doc, busy, onOpenSheet, onOpenNote, onAct, onReleaseWithF
         </div>
         <div className="flex shrink-0 flex-wrap items-center gap-2">
           <Badge tone={STATUS_TONE[doc.status] || 'neutral'}>{STATUS_LABEL[doc.status] || doc.status}</Badge>
+          {activeChain && currentStep && (
+            <Badge tone="warning">Circuit: en attente de {currentStep.signer?.full_name}</Badge>
+          )}
           {doc.kind === 'spreadsheet' ? (
             <Button size="sm" onClick={onOpenSheet}>
               Ouvrir
@@ -294,13 +301,82 @@ function DocumentRow({ doc, busy, onOpenSheet, onOpenNote, onAct, onReleaseWithF
               )}
             </>
           )}
-          {doc.kind === 'templated' && doc.status !== 'signed' && (
-            <Button size="sm" onClick={() => onAct('sign')} disabled={busy === doc.id}>
-              Signer
-            </Button>
+          {doc.kind === 'templated' && doc.status !== 'signed' && !activeChain && (
+            <>
+              <Button size="sm" onClick={() => onAct('sign')} disabled={busy === doc.id}>
+                Signer
+              </Button>
+              <Button size="sm" variant="secondary" onClick={() => setShowRequestForm((v) => !v)}>
+                {showRequestForm ? 'Fermer' : 'Demander des signatures'}
+              </Button>
+            </>
           )}
         </div>
       </CardBody>
+      {showRequestForm && (
+        <RequestSignaturesForm
+          documentId={doc.id}
+          onCancel={() => setShowRequestForm(false)}
+          onSent={() => { setShowRequestForm(false); onRequestedSignatures() }}
+        />
+      )}
     </Card>
+  )
+}
+
+function RequestSignaturesForm({ documentId, onCancel, onSent }) {
+  const staff = useApiGet('/api/collab/staff-directory/')
+  const [order, setOrder] = useState([])
+  const [error, setError] = useState(null)
+  const [submitting, setSubmitting] = useState(false)
+
+  const toggle = (id) => {
+    setOrder((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]))
+  }
+
+  const submit = async () => {
+    if (order.length === 0) return
+    setSubmitting(true)
+    setError(null)
+    try {
+      await api.post(`/api/collab/documents/${documentId}/signature-requests/`, { signer_ids: order })
+      onSent()
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'Erreur inattendue.')
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  return (
+    <div className="border-t border-border p-4">
+      <p className="mb-2 text-xs font-medium text-ink-muted">Cliquez les signataires dans l'ordre d'approbation souhaite.</p>
+      {staff.loading && <Spinner />}
+      <div className="flex flex-wrap gap-2">
+        {staff.data?.map((s) => {
+          const stepNumber = order.indexOf(s.id) + 1
+          return (
+            <button
+              key={s.id}
+              type="button"
+              onClick={() => toggle(s.id)}
+              className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition ${
+                stepNumber > 0 ? 'bg-primary-600 text-white' : 'bg-surface-hover text-ink hover:bg-surface'
+              }`}
+            >
+              {stepNumber > 0 && <span className="flex h-4 w-4 items-center justify-center rounded-full bg-white/20 text-[10px]">{stepNumber}</span>}
+              {s.full_name}
+            </button>
+          )
+        })}
+      </div>
+      {error && <p className="mt-2 text-sm text-danger-600">{error}</p>}
+      <div className="mt-3 flex gap-2">
+        <Button size="sm" onClick={submit} disabled={submitting || order.length === 0}>
+          {submitting ? 'Envoi...' : `Envoyer (${order.length} signataire${order.length > 1 ? 's' : ''})`}
+        </Button>
+        <Button size="sm" variant="ghost" onClick={onCancel}>Annuler</Button>
+      </div>
+    </div>
   )
 }
