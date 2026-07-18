@@ -7,8 +7,11 @@ import Badge from '../../shared/ui/Badge.jsx'
 import Spinner from '../../shared/ui/Spinner.jsx'
 import EmptyState from '../../shared/ui/EmptyState.jsx'
 import MonEspaceRH from '../../shared/components/MonEspaceRH.jsx'
+import PortalTabs from '../../shared/ui/PortalTabs.jsx'
+import StatCard from '../../shared/ui/StatCard.jsx'
 
 const TABS = [
+  { key: 'dashboard', label: 'Tableau de bord' },
   { key: 'grades', label: 'Notes' },
   { key: 'attendance', label: 'Presences' },
   { key: 'discipline', label: 'Discipline' },
@@ -36,7 +39,7 @@ export default function TeacherPortal() {
   const myClasses = useApiGet('/api/academics/my-classes/')
   const examPeriods = useApiGet('/api/academics/exam-periods/')
   const [classSubjectId, setClassSubjectId] = useState(null)
-  const [tab, setTab] = useState('grades')
+  const [tab, setTab] = useState('dashboard')
 
   useEffect(() => {
     if (!classSubjectId && myClasses.data?.length > 0) {
@@ -77,21 +80,11 @@ export default function TeacherPortal() {
             </div>
           )}
 
-          <div className="flex gap-1 border-b border-border">
-            {TABS.map((t) => (
-              <button
-                key={t.key}
-                onClick={() => setTab(t.key)}
-                className={`px-4 py-2 text-sm font-medium transition ${
-                  tab === t.key ? 'border-b-2 border-primary-600 text-primary-700' : 'text-ink-muted hover:text-ink'
-                }`}
-              >
-                {t.label}
-              </button>
-            ))}
-          </div>
+          <PortalTabs tabs={TABS} active={tab} onChange={setTab} />
 
-          {tab !== 'rh' && (!myClasses.data || myClasses.data.length === 0) && (
+          {tab === 'dashboard' && <DashboardTab myClasses={myClasses.data} onNavigate={setTab} />}
+
+          {tab !== 'rh' && tab !== 'dashboard' && (!myClasses.data || myClasses.data.length === 0) && (
             <EmptyState
               title="Aucune classe assignee"
               description="Contactez le Censeur si vous devriez avoir des classes ici."
@@ -109,6 +102,36 @@ export default function TeacherPortal() {
           {tab === 'rh' && <MonEspaceRH />}
         </>
       )}
+    </div>
+  )
+}
+
+function DashboardTab({ myClasses, onNavigate }) {
+  const examPapers = useApiGet('/api/academics/exam-papers/')
+  const draftPapers = (examPapers.data || []).filter((p) => p.status === 'draft')
+
+  return (
+    <div className="space-y-4">
+      <div>
+        <h2 className="text-lg font-semibold text-ink">Bonjour</h2>
+        <p className="mt-1 text-sm text-ink-muted">Vue d'ensemble de vos classes.</p>
+      </div>
+
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <button onClick={() => onNavigate('grades')} className="rounded-card border border-border bg-primary-950 p-4 text-left text-white transition hover:bg-primary-900">
+          <p className="text-sm font-semibold">Saisir les notes</p>
+          <p className="mt-1 text-xs text-white/70">Notes pour la classe selectionnee</p>
+        </button>
+        <button onClick={() => onNavigate('attendance')} className="rounded-card border border-border bg-accent-600 p-4 text-left text-white transition hover:bg-accent-700">
+          <p className="text-sm font-semibold">Faire l'appel</p>
+          <p className="mt-1 text-xs text-white/70">Enregistrer la presence</p>
+        </button>
+      </div>
+
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <StatCard label="Classes assignees" value={myClasses?.length || 0} />
+        <StatCard label="Epreuves en brouillon" value={draftPapers.length} tone={draftPapers.length > 0 ? 'accent' : 'success'} />
+      </div>
     </div>
   )
 }

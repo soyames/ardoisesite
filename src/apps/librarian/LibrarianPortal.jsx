@@ -7,6 +7,8 @@ import Badge from '../../shared/ui/Badge.jsx'
 import Spinner from '../../shared/ui/Spinner.jsx'
 import EmptyState from '../../shared/ui/EmptyState.jsx'
 import MonEspaceRH from '../../shared/components/MonEspaceRH.jsx'
+import PortalTabs from '../../shared/ui/PortalTabs.jsx'
+import StatCard from '../../shared/ui/StatCard.jsx'
 
 const INPUT_CLASS =
   'block w-full rounded-control border-0 py-2 px-3 bg-surface-raised text-ink ring-1 ring-inset ring-border focus:ring-2 focus:ring-primary-500 sm:text-sm'
@@ -19,6 +21,7 @@ const CATEGORIES = [
 ]
 
 const TABS = [
+  { key: 'dashboard', label: 'Tableau de bord' },
   { key: 'sale', label: 'Vente' },
   { key: 'prets', label: 'Prets' },
   { key: 'catalog', label: 'Catalogue' },
@@ -30,7 +33,7 @@ const TABS = [
 const NON_MEAL_CATEGORIES = ['book', 'uniform', 'supply', 'other']
 
 export default function LibrarianPortal() {
-  const [tab, setTab] = useState('sale')
+  const [tab, setTab] = useState('dashboard')
 
   return (
     <div className="space-y-4">
@@ -39,26 +42,78 @@ export default function LibrarianPortal() {
         <p className="mt-1 text-sm text-ink-muted">Catalogue, ventes au comptoir et approvisionnement.</p>
       </div>
 
-      <div className="flex flex-wrap gap-1 border-b border-border">
-        {TABS.map((t) => (
-          <button
-            key={t.key}
-            onClick={() => setTab(t.key)}
-            className={`px-4 py-2 text-sm font-medium transition ${
-              tab === t.key ? 'border-b-2 border-primary-600 text-primary-700' : 'text-ink-muted hover:text-ink'
-            }`}
-          >
-            {t.label}
-          </button>
-        ))}
-      </div>
+      <PortalTabs tabs={TABS} active={tab} onChange={setTab} />
 
+      {tab === 'dashboard' && <DashboardTab onNavigate={setTab} />}
       {tab === 'sale' && <SaleTab />}
       {tab === 'prets' && <PretsTab />}
       {tab === 'catalog' && <CatalogTab />}
       {tab === 'stock' && <StockTab />}
       {tab === 'vendors' && <VendorsTab />}
       {tab === 'rh' && <MonEspaceRH />}
+    </div>
+  )
+}
+
+function DashboardTab({ onNavigate }) {
+  const items = useApiGet('/api/shop/inventory/')
+  const sales = useApiGet('/api/shop/sales/')
+  const loans = useApiGet('/api/shop/loans/')
+
+  const loading = items.loading || sales.loading || loans.loading
+  const today = new Date().toDateString()
+  const todaySales = (sales.data || []).filter((s) => new Date(s.created_at || s.sold_at).toDateString() === today)
+  const todayTotal = todaySales.reduce((sum, s) => sum + Number(s.total_amount), 0)
+  const lowStockItems = (items.data || []).filter((i) => Number(i.quantity_on_hand) <= Number(i.low_stock_threshold))
+  const openLoans = (loans.data || []).filter((l) => !l.returned_date)
+  const overdueLoans = openLoans.filter((l) => l.due_date && new Date(l.due_date) < new Date())
+
+  return (
+    <div className="space-y-4">
+      <div>
+        <h2 className="text-lg font-semibold text-ink">Bonjour</h2>
+        <p className="mt-1 text-sm text-ink-muted">Vue d'ensemble de la librairie/economat.</p>
+      </div>
+
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <button onClick={() => onNavigate('sale')} className="rounded-card border border-border bg-primary-950 p-4 text-left text-white transition hover:bg-primary-900">
+          <p className="text-sm font-semibold">Nouvelle vente</p>
+          <p className="mt-1 text-xs text-white/70">Encaisser un achat</p>
+        </button>
+        <button onClick={() => onNavigate('prets')} className="rounded-card border border-border bg-accent-600 p-4 text-left text-white transition hover:bg-accent-700">
+          <p className="text-sm font-semibold">Prets de livres</p>
+          <p className="mt-1 text-xs text-white/70">{overdueLoans.length} en retard</p>
+        </button>
+      </div>
+
+      {loading && <div className="flex justify-center py-8"><Spinner /></div>}
+
+      {!loading && (
+        <>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <StatCard label="Ventes du jour" value={`${todayTotal.toLocaleString()} FCFA`} hint={`${todaySales.length} transaction(s)`} />
+            <StatCard label="Articles en stock" value={items.data?.length || 0} />
+            <StatCard label="Alertes stock faible" value={lowStockItems.length} tone={lowStockItems.length > 0 ? 'accent' : 'success'} />
+            <StatCard label="Prets en retard" value={overdueLoans.length} tone={overdueLoans.length > 0 ? 'accent' : 'success'} />
+          </div>
+
+          {lowStockItems.length > 0 && (
+            <Card>
+              <CardHeader title="Stock faible" action={<button onClick={() => onNavigate('stock')} className="text-xs font-medium text-primary-600 hover:text-primary-700">Voir tout</button>} />
+              <CardBody className="p-0">
+                <ul className="divide-y divide-border">
+                  {lowStockItems.slice(0, 5).map((i) => (
+                    <li key={i.id} className="flex items-center justify-between p-4">
+                      <p className="text-sm text-ink">{i.name}</p>
+                      <Badge tone="danger">{i.quantity_on_hand} restant(s)</Badge>
+                    </li>
+                  ))}
+                </ul>
+              </CardBody>
+            </Card>
+          )}
+        </>
+      )}
     </div>
   )
 }

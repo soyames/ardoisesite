@@ -5,8 +5,10 @@ import Badge from '../../shared/ui/Badge.jsx'
 import Spinner from '../../shared/ui/Spinner.jsx'
 import EmptyState from '../../shared/ui/EmptyState.jsx'
 import StatCard from '../../shared/ui/StatCard.jsx'
+import PortalTabs from '../../shared/ui/PortalTabs.jsx'
 
 const TABS = [
+  { key: 'dashboard', label: 'Tableau de bord' },
   { key: 'audit', label: "Journal d'audit" },
   { key: 'finance', label: 'Finances' },
   { key: 'hr', label: 'RH' },
@@ -14,7 +16,7 @@ const TABS = [
 ]
 
 export default function AuditorPortal() {
-  const [tab, setTab] = useState('audit')
+  const [tab, setTab] = useState('dashboard')
 
   return (
     <div className="space-y-4">
@@ -23,24 +25,72 @@ export default function AuditorPortal() {
         <p className="mt-1 text-sm text-ink-muted">Lecture seule sur les finances, la paie et les communications.</p>
       </div>
 
-      <div className="flex flex-wrap gap-1 border-b border-border">
-        {TABS.map((t) => (
-          <button
-            key={t.key}
-            onClick={() => setTab(t.key)}
-            className={`px-4 py-2 text-sm font-medium transition ${
-              tab === t.key ? 'border-b-2 border-primary-600 text-primary-700' : 'text-ink-muted hover:text-ink'
-            }`}
-          >
-            {t.label}
-          </button>
-        ))}
-      </div>
+      <PortalTabs tabs={TABS} active={tab} onChange={setTab} />
 
+      {tab === 'dashboard' && <DashboardTab onNavigate={setTab} />}
       {tab === 'audit' && <AuditLogTab />}
       {tab === 'finance' && <FinanceTab />}
       {tab === 'hr' && <HrTab />}
       {tab === 'comms' && <CommsTab />}
+    </div>
+  )
+}
+
+function DashboardTab({ onNavigate }) {
+  const logs = useApiGet('/api/audit/logs/')
+  const payments = useApiGet('/api/finance/payments/')
+  const advances = useApiGet('/api/hr/salary-advances/')
+
+  const loading = logs.loading || payments.loading || advances.loading
+  const today = new Date().toDateString()
+  const todayLogs = (logs.data || []).filter((l) => new Date(l.occurred_at).toDateString() === today)
+  const deleteAttempts = (logs.data || []).filter((l) => l.action === 'delete_attempt')
+  const pendingAdvances = (advances.data || []).filter((a) => a.status === 'pending')
+
+  return (
+    <div className="space-y-4">
+      <div>
+        <h2 className="text-lg font-semibold text-ink">Bonjour</h2>
+        <p className="mt-1 text-sm text-ink-muted">Vue d'ensemble de l'activite de l'ecole.</p>
+      </div>
+
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <button onClick={() => onNavigate('audit')} className="rounded-card border border-border bg-primary-950 p-4 text-left text-white transition hover:bg-primary-900">
+          <p className="text-sm font-semibold">Journal d'audit</p>
+          <p className="mt-1 text-xs text-white/70">{todayLogs.length} evenement(s) aujourd'hui</p>
+        </button>
+        <button onClick={() => onNavigate('finance')} className="rounded-card border border-border bg-accent-600 p-4 text-left text-white transition hover:bg-accent-700">
+          <p className="text-sm font-semibold">Finances</p>
+          <p className="mt-1 text-xs text-white/70">Balance et paiements</p>
+        </button>
+      </div>
+
+      {loading && <div className="flex justify-center py-8"><Spinner /></div>}
+
+      {!loading && (
+        <>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+            <StatCard label="Evenements aujourd'hui" value={todayLogs.length} />
+            <StatCard label="Tentatives de suppression bloquees" value={deleteAttempts.length} tone={deleteAttempts.length > 0 ? 'accent' : 'success'} />
+            <StatCard label="Avances en attente" value={pendingAdvances.length} tone={pendingAdvances.length > 0 ? 'accent' : 'success'} />
+          </div>
+
+          <Card>
+            <CardHeader title="Activite recente" action={<button onClick={() => onNavigate('audit')} className="text-xs font-medium text-primary-600 hover:text-primary-700">Voir tout</button>} />
+            <CardBody className="p-0">
+              {(logs.data || []).length === 0 && <div className="p-4"><EmptyState title="Aucune activite" /></div>}
+              <ul className="divide-y divide-border">
+                {(logs.data || []).slice(0, 5).map((l) => (
+                  <li key={l.id} className="p-4">
+                    <p className="text-sm text-ink">{l.summary}</p>
+                    <p className="text-xs text-ink-muted">{l.actor_name} - {new Date(l.occurred_at).toLocaleString('fr-FR')}</p>
+                  </li>
+                ))}
+              </ul>
+            </CardBody>
+          </Card>
+        </>
+      )}
     </div>
   )
 }
