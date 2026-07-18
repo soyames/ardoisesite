@@ -11,6 +11,7 @@ import CycleSwitcher from '../../shared/ui/CycleSwitcher.jsx'
 import PortalTabs from '../../shared/ui/PortalTabs.jsx'
 import StatCard from '../../shared/ui/StatCard.jsx'
 import QuickActionButton from '../../shared/ui/QuickActionButton.jsx'
+import CalendarGrid from '../../shared/ui/CalendarGrid.jsx'
 import LetterheadSettings from '../../shared/components/LetterheadSettings.jsx'
 
 const INPUT_CLASS =
@@ -339,6 +340,7 @@ function CalendrierTab() {
   const academicYears = useApiGet('/api/auth/academic-years/')
   const [classroomId, setClassroomId] = useState('')
   const [teacherId, setTeacherId] = useState('')
+  const [selectedDate, setSelectedDate] = useState(null)
 
   const currentYear = academicYears.data?.find((y) => y.is_current) || academicYears.data?.[0]
 
@@ -381,6 +383,8 @@ function CalendrierTab() {
     .filter((ev) => new Date(ev.date) >= new Date(new Date().toDateString()))
     .slice(0, 5)
 
+  const selectedDayEvents = selectedDate ? (events.data || []).filter((ev) => ev.date === selectedDate) : []
+
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-end gap-3">
@@ -401,6 +405,25 @@ function CalendrierTab() {
         <div className="ml-auto">
           <Button size="sm" onClick={() => setShowSlotForm((v) => !v)}>{showSlotForm ? 'Fermer' : '+ Nouveau creneau'}</Button>
         </div>
+      </div>
+
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+        <div className="lg:col-span-2">
+          <CalendarGrid events={events.data || []} selectedDate={selectedDate} onSelectDate={(d) => setSelectedDate(d === selectedDate ? null : d)} />
+        </div>
+        <Card>
+          <CardHeader title={selectedDate ? new Date(selectedDate).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' }) : 'Selectionnez un jour'} />
+          <CardBody className="space-y-2">
+            {selectedDate && selectedDayEvents.length === 0 && <p className="text-sm text-ink-muted">Aucun evenement ce jour.</p>}
+            {selectedDayEvents.map((ev) => (
+              <div key={ev.id} className="flex items-center justify-between rounded-control border border-border p-2">
+                <p className="text-sm text-ink">{ev.label}</p>
+                <Badge tone={ev.kind === 'holiday' ? 'neutral' : 'warning'}>{ev.kind === 'holiday' ? 'Ferie' : 'Evenement'}</Badge>
+              </div>
+            ))}
+            {!selectedDate && <p className="text-sm text-ink-muted">Cliquez un jour dans le calendrier pour voir ses evenements.</p>}
+          </CardBody>
+        </Card>
       </div>
 
       {showSlotForm && (
