@@ -35,7 +35,7 @@ export default function TeacherList() {
 
   return (
     <div className="min-h-screen bg-surface py-12">
-      <div className="mx-auto max-w-7xl px-6 lg:px-8">
+      <div className="mx-auto max-w-[1600px] px-6 lg:px-12">
         <div className="md:flex md:items-center md:justify-between">
           <div className="min-w-0 flex-1">
             <h2 className="text-4xl font-extrabold tracking-tight text-ink sm:text-5xl">

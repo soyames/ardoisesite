@@ -23,7 +23,7 @@ export default function TeacherDetail() {
   return (
     <div className="bg-surface min-h-screen pb-20">
       <div className="bg-primary-950 pb-24 pt-16 sm:pb-32 sm:pt-24 lg:pb-40">
-        <div className="mx-auto max-w-7xl px-6 lg:px-8">
+        <div className="mx-auto max-w-[1600px] px-6 lg:px-12">
           <div className="flex flex-col md:flex-row gap-8 items-center md:items-start">
             <img src={teacher.image} alt={teacher.name} className="h-48 w-48 rounded-full object-cover ring-4 ring-accent-500/30 shadow-elevated" />
             <div className="text-center md:text-left flex-1 mt-4 md:mt-0">
@@ -55,7 +55,7 @@ export default function TeacherDetail() {
         </div>
       </div>
 
-      <div className="mx-auto max-w-7xl px-6 lg:px-8 -mt-16 sm:-mt-24">
+      <div className="mx-auto max-w-[1600px] px-6 lg:px-12 -mt-16 sm:-mt-24">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           <div className="bg-surface-raised rounded-card shadow-card ring-1 ring-border p-8">
              <h3 className="text-xl font-bold text-ink mb-4">Disponibilité</h3>

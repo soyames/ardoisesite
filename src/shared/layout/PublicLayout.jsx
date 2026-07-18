@@ -177,7 +177,7 @@ export default function PublicLayout() {
       </main>
 
       <footer className="mt-auto border-t border-border bg-surface-raised py-12">
-        <div className="mx-auto max-w-7xl px-6 flex flex-col items-center gap-6">
+        <div className="mx-auto max-w-[1600px] px-6 lg:px-12 flex flex-col items-center gap-6">
           <nav className="flex flex-wrap justify-center gap-x-8 gap-y-4">
             <Link to="/install" className="text-sm font-medium text-ink-muted hover:text-ink">
               Pour les Écoles (Installation)
