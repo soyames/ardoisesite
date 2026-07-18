@@ -23,10 +23,17 @@ const TABS = [
   { key: 'bulletins', label: 'Bulletins' },
   { key: 'discipline', label: 'Discipline' },
   { key: 'calendrier', label: 'Calendrier' },
+  { key: 'planification', label: 'Planification' },
   { key: 'timelogs', label: 'Heures vacataires' },
   { key: 'exams', label: 'Epreuves' },
   { key: 'letterhead', label: 'Lettre a en-tete' },
 ]
+
+const AVAILABILITY_STATUS = {
+  submitted: { label: 'Soumis', tone: 'neutral' },
+  drafted: { label: 'Brouillon envoye', tone: 'warning' },
+  approved: { label: 'Approuve', tone: 'success' },
+}
 
 const DAYS = [
   { value: 0, label: 'Lundi' },
@@ -53,6 +60,7 @@ export default function CenseurPortal() {
       {tab === 'bulletins' && <BulletinsTab />}
       {tab === 'discipline' && <DisciplineTab />}
       {tab === 'calendrier' && <CalendrierTab />}
+      {tab === 'planification' && <PlanificationTab />}
       {tab === 'timelogs' && <TimeLogsTab />}
       {tab === 'exams' && <ExamsTab />}
       {tab === 'letterhead' && <LetterheadSettings />}
@@ -488,6 +496,103 @@ function CalendrierTab() {
         <EmptyState title="Aucun creneau" description="Aucun creneau ne correspond a ces filtres." />
       )}
       {!slots.loading && slots.data?.length > 0 && <WeeklyTimetableGrid slots={slots.data} />}
+    </div>
+  )
+}
+
+function PlanificationTab() {
+  const submissions = useApiGet('/api/hr/teacher-availability/')
+  const conflicts = useApiGet('/api/hr/timetable-conflicts/')
+  const [busy, setBusy] = useState(null)
+  const [error, setError] = useState(null)
+
+  const review = async (id, newStatus) => {
+    setBusy(id)
+    setError(null)
+    try {
+      await api.post(`/api/hr/teacher-availability/${id}/review/`, { status: newStatus })
+      submissions.refetch()
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'Erreur inattendue.')
+    } finally {
+      setBusy(null)
+    }
+  }
+
+  return (
+    <div className="space-y-4">
+      <Card>
+        <CardHeader
+          title="Conflits d'emploi du temps"
+          subtitle="Detectes automatiquement a partir des creneaux reels (meme enseignant ou meme salle, horaires qui se chevauchent)."
+        />
+        <CardBody className="p-0">
+          {conflicts.loading && <div className="flex justify-center py-8"><Spinner /></div>}
+          {!conflicts.loading && (conflicts.data || []).length === 0 && (
+            <div className="p-4"><EmptyState title="Aucun conflit detecte" /></div>
+          )}
+          <ul className="divide-y divide-border">
+            {(conflicts.data || []).map((c, i) => (
+              <li key={i} className="flex items-start justify-between gap-3 p-4">
+                <div>
+                  <p className="text-sm text-ink">{c.detail_a}</p>
+                  <p className="text-sm text-ink">{c.detail_b}</p>
+                  <p className="mt-1 text-xs text-ink-muted">
+                    {c.kind === 'teacher' ? `Meme enseignant : ${c.teacher_name}` : `Meme salle : ${c.classroom_name}`}
+                  </p>
+                </div>
+                <Badge tone="warning">{c.kind === 'teacher' ? 'Enseignant' : 'Salle'}</Badge>
+              </li>
+            ))}
+          </ul>
+        </CardBody>
+      </Card>
+
+      <Card>
+        <CardHeader title="Soumissions des enseignants" subtitle="Preferences pour la prochaine planification." />
+        <CardBody className="p-0">
+          {error && <p className="p-4 text-sm text-danger-600">{error}</p>}
+          {submissions.loading && <div className="flex justify-center py-8"><Spinner /></div>}
+          {!submissions.loading && (submissions.data || []).length === 0 && (
+            <div className="p-4"><EmptyState title="Aucune soumission" /></div>
+          )}
+          <ul className="divide-y divide-border">
+            {(submissions.data || []).map((s) => {
+              const status = AVAILABILITY_STATUS[s.status] || { label: s.status, tone: 'neutral' }
+              return (
+                <li key={s.id} className="flex flex-col gap-2 p-4 sm:flex-row sm:items-start sm:justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-ink">{s.staff_name}{s.subject_name && ` - ${s.subject_name}`}</p>
+                    <p className="text-sm text-ink-muted">{s.notes}</p>
+                    <p className="mt-1 text-xs text-ink-muted">
+                      {s.hours_requested != null && `${s.hours_requested} h souhaitees - `}
+                      {new Date(s.created_at).toLocaleDateString('fr-FR')}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Badge tone={status.tone}>{status.label}</Badge>
+                    {s.status === 'submitted' && (
+                      <>
+                        <Button size="sm" variant="secondary" onClick={() => review(s.id, 'drafted')} disabled={busy === s.id}>
+                          Brouillon envoye
+                        </Button>
+                        <Button size="sm" onClick={() => review(s.id, 'approved')} disabled={busy === s.id}>
+                          Approuver
+                        </Button>
+                      </>
+                    )}
+                    {s.status === 'drafted' && (
+                      <Button size="sm" onClick={() => review(s.id, 'approved')} disabled={busy === s.id}>
+                        Approuver
+                      </Button>
+                    )}
+                  </div>
+                </li>
+              )
+            })}
+          </ul>
+        </CardBody>
+      </Card>
     </div>
   )
 }
