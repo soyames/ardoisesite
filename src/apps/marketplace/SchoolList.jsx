@@ -19,6 +19,7 @@ export default function SchoolList() {
   const [search, setSearch] = useState('')
   const [cityFilter, setCityFilter] = useState('Toutes')
   const department = searchParams.get('department')
+  const commune = searchParams.get('commune')
 
   useEffect(() => {
     const unsubscribe = onSnapshot(collection(db, 'schools'), (snapshot) => {
@@ -42,7 +43,8 @@ export default function SchoolList() {
     const matchesSearch = (school.name || '').toLowerCase().includes(search.toLowerCase())
     const matchesCity = cityFilter === 'Toutes' || school.city === cityFilter
     const matchesDepartment = !department || BENIN_COMMUNE_DEPARTMENT[school.city] === department
-    return matchesSearch && matchesCity && matchesDepartment
+    const matchesCommune = !commune || school.city === commune
+    return matchesSearch && matchesCity && matchesDepartment && matchesCommune
   })
 
   return (
@@ -70,14 +72,15 @@ export default function SchoolList() {
                 schoolCounts={cityCounts}
                 selectedDepartment={department}
                 onSelectDepartment={(dept) => setSearchParams(dept ? { department: dept } : {})}
+                onSelectCommune={(c) => setSearchParams({ commune: c })}
               />
             </div>
-            {department && (
+            {(department || commune) && (
               <button
                 onClick={() => setSearchParams({})}
                 className="mt-3 text-xs font-semibold text-primary-600 hover:text-primary-500"
               >
-                &larr; Effacer le filtre regional
+                &larr; Effacer le filtre regional ({commune || department})
               </button>
             )}
           </div>

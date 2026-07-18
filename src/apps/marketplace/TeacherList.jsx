@@ -1,7 +1,8 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import EmptyState from '../../shared/ui/EmptyState.jsx'
 import { FRANCOPHONE_AFRICA_DATA } from '../../shared/constants/locations.js'
+import { BENIN_COMMUNE_DEPARTMENT } from '../../shared/constants/beninGeoCommunes.js'
 
 const TEACHERS_DATA = [
   { id: 1, name: 'Dr. Jean Dupont', subject: 'Mathématiques', country: 'Benin', city: 'Cotonou', rating: 4.9, price: '15 000 F / mois', image: 'https://images.unsplash.com/photo-1568602471122-7832951cc4c5?w=400&q=80', description: 'Docteur en mathématiques appliquées, 10 ans d\'expérience.' },
@@ -11,17 +12,25 @@ const TEACHERS_DATA = [
 ]
 
 export default function TeacherList() {
+  const [searchParams, setSearchParams] = useSearchParams()
   const [search, setSearch] = useState('')
   const [countryFilter, setCountryFilter] = useState('Tous')
   const [cityFilter, setCityFilter] = useState('Toutes')
   const [subjectFilter, setSubjectFilter] = useState('Toutes')
+  // Region filters carried over from the Home page map (see BeninMap.jsx's
+  // onSelectDepartment/onSelectCommune) - kept separate from the visible
+  // cityFilter select above, same split SchoolList.jsx already uses.
+  const department = searchParams.get('department')
+  const commune = searchParams.get('commune')
 
   const filteredTeachers = TEACHERS_DATA.filter(teacher => {
     const matchesSearch = teacher.name.toLowerCase().includes(search.toLowerCase())
     const matchesCountry = countryFilter === 'Tous' || teacher.country === countryFilter
     const matchesCity = cityFilter === 'Toutes' || teacher.city === cityFilter
     const matchesSubject = subjectFilter === 'Toutes' || teacher.subject === subjectFilter
-    return matchesSearch && matchesCountry && matchesCity && matchesSubject
+    const matchesDepartment = !department || BENIN_COMMUNE_DEPARTMENT[teacher.city] === department
+    const matchesCommune = !commune || teacher.city === commune
+    return matchesSearch && matchesCountry && matchesCity && matchesSubject && matchesDepartment && matchesCommune
   })
 
   return (
@@ -82,6 +91,18 @@ export default function TeacherList() {
             <option value="Philosophie">Philosophie</option>
           </select>
         </div>
+
+        {(department || commune) && (
+          <p className="mt-4 text-sm text-ink-muted">
+            Filtre regional : <span className="font-semibold text-ink">{commune || department}</span>
+            <button
+              onClick={() => setSearchParams({})}
+              className="ml-3 text-sm font-semibold text-primary-600 hover:text-primary-500"
+            >
+              &larr; Effacer
+            </button>
+          </p>
+        )}
 
         <div className="mt-12 grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4">
           {filteredTeachers.map((teacher) => (

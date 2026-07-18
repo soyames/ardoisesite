@@ -15,8 +15,9 @@ const DEPARTMENT_ORDER = Object.keys(BENIN_DEPARTMENT_PATHS)
  * @param {Object} schoolCounts - { [cityOrCommune]: number } - keyed by commune name (matches BENIN_COMMUNE_PATHS keys)
  * @param {string|null} selectedDepartment - department to filter by at the national level, or null
  * @param {(dept: string|null) => void} onSelectDepartment - toggles the department-level filter
+ * @param {(commune: string) => void} [onSelectCommune] - fires when a commune is clicked in the drilled-in view (in addition to the hover detail panel)
  */
-export default function BeninMap({ schoolCounts = {}, selectedDepartment = null, onSelectDepartment }) {
+export default function BeninMap({ schoolCounts = {}, selectedDepartment = null, onSelectDepartment, onSelectCommune }) {
   const [drilledInto, setDrilledInto] = useState(null) // department name, or null = national view
   const [hovered, setHovered] = useState(null)
 
@@ -105,7 +106,7 @@ export default function BeninMap({ schoolCounts = {}, selectedDepartment = null,
               <path
                 key={name}
                 d={BENIN_COMMUNE_PATHS[name]}
-                onClick={() => setHovered((h) => (h === name ? null : name))}
+                onClick={() => { setHovered((h) => (h === name ? null : name)); onSelectCommune?.(name) }}
                 onMouseEnter={() => setHovered(name)}
                 onMouseLeave={() => setHovered((h) => (h === name ? null : h))}
                 className={`cursor-pointer transition-colors ${
