@@ -9,6 +9,8 @@ import Spinner from '../../shared/ui/Spinner.jsx'
 import EmptyState from '../../shared/ui/EmptyState.jsx'
 import PortalTabs from '../../shared/ui/PortalTabs.jsx'
 import StatCard from '../../shared/ui/StatCard.jsx'
+import ActivityList from '../../shared/ui/ActivityList.jsx'
+import QuickActionButton from '../../shared/ui/QuickActionButton.jsx'
 import LetterheadSettings from '../../shared/components/LetterheadSettings.jsx'
 import Encaissement from '../../shared/components/Encaissement.jsx'
 
@@ -86,34 +88,34 @@ function DashboardTab({ onNavigate }) {
 
   const firstName = user?.first_name || user?.name?.split(' ')[0] || 'Secretaire'
 
+  const recentEnrollmentItems = recentEnrollments.map((e) => ({
+    id: e.id,
+    icon: 'school',
+    iconTone: e.is_active ? 'success' : 'primary',
+    title: e.student_name,
+    subtitle: `${e.classroom_name} - inscrit le ${e.enrolled_on}`,
+    badge: e.is_active ? 'Actif' : 'Inactif',
+    badgeTone: e.is_active ? 'success' : 'neutral',
+  }))
+
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-lg font-semibold text-ink">Bienvenue, {firstName}</h2>
+        <p className="text-xs font-semibold uppercase tracking-wider text-accent-700">Secretariat</p>
+        <h2 className="mt-1 text-xl font-bold text-ink">Bienvenue, {firstName}</h2>
         <p className="mt-1 text-sm text-ink-muted">Voici un apercu de l'activite au secretariat aujourd'hui.</p>
       </div>
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-        <QuickActionCard
-          title="Nouvel eleve"
-          subtitle="Enregistrer un eleve dans l'ecole"
-          onClick={() => onNavigate('students')}
-        />
-        <QuickActionCard
-          title="Nouvelle inscription"
-          subtitle="Affecter un eleve a une classe"
-          onClick={() => onNavigate('enrollments')}
-        />
-        <QuickActionCard
-          title="Lier un tuteur"
-          subtitle="Associer un eleve a un parent"
-          onClick={() => onNavigate('guardianships')}
-        />
+        <QuickActionButton icon="person_add" title="Nouvel eleve" description="Enregistrer un eleve dans l'ecole" onClick={() => onNavigate('students')} />
+        <QuickActionButton icon="school" title="Nouvelle inscription" description="Affecter un eleve a une classe" onClick={() => onNavigate('enrollments')} />
+        <QuickActionButton icon="family_restroom" title="Lier un tuteur" description="Associer un eleve a un parent" onClick={() => onNavigate('guardianships')} />
       </div>
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
         <button type="button" onClick={() => onNavigate('students')} className="w-full text-left">
           <StatCard
+            icon="groups"
             label="Eleves actifs"
             value={students.loading ? '...' : activeStudents}
             hint={`${totalStudents} au total - voir les eleves`}
@@ -122,6 +124,7 @@ function DashboardTab({ onNavigate }) {
         </button>
         <button type="button" onClick={() => onNavigate('parents')} className="w-full text-left">
           <StatCard
+            icon="family_restroom"
             label="Parents"
             value={parents.loading ? '...' : totalParents}
             hint="Annuaire - voir les parents"
@@ -130,6 +133,7 @@ function DashboardTab({ onNavigate }) {
         </button>
         <button type="button" onClick={() => onNavigate('enrollments')} className="w-full text-left">
           <StatCard
+            icon="school"
             label="Inscriptions actives"
             value={enrollments.loading ? '...' : activeEnrollments}
             hint={`${totalEnrollments} au total - voir les inscriptions`}
@@ -153,38 +157,10 @@ function DashboardTab({ onNavigate }) {
 
       <Card>
         <CardHeader title="Activite recente" subtitle="Dernieres inscriptions enregistrees" />
-        <CardBody className="p-0">
-          {enrollments.loading && <div className="flex justify-center py-8"><Spinner /></div>}
-          {!enrollments.loading && recentEnrollments.length === 0 && (
-            <div className="p-4"><EmptyState title="Aucune activite recente" /></div>
-          )}
-          <ul className="divide-y divide-border">
-            {recentEnrollments.map((e) => (
-              <li key={e.id} className="flex items-center justify-between p-4">
-                <div>
-                  <p className="text-sm font-medium text-ink">{e.student_name}</p>
-                  <p className="text-xs text-ink-muted">{e.classroom_name} - inscrit le {e.enrolled_on}</p>
-                </div>
-                <Badge tone={e.is_active ? 'success' : 'neutral'}>{e.is_active ? 'Actif' : 'Inactif'}</Badge>
-              </li>
-            ))}
-          </ul>
-        </CardBody>
+        {enrollments.loading && <div className="flex justify-center py-8"><Spinner /></div>}
+        {!enrollments.loading && <ActivityList items={recentEnrollmentItems} emptyLabel="Aucune activite recente." />}
       </Card>
     </div>
-  )
-}
-
-function QuickActionCard({ title, subtitle, onClick }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="flex flex-col items-start gap-1 rounded-card border border-border bg-surface-raised p-4 text-left shadow-card transition hover:border-primary-300 hover:shadow-elevated"
-    >
-      <span className="text-sm font-semibold text-primary-700">+ {title}</span>
-      <span className="text-xs text-ink-muted">{subtitle}</span>
-    </button>
   )
 }
 
