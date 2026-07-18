@@ -12,6 +12,7 @@ import Spinner from '../../shared/ui/Spinner.jsx'
 import EmptyState from '../../shared/ui/EmptyState.jsx'
 import StatCard from '../../shared/ui/StatCard.jsx'
 import ActivityList from '../../shared/ui/ActivityList.jsx'
+import Icon from '../../shared/ui/Icon.jsx'
 
 /**
  * Everything a parent can see about their own children -- bulletins,
@@ -124,6 +125,7 @@ function ChildDetail({ child, parentId }) {
   const invoices = useApiGet(parentId ? `/api/finance/invoices/?parent=${parentId}&student_matricule=${child.matricule}` : null, {
     skip: !parentId,
   })
+  const [selectedInvoiceId, setSelectedInvoiceId] = useState(null)
 
   const absenceCount = attendance.data?.filter((a) => a.state.startsWith('absent')).length ?? 0
 
@@ -208,20 +210,26 @@ function ChildDetail({ child, parentId }) {
             <ul className="space-y-2">
               {invoices.data?.map((inv) => (
                 <li key={inv.id} className="flex flex-col rounded-control border border-border p-3">
-                  <div className="flex items-center justify-between mb-2">
+                  <button
+                    type="button"
+                    onClick={() => setSelectedInvoiceId(inv.id)}
+                    className="flex items-center justify-between gap-2 text-left mb-2"
+                  >
                     <div>
-                      <p className="text-sm font-medium text-ink">{inv.tranche_label || `Facture #${inv.id}`}</p>
+                      <p className="text-sm font-medium text-ink underline decoration-dotted underline-offset-2">
+                        {inv.tranche_label || `Facture #${inv.id}`}
+                      </p>
                       <p className="text-xs text-ink-muted">{inv.amount_due} FCFA</p>
                     </div>
                     <Badge tone={inv.status === 'paid' ? 'success' : inv.status === 'overdue' ? 'danger' : 'warning'}>
                       {inv.status}
                     </Badge>
-                  </div>
+                  </button>
                   {inv.status !== 'paid' && (
                     <div className="mt-2 flex justify-end border-t border-border pt-2">
-                      <SchoolPaymentButton 
-                        schoolId={child.current_enrollment?.school_id || 1} 
-                        invoice={inv} 
+                      <SchoolPaymentButton
+                        schoolId={child.current_enrollment?.school_id || 1}
+                        invoice={inv}
                         parent={child}
                       />
                     </div>
@@ -231,6 +239,108 @@ function ChildDetail({ child, parentId }) {
             </ul>
           </CardBody>
         </Card>
+      </div>
+
+      {selectedInvoiceId && (
+        <InvoiceDetailModal invoiceId={selectedInvoiceId} onClose={() => setSelectedInvoiceId(null)} />
+      )}
+    </div>
+  )
+}
+
+const PAYMENT_METHOD_ICON = { cash: 'payments', momo: 'smartphone', flooz: 'smartphone', bank: 'account_balance' }
+
+function InvoiceDetailModal({ invoiceId, onClose }) {
+  const detail = useApiGet(`/api/finance/invoices/${invoiceId}/`)
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-0 sm:items-center sm:p-4" onClick={onClose}>
+      <div
+        className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-t-card bg-surface-raised shadow-elevated sm:rounded-card"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {detail.loading && (
+          <div className="flex justify-center py-16">
+            <Spinner />
+          </div>
+        )}
+        {!detail.loading && detail.data && (
+          <div className="space-y-4 p-5">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">
+                  Facture #{detail.data.id}
+                </p>
+                <h3 className="text-lg font-semibold text-ink">{detail.data.tranche_label || detail.data.label}</h3>
+                <p className="mt-0.5 text-sm text-ink-muted">
+                  {detail.data.student_name} - {detail.data.student_matricule}
+                </p>
+              </div>
+              <button type="button" onClick={onClose} className="rounded-control p-1 text-ink-muted hover:bg-surface-hover hover:text-ink">
+                <Icon name="close" className="text-[22px]" />
+              </button>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3 rounded-control border border-border bg-surface p-3 text-sm">
+              <div>
+                <p className="text-xs text-ink-muted">Emise le</p>
+                <p className="text-ink">{new Date(detail.data.issued_on).toLocaleDateString('fr-FR')}</p>
+              </div>
+              <div>
+                <p className="text-xs text-ink-muted">Echeance</p>
+                <p className="text-ink">
+                  {detail.data.due_date ? new Date(detail.data.due_date).toLocaleDateString('fr-FR') : 'N/A'}
+                </p>
+              </div>
+              <div>
+                <p className="text-xs text-ink-muted">Montant du</p>
+                <p className="font-semibold text-ink">{detail.data.amount_due} FCFA</p>
+              </div>
+              <div>
+                <p className="text-xs text-ink-muted">Montant paye</p>
+                <p className="font-semibold text-ink">{detail.data.amount_paid} FCFA</p>
+              </div>
+            </div>
+
+            {detail.data.parent_names?.length > 0 && (
+              <p className="text-xs text-ink-muted">Responsable(s) : {detail.data.parent_names.join(', ')}</p>
+            )}
+
+            <Badge tone={detail.data.status === 'paid' ? 'success' : detail.data.status === 'partial' ? 'warning' : 'danger'}>
+              {detail.data.status}
+            </Badge>
+
+            <div>
+              <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-ink-muted">Historique des paiements</p>
+              {detail.data.payments.length === 0 && <p className="text-sm text-ink-muted">Aucun paiement enregistre.</p>}
+              <ul className="space-y-2">
+                {detail.data.payments.map((p) => (
+                  <li key={p.id} className="flex items-center gap-3 rounded-control border border-border p-2.5">
+                    <Icon name={PAYMENT_METHOD_ICON[p.method] || 'receipt'} className="text-accent-700" />
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm text-ink">{p.method_label} - {p.amount} FCFA</p>
+                      <p className="text-xs text-ink-muted">
+                        Recu {p.receipt_number} - {new Date(p.received_on).toLocaleDateString('fr-FR')}
+                      </p>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {detail.data.document_url && (
+              <a
+                href={detail.data.document_url}
+                target="_blank"
+                rel="noreferrer"
+                className="flex items-center justify-center gap-2 rounded-control bg-primary-50 px-4 py-2.5 text-sm font-semibold text-primary-700 ring-1 ring-inset ring-primary-200 hover:bg-primary-100"
+              >
+                <Icon name="download" className="text-[18px]" />
+                Telecharger le PDF
+              </a>
+            )}
+          </div>
+        )}
       </div>
     </div>
   )
