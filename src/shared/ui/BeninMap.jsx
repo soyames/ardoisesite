@@ -63,7 +63,13 @@ export default function BeninMap({ schoolCounts = {}, selectedDepartment = null,
   }, [isCommuneView, hovered, activeName, drilledInto, schoolCounts, departmentCounts])
 
   return (
-    <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
+    // Always stacked (map above, detail panel below) - this component gets
+    // embedded in narrow fixed-width columns (a 320px hero column, a 280px
+    // sidebar), and a viewport-width breakpoint like sm:flex-row has no way
+    // to know that; it fires on any wide desktop screen regardless of how
+    // little room the actual column has, which was overflowing the detail
+    // box. Stacking is container-width-safe with plain flexbox.
+    <div className="flex flex-col gap-4">
       <div className="shrink-0">
         {isCommuneView && (
           <button
@@ -132,7 +138,7 @@ export default function BeninMap({ schoolCounts = {}, selectedDepartment = null,
         )}
       </div>
 
-      <div className="min-w-[180px] flex-1 rounded-card border border-border bg-surface-raised p-4">
+      <div className="w-full rounded-card border border-border bg-surface-raised p-4">
         {detail ? (
           <>
             <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">{detail.sublabel}</p>
