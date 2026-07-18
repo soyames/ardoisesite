@@ -1,16 +1,20 @@
 import { useState } from 'react'
 import { api, ApiError } from '../../shared/api/client.js'
 import { useApiGet } from '../../shared/hooks/useApi.js'
+import { useAuth } from '../../shared/auth/AuthContext.jsx'
 import { Card, CardHeader, CardBody } from '../../shared/ui/Card.jsx'
 import Button from '../../shared/ui/Button.jsx'
 import Badge from '../../shared/ui/Badge.jsx'
 import Spinner from '../../shared/ui/Spinner.jsx'
 import EmptyState from '../../shared/ui/EmptyState.jsx'
+import PortalTabs from '../../shared/ui/PortalTabs.jsx'
+import StatCard from '../../shared/ui/StatCard.jsx'
 
 const INPUT_CLASS =
   'block w-full rounded-control border-0 py-2 px-3 bg-surface-raised text-ink ring-1 ring-inset ring-border focus:ring-2 focus:ring-primary-500 sm:text-sm'
 
 const TABS = [
+  { key: 'dashboard', label: 'Tableau de bord' },
   { key: 'students', label: 'Eleves' },
   { key: 'parents', label: 'Parents' },
   { key: 'guardianships', label: 'Tutelle' },
@@ -28,7 +32,7 @@ const TABS = [
  * The Parents tab below is a read-only directory for front-desk lookup.
  */
 export default function SecretaryPortal() {
-  const [tab, setTab] = useState('students')
+  const [tab, setTab] = useState('dashboard')
 
   return (
     <div className="space-y-4">
@@ -37,25 +41,144 @@ export default function SecretaryPortal() {
         <p className="mt-1 text-sm text-ink-muted">Inscription des eleves, parents, et affectation en classe.</p>
       </div>
 
-      <div className="flex gap-1 border-b border-border">
-        {TABS.map((t) => (
-          <button
-            key={t.key}
-            onClick={() => setTab(t.key)}
-            className={`px-4 py-2 text-sm font-medium transition ${
-              tab === t.key ? 'border-b-2 border-primary-600 text-primary-700' : 'text-ink-muted hover:text-ink'
-            }`}
-          >
-            {t.label}
-          </button>
-        ))}
-      </div>
+      <PortalTabs tabs={TABS} active={tab} onChange={setTab} />
 
+      {tab === 'dashboard' && <DashboardTab onNavigate={setTab} />}
       {tab === 'students' && <StudentsTab />}
       {tab === 'parents' && <ParentsTab />}
       {tab === 'guardianships' && <GuardianshipsTab />}
       {tab === 'enrollments' && <EnrollmentsTab />}
     </div>
+  )
+}
+
+/**
+ * Landing view for the portal - a real snapshot (active students, parent
+ * directory size, active enrollments) built entirely from the same three
+ * endpoints the other tabs already call, plus guardianships (already used
+ * by GuardianshipsTab) to surface students still missing a linked parent.
+ * No new backend endpoints, no invented "activity log" - the recent-activity
+ * feed is just the latest real enrollments.
+ */
+function DashboardTab({ onNavigate }) {
+  const { user } = useAuth()
+  const students = useApiGet('/api/students/students/')
+  const parents = useApiGet('/api/students/parents/')
+  const enrollments = useApiGet('/api/students/enrollments/')
+  const guardianships = useApiGet('/api/students/guardianships/')
+
+  const totalStudents = students.data?.length ?? 0
+  const activeStudents = students.data?.filter((s) => (s.status || 'active') === 'active').length ?? 0
+  const totalParents = parents.data?.length ?? 0
+  const totalEnrollments = enrollments.data?.length ?? 0
+  const activeEnrollments = enrollments.data?.filter((e) => e.is_active).length ?? 0
+
+  const linkedStudentIds = new Set((guardianships.data ?? []).map((g) => g.student))
+  const unlinkedCount = (students.data ?? []).filter((s) => !linkedStudentIds.has(s.id)).length
+
+  const recentEnrollments = [...(enrollments.data ?? [])].sort((a, b) => b.id - a.id).slice(0, 5)
+
+  const firstName = user?.first_name || user?.name?.split(' ')[0] || 'Secretaire'
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h2 className="text-lg font-semibold text-ink">Bienvenue, {firstName}</h2>
+        <p className="mt-1 text-sm text-ink-muted">Voici un apercu de l'activite au secretariat aujourd'hui.</p>
+      </div>
+
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+        <QuickActionCard
+          title="Nouvel eleve"
+          subtitle="Enregistrer un eleve dans l'ecole"
+          onClick={() => onNavigate('students')}
+        />
+        <QuickActionCard
+          title="Nouvelle inscription"
+          subtitle="Affecter un eleve a une classe"
+          onClick={() => onNavigate('enrollments')}
+        />
+        <QuickActionCard
+          title="Lier un tuteur"
+          subtitle="Associer un eleve a un parent"
+          onClick={() => onNavigate('guardianships')}
+        />
+      </div>
+
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+        <button type="button" onClick={() => onNavigate('students')} className="w-full text-left">
+          <StatCard
+            label="Eleves actifs"
+            value={students.loading ? '...' : activeStudents}
+            hint={`${totalStudents} au total - voir les eleves`}
+            tone="primary"
+          />
+        </button>
+        <button type="button" onClick={() => onNavigate('parents')} className="w-full text-left">
+          <StatCard
+            label="Parents"
+            value={parents.loading ? '...' : totalParents}
+            hint="Annuaire - voir les parents"
+            tone="primary"
+          />
+        </button>
+        <button type="button" onClick={() => onNavigate('enrollments')} className="w-full text-left">
+          <StatCard
+            label="Inscriptions actives"
+            value={enrollments.loading ? '...' : activeEnrollments}
+            hint={`${totalEnrollments} au total - voir les inscriptions`}
+            tone="success"
+          />
+        </button>
+      </div>
+
+      {!guardianships.loading && !students.loading && unlinkedCount > 0 && (
+        <button
+          type="button"
+          onClick={() => onNavigate('guardianships')}
+          className="flex w-full items-center justify-between rounded-card border border-accent-200 bg-accent-50 px-4 py-3 text-left transition hover:bg-accent-100"
+        >
+          <span className="text-sm font-medium text-accent-700">
+            {unlinkedCount} eleve{unlinkedCount > 1 ? 's' : ''} sans tuteur lie{unlinkedCount > 1 ? 's' : ''} - urgent
+          </span>
+          <span className="text-xs font-medium text-accent-700">Lier maintenant &rarr;</span>
+        </button>
+      )}
+
+      <Card>
+        <CardHeader title="Activite recente" subtitle="Dernieres inscriptions enregistrees" />
+        <CardBody className="p-0">
+          {enrollments.loading && <div className="flex justify-center py-8"><Spinner /></div>}
+          {!enrollments.loading && recentEnrollments.length === 0 && (
+            <div className="p-4"><EmptyState title="Aucune activite recente" /></div>
+          )}
+          <ul className="divide-y divide-border">
+            {recentEnrollments.map((e) => (
+              <li key={e.id} className="flex items-center justify-between p-4">
+                <div>
+                  <p className="text-sm font-medium text-ink">{e.student_name}</p>
+                  <p className="text-xs text-ink-muted">{e.classroom_name} - inscrit le {e.enrolled_on}</p>
+                </div>
+                <Badge tone={e.is_active ? 'success' : 'neutral'}>{e.is_active ? 'Actif' : 'Inactif'}</Badge>
+              </li>
+            ))}
+          </ul>
+        </CardBody>
+      </Card>
+    </div>
+  )
+}
+
+function QuickActionCard({ title, subtitle, onClick }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="flex flex-col items-start gap-1 rounded-card border border-border bg-surface-raised p-4 text-left shadow-card transition hover:border-primary-300 hover:shadow-elevated"
+    >
+      <span className="text-sm font-semibold text-primary-700">+ {title}</span>
+      <span className="text-xs text-ink-muted">{subtitle}</span>
+    </button>
   )
 }
 

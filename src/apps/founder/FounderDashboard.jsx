@@ -7,55 +7,38 @@ import ApiIntegrations from './ApiIntegrations.jsx'
 import SubscriptionPanel from './SubscriptionPanel.jsx'
 import DepartmentsHub from './DepartmentsHub.jsx'
 import AnalyticsDashboard from './AnalyticsDashboard.jsx'
+import PortalTabs from '../../shared/ui/PortalTabs.jsx'
 
 export default function FounderDashboard() {
   const { user } = useAuth()
-  const [activeTab, setActiveTab] = useState('departments')
+  const [activeTab, setActiveTab] = useState('dashboard')
 
   if (!user || !['founder', 'director'].includes(user.role)) {
     return <div className="py-20 text-center">Accès non autorisé</div>
   }
 
   const tabs = [
-    { id: 'departments', label: 'Departements (ERP)' },
-    { id: 'analytics', label: 'Analytique' },
-    { id: 'overview', label: "Vue d'ensemble (Inscriptions)" },
-    { id: 'recruitment', label: 'Recrutement' },
-    { id: 'settings', label: "Paramètres de l'école" },
-    { id: 'integrations', label: 'Intégrations API' },
-    { id: 'subscription', label: 'Facturation & Abonnement' }
+    { key: 'dashboard', label: 'Tableau de bord' },
+    { key: 'departments', label: 'Departements (ERP)' },
+    { key: 'overview', label: "Vue d'ensemble (Inscriptions)" },
+    { key: 'recruitment', label: 'Recrutement' },
+    { key: 'settings', label: "Paramètres de l'école" },
+    { key: 'integrations', label: 'Intégrations API' },
+    { key: 'subscription', label: 'Facturation & Abonnement' }
   ]
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-start">
-        <div>
-          <h1 className="text-2xl font-bold text-ink">Tableau de bord Fondateur</h1>
-          <p className="mt-1 text-sm text-ink-muted">Command Center</p>
-        </div>
+      <div>
+        <h1 className="text-2xl font-bold text-ink">Tableau de bord Fondateur</h1>
+        <p className="mt-1 text-sm text-ink-muted">Command Center</p>
       </div>
 
-      <div className="border-b border-border">
-        <nav className="-mb-px flex space-x-8">
-          {tabs.map(tab => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm ${
-                activeTab === tab.id
-                  ? 'border-primary-500 text-primary-600'
-                  : 'border-transparent text-ink-muted hover:text-ink hover:border-border'
-              }`}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </nav>
-      </div>
+      <PortalTabs tabs={tabs} active={activeTab} onChange={setActiveTab} />
 
       <div className="mt-6">
+        {activeTab === 'dashboard' && <AnalyticsDashboard onNavigate={setActiveTab} />}
         {activeTab === 'departments' && <DepartmentsHub />}
-        {activeTab === 'analytics' && <AnalyticsDashboard />}
         {activeTab === 'overview' && <EnrollmentPanel />}
         {activeTab === 'recruitment' && <RecruitmentPanel />}
         {activeTab === 'settings' && <SchoolSettings />}

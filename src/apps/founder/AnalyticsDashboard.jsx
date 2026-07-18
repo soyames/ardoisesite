@@ -11,7 +11,7 @@ import Spinner from '../../shared/ui/Spinner.jsx'
  * response - fine at this product's scale (one school), not built to
  * scale past that.
  */
-export default function AnalyticsDashboard() {
+export default function AnalyticsDashboard({ onNavigate }) {
   const today = new Date()
   const monthStart = new Date(today.getFullYear(), today.getMonth(), 1).toISOString().slice(0, 10)
   const todayStr = today.toISOString().slice(0, 10)
@@ -37,6 +37,23 @@ export default function AnalyticsDashboard() {
         <h1 className="text-xl font-semibold text-ink">Tableau de bord analytique</h1>
         <p className="mt-1 text-sm text-ink-muted">Vue d'ensemble en lecture seule - inscriptions, finances, et approbations en attente.</p>
       </div>
+
+      {onNavigate && (
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+          <button onClick={() => onNavigate('departments')} className="rounded-card border border-border bg-primary-950 p-4 text-left text-white transition hover:bg-primary-900">
+            <p className="text-sm font-semibold">Departements</p>
+            <p className="mt-1 text-xs text-white/70">Superviser chaque service</p>
+          </button>
+          <button onClick={() => onNavigate('overview')} className="rounded-card border border-border bg-accent-600 p-4 text-left text-white transition hover:bg-accent-700">
+            <p className="text-sm font-semibold">Inscriptions</p>
+            <p className="mt-1 text-xs text-white/70">Vue d'ensemble des admissions</p>
+          </button>
+          <button onClick={() => onNavigate('recruitment')} className="rounded-card border border-border bg-surface-raised p-4 text-left text-ink transition hover:bg-surface-hover">
+            <p className="text-sm font-semibold">Recrutement</p>
+            <p className="mt-1 text-xs text-ink-muted">Postes ouverts et candidatures</p>
+          </button>
+        </div>
+      )}
 
       {loading && <div className="flex justify-center py-10"><Spinner /></div>}
 

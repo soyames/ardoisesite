@@ -7,13 +7,16 @@ import Badge from '../../shared/ui/Badge.jsx'
 import Spinner from '../../shared/ui/Spinner.jsx'
 import EmptyState from '../../shared/ui/EmptyState.jsx'
 import StatCard from '../../shared/ui/StatCard.jsx'
+import PortalTabs from '../../shared/ui/PortalTabs.jsx'
 
 const INPUT_CLASS =
   'block w-full rounded-control border-0 py-2 px-3 bg-surface-raised text-ink ring-1 ring-inset ring-border focus:ring-2 focus:ring-primary-500 sm:text-sm'
 
 const TABS = [
+  { key: 'dashboard', label: 'Tableau de bord' },
   { key: 'reports', label: 'Rapports' },
   { key: 'batch-invoices', label: 'Facturation groupee' },
+  { key: 'expenses', label: 'Depenses & Budgets' },
   { key: 'payroll', label: 'Validation paie' },
   { key: 'advances', label: 'Avances' },
   { key: 'leave', label: 'Conges (sans solde)' },
@@ -21,7 +24,7 @@ const TABS = [
 ]
 
 export default function ComptablePortal() {
-  const [tab, setTab] = useState('reports')
+  const [tab, setTab] = useState('dashboard')
 
   return (
     <div className="space-y-4">
@@ -30,26 +33,110 @@ export default function ComptablePortal() {
         <p className="mt-1 text-sm text-ink-muted">Grand livre, validation de paie, approbations financieres.</p>
       </div>
 
-      <div className="flex flex-wrap gap-1 border-b border-border">
-        {TABS.map((t) => (
-          <button
-            key={t.key}
-            onClick={() => setTab(t.key)}
-            className={`px-4 py-2 text-sm font-medium transition ${
-              tab === t.key ? 'border-b-2 border-primary-600 text-primary-700' : 'text-ink-muted hover:text-ink'
-            }`}
-          >
-            {t.label}
-          </button>
-        ))}
-      </div>
+      <PortalTabs tabs={TABS} active={tab} onChange={setTab} />
 
+      {tab === 'dashboard' && <DashboardTab onNavigate={setTab} />}
       {tab === 'reports' && <ReportsTab />}
       {tab === 'batch-invoices' && <BatchInvoicesTab />}
+      {tab === 'expenses' && <ExpensesTab />}
       {tab === 'payroll' && <PayrollValidationTab />}
       {tab === 'advances' && <AdvancesApprovalTab />}
       {tab === 'leave' && <LeaveApprovalTab />}
       {tab === 'vendors' && <VendorsTab />}
+    </div>
+  )
+}
+
+function DashboardTab({ onNavigate }) {
+  const today = new Date().toISOString().slice(0, 10)
+  const monthStart = today.slice(0, 8) + '01'
+  const incomeStatement = useApiGet(`/api/finance/reports/income-statement/?start=${monthStart}&end=${today}`)
+  const pendingExpenses = useApiGet('/api/finance/expense-requests/?status=pending')
+  const budgets = useApiGet('/api/finance/budgets/')
+  const payrollPending = useApiGet('/api/hr/payroll-runs/pending-validation/')
+  const leavePending = useApiGet('/api/hr/leave-requests/pending-approval/')
+
+  const loading = incomeStatement.loading || pendingExpenses.loading || budgets.loading || payrollPending.loading || leavePending.loading
+  const pendingAmount = (pendingExpenses.data || []).reduce((sum, e) => sum + Number(e.amount), 0)
+
+  return (
+    <div className="space-y-4">
+      <div>
+        <h2 className="text-lg font-semibold text-ink">Bonjour</h2>
+        <p className="mt-1 text-sm text-ink-muted">Voici l'etat financier de l'ecole aujourd'hui.</p>
+      </div>
+
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <button onClick={() => onNavigate('batch-invoices')} className="rounded-card border border-border bg-primary-950 p-4 text-left text-white transition hover:bg-primary-900">
+          <p className="text-sm font-semibold">Generer des factures</p>
+          <p className="mt-1 text-xs text-white/70">Facturation groupee par tranche</p>
+        </button>
+        <button onClick={() => onNavigate('payroll')} className="rounded-card border border-border bg-accent-600 p-4 text-left text-white transition hover:bg-accent-700">
+          <p className="text-sm font-semibold">Traiter la paie</p>
+          <p className="mt-1 text-xs text-white/70">Valider les cycles en attente</p>
+        </button>
+      </div>
+
+      {loading && <div className="flex justify-center py-8"><Spinner /></div>}
+
+      {!loading && (
+        <>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <StatCard label="Resultat net (mois)" value={`${Number(incomeStatement.data?.net_income || 0).toLocaleString()} F`} />
+            <StatCard
+              label="Depenses en attente"
+              value={pendingExpenses.data?.length || 0}
+              hint={`${pendingAmount.toLocaleString()} FCFA`}
+              tone={pendingExpenses.data?.length > 0 ? 'accent' : 'success'}
+            />
+            <StatCard label="Cycles de paie a valider" value={payrollPending.data?.length || 0} tone={payrollPending.data?.length > 0 ? 'accent' : 'success'} />
+            <StatCard label="Conges en attente" value={leavePending.data?.length || 0} tone={leavePending.data?.length > 0 ? 'accent' : 'success'} />
+          </div>
+
+          {budgets.data?.length > 0 && (
+            <Card>
+              <CardHeader title="Utilisation des budgets" action={<button onClick={() => onNavigate('expenses')} className="text-xs font-medium text-primary-600 hover:text-primary-700">Voir tout</button>} />
+              <CardBody className="space-y-3">
+                {budgets.data.map((b) => (
+                  <div key={b.id}>
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-ink">{b.department}</span>
+                      <span className="text-ink-muted">{b.utilization_pct}% utilise</span>
+                    </div>
+                    <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-surface">
+                      <div
+                        className={`h-full rounded-full ${Number(b.utilization_pct) >= 90 ? 'bg-danger-500' : 'bg-primary-700'}`}
+                        style={{ width: `${Math.min(100, Number(b.utilization_pct))}%` }}
+                      />
+                    </div>
+                    <p className="mt-1 text-xs text-ink-muted">
+                      Depense: {Number(b.spent_amount).toLocaleString()} F - Total: {Number(b.allocated_amount).toLocaleString()} F
+                    </p>
+                  </div>
+                ))}
+              </CardBody>
+            </Card>
+          )}
+
+          <Card>
+            <CardHeader title="Approbations en attente" action={<button onClick={() => onNavigate('expenses')} className="text-xs font-medium text-primary-600 hover:text-primary-700">Voir tout</button>} />
+            <CardBody className="p-0">
+              {(pendingExpenses.data || []).length === 0 && <div className="p-4"><EmptyState title="Aucune depense en attente" /></div>}
+              <ul className="divide-y divide-border">
+                {(pendingExpenses.data || []).slice(0, 5).map((e) => (
+                  <li key={e.id} className="flex items-center justify-between p-4">
+                    <div>
+                      <p className="text-sm font-medium text-ink">{e.description}</p>
+                      <p className="text-xs text-ink-muted">{e.budget_department} - {e.requested_by_name}</p>
+                    </div>
+                    <Badge tone="neutral">{Number(e.amount).toLocaleString()} F</Badge>
+                  </li>
+                ))}
+              </ul>
+            </CardBody>
+          </Card>
+        </>
+      )}
     </div>
   )
 }
@@ -124,6 +211,124 @@ function BatchInvoicesTab() {
           </CardBody>
         </Card>
       )}
+    </div>
+  )
+}
+
+function ExpensesTab() {
+  const budgets = useApiGet('/api/finance/budgets/')
+  const expenses = useApiGet('/api/finance/expense-requests/')
+  const vendors = useApiGet('/api/finance/vendors/')
+  const [busy, setBusy] = useState(null)
+  const [error, setError] = useState(null)
+  const [showForm, setShowForm] = useState(false)
+  const [form, setForm] = useState({ budget: '', vendor: '', description: '', amount: '' })
+  const [submitting, setSubmitting] = useState(false)
+
+  const submit = async (e) => {
+    e.preventDefault()
+    setSubmitting(true)
+    setError(null)
+    try {
+      await api.post('/api/finance/expense-requests/', {
+        budget: Number(form.budget), vendor: form.vendor ? Number(form.vendor) : null,
+        description: form.description, amount: form.amount,
+      })
+      setForm({ budget: '', vendor: '', description: '', amount: '' })
+      setShowForm(false)
+      expenses.refetch()
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'Erreur inattendue.')
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  const act = async (id, action) => {
+    setBusy(id)
+    setError(null)
+    try {
+      await api.post(`/api/finance/expense-requests/${id}/${action}/`, {})
+      expenses.refetch()
+      budgets.refetch()
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'Erreur inattendue.')
+    } finally {
+      setBusy(null)
+    }
+  }
+
+  const STATUS_TONE = { pending: 'neutral', approved: 'success', rejected: 'danger', paid: 'success' }
+
+  return (
+    <div className="space-y-4">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+        {(budgets.data || []).map((b) => (
+          <Card key={b.id}>
+            <CardBody>
+              <p className="text-xs font-medium uppercase tracking-wide text-ink-muted">{b.department}</p>
+              <p className="mt-1 text-lg font-semibold text-ink">{b.utilization_pct}%</p>
+              <p className="text-xs text-ink-muted">{Number(b.spent_amount).toLocaleString()} / {Number(b.allocated_amount).toLocaleString()} F</p>
+            </CardBody>
+          </Card>
+        ))}
+      </div>
+
+      <div className="flex justify-end">
+        <Button size="sm" onClick={() => setShowForm((v) => !v)}>{showForm ? 'Fermer' : '+ Nouvelle demande'}</Button>
+      </div>
+
+      {showForm && (
+        <Card>
+          <CardHeader title="Nouvelle demande de depense" />
+          <CardBody>
+            <form onSubmit={submit} className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <select required className={INPUT_CLASS} value={form.budget} onChange={(e) => setForm({ ...form, budget: e.target.value })}>
+                <option value="">Choisir un budget...</option>
+                {budgets.data?.map((b) => <option key={b.id} value={b.id}>{b.department}</option>)}
+              </select>
+              <select className={INPUT_CLASS} value={form.vendor} onChange={(e) => setForm({ ...form, vendor: e.target.value })}>
+                <option value="">Fournisseur (optionnel)</option>
+                {vendors.data?.map((v) => <option key={v.id} value={v.id}>{v.name}</option>)}
+              </select>
+              <input required className={`sm:col-span-2 ${INPUT_CLASS}`} placeholder="Description" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
+              <input required type="number" step="0.01" className={INPUT_CLASS} placeholder="Montant (FCFA)" value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} />
+              {error && <p className="text-sm text-danger-600 sm:col-span-2">{error}</p>}
+              <div className="sm:col-span-2"><Button type="submit" disabled={submitting}>{submitting ? 'Enregistrement...' : 'Soumettre'}</Button></div>
+            </form>
+          </CardBody>
+        </Card>
+      )}
+
+      <Card>
+        <CardHeader title="Demandes de depense" />
+        <CardBody className="p-0">
+          {expenses.loading && <div className="flex justify-center py-8"><Spinner /></div>}
+          {!expenses.loading && expenses.data?.length === 0 && <div className="p-4"><EmptyState title="Aucune demande" /></div>}
+          <ul className="divide-y divide-border">
+            {expenses.data?.map((e) => (
+              <li key={e.id} className="flex items-center justify-between p-4">
+                <div>
+                  <p className="text-sm font-medium text-ink">{e.description}</p>
+                  <p className="text-xs text-ink-muted">{e.budget_department} - {e.requested_by_name} - {Number(e.amount).toLocaleString()} F</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Badge tone={STATUS_TONE[e.status]}>{e.status}</Badge>
+                  {e.status === 'pending' && (
+                    <>
+                      <Button size="sm" variant="danger" onClick={() => act(e.id, 'reject')} disabled={busy === e.id}>Rejeter</Button>
+                      <Button size="sm" onClick={() => act(e.id, 'approve')} disabled={busy === e.id}>Approuver</Button>
+                    </>
+                  )}
+                  {e.status === 'approved' && e.vendor && (
+                    <Button size="sm" onClick={() => act(e.id, 'pay')} disabled={busy === e.id}>Payer</Button>
+                  )}
+                </div>
+              </li>
+            ))}
+          </ul>
+        </CardBody>
+      </Card>
     </div>
   )
 }
