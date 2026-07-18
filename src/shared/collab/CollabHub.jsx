@@ -1,10 +1,12 @@
 import { useState } from 'react'
 import MessagesPanel from './MessagesPanel.jsx'
 import TasksPanel from './TasksPanel.jsx'
+import DocumentsPanel from './DocumentsPanel.jsx'
 
 const TABS = [
   { key: 'messages', label: 'Messages' },
   { key: 'tasks', label: 'Taches' },
+  { key: 'documents', label: 'Documents' },
 ]
 
 /**
@@ -44,6 +46,7 @@ export default function CollabHub() {
       <div className="min-h-0 flex-1">
         {tab === 'messages' && <MessagesPanel />}
         {tab === 'tasks' && <TasksPanel />}
+        {tab === 'documents' && <DocumentsPanel />}
       </div>
     </div>
   )
