@@ -65,12 +65,13 @@ export default function SurveillantPortal() {
 function DashboardTab({ onNavigate }) {
   const openIncidents = useApiGet('/api/academics/incidents/?status=open')
   const pendingDetentions = useApiGet('/api/academics/discipline/list/')
+  const attendanceSummary = useApiGet('/api/academics/attendance/today-summary/')
 
   const detentionsAwaitingCheckIn = (pendingDetentions.data || []).filter(
     (d) => d.measure === 'detention' && d.status === 'approved' && !d.served_at
   )
 
-  const loading = openIncidents.loading || pendingDetentions.loading
+  const loading = openIncidents.loading || pendingDetentions.loading || attendanceSummary.loading
 
   return (
     <div className="space-y-4">
@@ -94,7 +95,12 @@ function DashboardTab({ onNavigate }) {
 
       {!loading && (
         <>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+            <StatCard
+              label="Taux de presence aujourd'hui"
+              value={attendanceSummary.data?.rate_pct != null ? `${attendanceSummary.data.rate_pct}%` : 'Pas encore fait'}
+              hint={attendanceSummary.data?.total ? `${attendanceSummary.data.present}/${attendanceSummary.data.total} presents` : undefined}
+            />
             <StatCard label="Incidents ouverts" value={openIncidents.data?.length || 0} tone={openIncidents.data?.length > 0 ? 'accent' : 'success'} />
             <StatCard
               label="Heures de colle a pointer"
