@@ -6,14 +6,17 @@ import EmptyState from '../../shared/ui/EmptyState.jsx'
 import Spinner from '../../shared/ui/Spinner.jsx'
 import BeninMap from '../../shared/ui/BeninMap.jsx'
 import { FRANCOPHONE_AFRICA_DATA } from '../../shared/constants/locations.js'
-import { departmentForCity } from '../../shared/constants/beninDepartments.js'
+import { BENIN_COMMUNE_DEPARTMENT } from '../../shared/constants/beninGeoCommunes.js'
+
+// Marketplace is Benin-only for now - see FRANCOPHONE_AFRICA_DATA for the
+// full multi-country list this will expand into later.
+const BENIN_CITIES = FRANCOPHONE_AFRICA_DATA['Benin']
 
 export default function SchoolList() {
   const [searchParams, setSearchParams] = useSearchParams()
   const [schools, setSchools] = useState([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
-  const [countryFilter, setCountryFilter] = useState('Tous')
   const [cityFilter, setCityFilter] = useState('Toutes')
   const department = searchParams.get('department')
 
@@ -27,21 +30,19 @@ export default function SchoolList() {
     return () => unsubscribe()
   }, [])
 
-  const departmentCounts = useMemo(() => {
+  const cityCounts = useMemo(() => {
     const counts = {}
     schools.forEach((school) => {
-      const dept = departmentForCity(school.city)
-      if (dept) counts[dept] = (counts[dept] || 0) + 1
+      if (school.city) counts[school.city] = (counts[school.city] || 0) + 1
     })
     return counts
   }, [schools])
 
   const filteredSchools = schools.filter(school => {
     const matchesSearch = (school.name || '').toLowerCase().includes(search.toLowerCase())
-    const matchesCountry = countryFilter === 'Tous' || school.country === countryFilter
     const matchesCity = cityFilter === 'Toutes' || school.city === cityFilter
-    const matchesDepartment = !department || departmentForCity(school.city) === department
-    return matchesSearch && matchesCountry && matchesCity && matchesDepartment
+    const matchesDepartment = !department || BENIN_COMMUNE_DEPARTMENT[school.city] === department
+    return matchesSearch && matchesCity && matchesDepartment
   })
 
   return (
@@ -63,12 +64,12 @@ export default function SchoolList() {
           {/* Region map */}
           <div className="rounded-card border border-border bg-surface-raised p-5 shadow-card lg:sticky lg:top-6 lg:self-start">
             <h3 className="text-sm font-semibold text-ink">Parcourir par departement</h3>
-            <p className="mt-1 text-xs text-ink-muted">Cliquez une region pour filtrer l'annuaire.</p>
+            <p className="mt-1 text-xs text-ink-muted">Cliquez une region pour filtrer l'annuaire, ou passez aux communes.</p>
             <div className="mt-4">
               <BeninMap
-                counts={departmentCounts}
-                selected={department}
-                onSelect={(dept) => setSearchParams(dept ? { department: dept } : {})}
+                schoolCounts={cityCounts}
+                selectedDepartment={department}
+                onSelectDepartment={(dept) => setSearchParams(dept ? { department: dept } : {})}
               />
             </div>
             {department && (
@@ -92,26 +93,12 @@ export default function SchoolList() {
                 className="w-full sm:max-w-xs rounded-control border-0 bg-surface px-4 py-3 text-ink shadow-sm ring-1 ring-inset ring-border placeholder:text-ink-muted focus:ring-2 focus:ring-inset focus:ring-primary-500 sm:text-sm sm:leading-6"
               />
               <select
-                value={countryFilter}
-                onChange={(e) => {
-                  setCountryFilter(e.target.value)
-                  setCityFilter('Toutes')
-                }}
-                className="w-full sm:max-w-[200px] rounded-control border-0 bg-surface px-4 py-3 text-ink shadow-sm ring-1 ring-inset ring-border focus:ring-2 focus:ring-inset focus:ring-primary-500 sm:text-sm sm:leading-6"
-              >
-                <option value="Tous">Tous les pays</option>
-                {Object.keys(FRANCOPHONE_AFRICA_DATA).map(country => (
-                  <option key={country} value={country}>{country}</option>
-                ))}
-              </select>
-              <select
                 value={cityFilter}
                 onChange={(e) => setCityFilter(e.target.value)}
-                disabled={countryFilter === 'Tous'}
-                className="w-full sm:max-w-[200px] rounded-control border-0 bg-surface px-4 py-3 text-ink shadow-sm ring-1 ring-inset ring-border focus:ring-2 focus:ring-inset focus:ring-primary-500 sm:text-sm sm:leading-6 disabled:opacity-50"
+                className="w-full sm:max-w-[200px] rounded-control border-0 bg-surface px-4 py-3 text-ink shadow-sm ring-1 ring-inset ring-border focus:ring-2 focus:ring-inset focus:ring-primary-500 sm:text-sm sm:leading-6"
               >
                 <option value="Toutes">Toutes les villes</option>
-                {countryFilter !== 'Tous' && FRANCOPHONE_AFRICA_DATA[countryFilter].map(city => (
+                {BENIN_CITIES.map(city => (
                   <option key={city} value={city}>{city}</option>
                 ))}
               </select>
@@ -138,7 +125,7 @@ export default function SchoolList() {
                     <div className="flex flex-1 flex-col justify-between p-6">
                       <div>
                         <div className="flex items-center justify-between">
-                          <p className="text-sm font-medium text-primary-600">{school.city}, {school.country}</p>
+                          <p className="text-sm font-medium text-primary-600">{school.city}</p>
                           {school.cycle && <p className="text-xs font-semibold text-ink-muted">{school.cycle}</p>}
                         </div>
                         <h3 className="mt-2 text-xl font-bold text-ink group-hover:text-primary-600 transition-colors">
@@ -172,7 +159,7 @@ export default function SchoolList() {
                   description="Essayez une autre région, une autre ville, ou un autre terme de recherche."
                   action={
                     <button
-                      onClick={() => { setSearch(''); setCountryFilter('Tous'); setCityFilter('Toutes'); setSearchParams({}) }}
+                      onClick={() => { setSearch(''); setCityFilter('Toutes'); setSearchParams({}) }}
                       className="text-sm font-semibold text-primary-600 hover:text-primary-500"
                     >
                       Réinitialiser les filtres

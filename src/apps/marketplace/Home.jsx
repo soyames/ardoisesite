@@ -4,7 +4,6 @@ import { collection, onSnapshot } from 'firebase/firestore'
 import { db } from '../../shared/api/firebase.js'
 import Badge from '../../shared/ui/Badge.jsx'
 import BeninMap from '../../shared/ui/BeninMap.jsx'
-import { departmentForCity } from '../../shared/constants/beninDepartments.js'
 
 // Tutors aren't wired to Firestore yet - TeacherList/TeacherDetail still
 // resolve profiles from TeacherDetail.jsx's TEACHER_DB mock, so pointing
@@ -34,11 +33,10 @@ export default function Home() {
     [schools]
   )
 
-  const departmentCounts = useMemo(() => {
+  const cityCounts = useMemo(() => {
     const counts = {}
     schools.forEach((school) => {
-      const dept = departmentForCity(school.city)
-      if (dept) counts[dept] = (counts[dept] || 0) + 1
+      if (school.city) counts[school.city] = (counts[school.city] || 0) + 1
     })
     return counts
   }, [schools])
@@ -127,8 +125,8 @@ export default function Home() {
           </div>
           <div className="flex justify-center">
             <BeninMap
-              counts={departmentCounts}
-              onSelect={(dept) => navigate(dept ? `/schools?department=${encodeURIComponent(dept)}` : '/schools')}
+              schoolCounts={cityCounts}
+              onSelectDepartment={(dept) => navigate(dept ? `/schools?department=${encodeURIComponent(dept)}` : '/schools')}
             />
           </div>
         </div>
