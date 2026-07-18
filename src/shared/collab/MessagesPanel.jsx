@@ -7,6 +7,7 @@ import Button from '../ui/Button.jsx'
 import Badge from '../ui/Badge.jsx'
 import Spinner from '../ui/Spinner.jsx'
 import EmptyState from '../ui/EmptyState.jsx'
+import Icon from '../ui/Icon.jsx'
 
 const INPUT_CLASS =
   'block w-full rounded-control border-0 py-2 px-3 bg-surface-raised text-ink ring-1 ring-inset ring-border focus:ring-2 focus:ring-primary-500 sm:text-sm'
@@ -147,25 +148,40 @@ export default function MessagesPanel() {
         )}
 
         <div className="flex-1 overflow-y-auto">
-          {conversations.data?.map((c) => (
-            <button
-              key={c.id}
-              onClick={() => setActiveId(c.id)}
-              className={`flex w-full flex-col gap-0.5 border-b border-border px-4 py-3 text-left transition ${
-                activeId === c.id ? 'bg-primary-50' : 'hover:bg-primary-50/50'
-              }`}
-            >
-              <div className="flex items-center justify-between gap-2">
-                <span className="truncate text-sm font-medium text-ink">
-                  {conversationLabel(c, user.id)}
-                </span>
-                {c.unread_count > 0 && <Badge tone="info">{c.unread_count}</Badge>}
-              </div>
-              {c.last_message && (
-                <span className="truncate text-xs text-ink-muted">{c.last_message.body || 'Document partage'}</span>
-              )}
-            </button>
-          ))}
+          {conversations.data?.map((c) => {
+            const label = conversationLabel(c, user.id)
+            return (
+              <button
+                key={c.id}
+                onClick={() => setActiveId(c.id)}
+                className={`flex w-full items-start gap-3 border-b border-border px-4 py-3 text-left transition ${
+                  activeId === c.id ? 'bg-primary-50' : 'hover:bg-primary-50/50'
+                }`}
+              >
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary-100 text-primary-700">
+                  {c.is_group ? <Icon name="groups" /> : <span className="text-xs font-bold">{label.slice(0, 2).toUpperCase()}</span>}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="truncate text-sm font-medium text-ink">{label}</span>
+                    {c.last_message && (
+                      <span className="shrink-0 text-[11px] text-ink-muted">
+                        {new Date(c.last_message.created_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex items-center justify-between gap-2">
+                    {c.last_message ? (
+                      <span className="truncate text-xs text-ink-muted">{c.last_message.body || 'Document partage'}</span>
+                    ) : (
+                      <span className="text-xs text-ink-muted">Aucun message</span>
+                    )}
+                    {c.unread_count > 0 && <Badge tone="info">{c.unread_count}</Badge>}
+                  </div>
+                </div>
+              </button>
+            )
+          })}
         </div>
       </Card>
 

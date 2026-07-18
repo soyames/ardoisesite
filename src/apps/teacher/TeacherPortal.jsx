@@ -10,7 +10,7 @@ import MonEspaceRH from '../../shared/components/MonEspaceRH.jsx'
 import PortalTabs from '../../shared/ui/PortalTabs.jsx'
 import StatCard from '../../shared/ui/StatCard.jsx'
 import QuickActionButton from '../../shared/ui/QuickActionButton.jsx'
-import Icon from '../../shared/ui/Icon.jsx'
+import WeeklyTimetableGrid from '../../shared/ui/WeeklyTimetableGrid.jsx'
 
 const TABS = [
   { key: 'dashboard', label: 'Tableau de bord' },
@@ -20,15 +20,6 @@ const TABS = [
   { key: 'exampaper', label: "Epreuve" },
   { key: 'timetable', label: 'Emploi du temps' },
   { key: 'rh', label: 'Mon espace RH' },
-]
-
-const DAYS = [
-  { value: 0, label: 'Lundi' },
-  { value: 1, label: 'Mardi' },
-  { value: 2, label: 'Mercredi' },
-  { value: 3, label: 'Jeudi' },
-  { value: 4, label: 'Vendredi' },
-  { value: 5, label: 'Samedi' },
 ]
 
 const MEASURES = [
@@ -149,36 +140,17 @@ function TimetablePanel() {
   const slots = useApiGet('/api/academics/timetable-slots/?teacher=me')
 
   return (
-    <Card>
-      <CardHeader title="Mon emploi du temps" subtitle="Vos creneaux d'enseignement, par jour." />
-      <CardBody className="p-0">
-        {slots.loading && <div className="flex justify-center py-8"><Spinner /></div>}
-        {!slots.loading && (slots.data || []).length === 0 && (
-          <div className="p-4"><EmptyState title="Aucun creneau assigne" description="Contactez le Censeur si vous devriez avoir des creneaux ici." /></div>
-        )}
-        <div className="divide-y divide-border">
-          {DAYS.map((day) => {
-            const dayRows = (slots.data || [])
-              .filter((s) => s.day_of_week === day.value)
-              .sort((a, b) => a.start_time.localeCompare(b.start_time))
-            if (dayRows.length === 0) return null
-            return (
-              <div key={day.value} className="p-4">
-                <p className="mb-2 text-sm font-semibold text-ink">{day.label}</p>
-                <ul className="space-y-2">
-                  {dayRows.map((s) => (
-                    <li key={s.id} className="flex items-center gap-3 text-sm">
-                      <Icon name="schedule" className="text-accent-600" />
-                      <span className="text-ink">{s.start_time.slice(0, 5)}-{s.end_time.slice(0, 5)} - {s.classroom_name} - {s.subject_name}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )
-          })}
-        </div>
-      </CardBody>
-    </Card>
+    <div className="space-y-3">
+      <div>
+        <p className="text-sm font-semibold text-ink">Mon emploi du temps</p>
+        <p className="text-xs text-ink-muted">Vos creneaux d'enseignement pour la semaine.</p>
+      </div>
+      {slots.loading && <div className="flex justify-center py-8"><Spinner /></div>}
+      {!slots.loading && (slots.data || []).length === 0 && (
+        <EmptyState title="Aucun creneau assigne" description="Contactez le Censeur si vous devriez avoir des creneaux ici." />
+      )}
+      {!slots.loading && (slots.data || []).length > 0 && <WeeklyTimetableGrid slots={slots.data} />}
+    </div>
   )
 }
 

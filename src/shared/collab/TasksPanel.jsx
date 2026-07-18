@@ -6,6 +6,7 @@ import Button from '../ui/Button.jsx'
 import Badge from '../ui/Badge.jsx'
 import Spinner from '../ui/Spinner.jsx'
 import EmptyState from '../ui/EmptyState.jsx'
+import ActivityList from '../ui/ActivityList.jsx'
 
 const INPUT_CLASS =
   'block w-full rounded-control border-0 py-2 px-3 bg-surface-raised text-ink ring-1 ring-inset ring-border focus:ring-2 focus:ring-primary-500 sm:text-sm'
@@ -197,19 +198,19 @@ function TaskDetail({ task, onClose, onChanged }) {
         )}
 
         <div className="space-y-2 border-t border-border pt-3">
-          <p className="text-xs font-medium text-ink-muted">Suivi et progression</p>
+          <p className="text-xs font-medium text-ink-muted">Fil d'activite</p>
           {updates.loading && <div className="flex justify-center py-3"><Spinner /></div>}
-          {updates.data?.map((u) => (
-            <div key={u.id} className="text-sm">
-              {u.kind === 'status_change' ? (
-                <p className="text-xs italic text-ink-muted">
-                  {u.author?.full_name} - {u.body}
-                </p>
-              ) : (
-                <p className="text-ink"><span className="font-medium">{u.author?.full_name}:</span> {u.body}</p>
-              )}
-            </div>
-          ))}
+          {!updates.loading && (updates.data || []).length > 0 && (
+            <ActivityList
+              items={updates.data.map((u) => ({
+                id: u.id,
+                icon: u.kind === 'status_change' ? 'sync_alt' : 'chat_bubble',
+                iconTone: u.kind === 'status_change' ? 'accent' : 'primary',
+                title: u.author?.full_name,
+                subtitle: u.body,
+              }))}
+            />
+          )}
           <div className="flex gap-2">
             <input
               className={`flex-1 ${INPUT_CLASS}`}
