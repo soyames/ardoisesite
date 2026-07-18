@@ -48,25 +48,30 @@ import HowItWorks from './apps/marketplace/HowItWorks.jsx'
 // two roles are platform-level Firestore accounts with no schoolId,
 // so there's no Django session for a Settings page to manage here -
 // their profile page is the separate marketplace-side one instead.
-const SETTINGS_NAV_ITEM = { to: '/portal/settings', label: 'Parametres', end: false }
+const SETTINGS_NAV_ITEM = { to: '/portal/settings', label: 'Parametres', end: false, icon: 'settings' }
+// Every Stitch mockup pairs each nav item with a Material Symbols icon
+// (see brand/DESIGN.md + shared/ui/Icon.jsx) - one per role here, kept
+// alongside each item rather than in a lookup table since a given
+// label ("Tableau de bord") can map to a different icon per role.
+const collabItem = (icon) => ({ to: '/portal/collab', label: 'Collaboration', end: false, icon })
 
 const NAV_BY_ROLE = {
-  founder: [{ to: '/portal', label: 'Tableau de bord', end: true }, { to: '/portal/collab', label: 'Collaboration', end: false }, SETTINGS_NAV_ITEM],
-  director: [{ to: '/portal', label: 'Tableau de bord', end: true }, { to: '/portal/collab', label: 'Collaboration', end: false }, SETTINGS_NAV_ITEM],
-  parent: [{ to: '/portal', label: 'Mes enfants', end: true }, SETTINGS_NAV_ITEM],
-  cashier: [{ to: '/portal', label: 'Encaissement', end: true }, { to: '/portal/collab', label: 'Collaboration', end: false }, SETTINGS_NAV_ITEM],
-  teacher: [{ to: '/portal', label: 'Mes classes', end: true }, { to: '/portal/collab', label: 'Collaboration', end: false }, SETTINGS_NAV_ITEM],
-  secretary: [{ to: '/portal', label: 'Secretariat', end: true }, { to: '/portal/collab', label: 'Collaboration', end: false }, SETTINGS_NAV_ITEM],
-  hr: [{ to: '/portal', label: 'RH & Paie', end: true }, { to: '/portal/collab', label: 'Collaboration', end: false }, SETTINGS_NAV_ITEM],
-  comptable: [{ to: '/portal', label: 'Comptabilite', end: true }, { to: '/portal/collab', label: 'Collaboration', end: false }, SETTINGS_NAV_ITEM],
-  censeur: [{ to: '/portal', label: 'Censorat', end: true }, { to: '/portal/collab', label: 'Collaboration', end: false }, SETTINGS_NAV_ITEM],
-  surveillant: [{ to: '/portal', label: 'Surveillance', end: true }, { to: '/portal/collab', label: 'Collaboration', end: false }, SETTINGS_NAV_ITEM],
-  canteen: [{ to: '/portal', label: 'Cantine', end: true }, { to: '/portal/collab', label: 'Collaboration', end: false }, SETTINGS_NAV_ITEM],
-  librarian: [{ to: '/portal', label: 'Librairie', end: true }, { to: '/portal/collab', label: 'Collaboration', end: false }, SETTINGS_NAV_ITEM],
-  student: [{ to: '/portal', label: 'Mon espace', end: true }, SETTINGS_NAV_ITEM],
-  auditor: [{ to: '/portal', label: 'Audit', end: true }, SETTINGS_NAV_ITEM],
-  superadmin: [{ to: '/portal', label: 'Administration', end: true }, { to: '/portal/collab', label: 'Collaboration', end: false }],
-  support_agent: [{ to: '/portal', label: 'Support Tickets', end: true }, { to: '/portal/collab', label: 'Collaboration', end: false }],
+  founder: [{ to: '/portal', label: 'Tableau de bord', end: true, icon: 'dashboard' }, collabItem('forum'), SETTINGS_NAV_ITEM],
+  director: [{ to: '/portal', label: 'Tableau de bord', end: true, icon: 'dashboard' }, collabItem('forum'), SETTINGS_NAV_ITEM],
+  parent: [{ to: '/portal', label: 'Mes enfants', end: true, icon: 'family_restroom' }, SETTINGS_NAV_ITEM],
+  cashier: [{ to: '/portal', label: 'Encaissement', end: true, icon: 'point_of_sale' }, collabItem('forum'), SETTINGS_NAV_ITEM],
+  teacher: [{ to: '/portal', label: 'Mes classes', end: true, icon: 'school' }, collabItem('forum'), SETTINGS_NAV_ITEM],
+  secretary: [{ to: '/portal', label: 'Secretariat', end: true, icon: 'contact_page' }, collabItem('forum'), SETTINGS_NAV_ITEM],
+  hr: [{ to: '/portal', label: 'RH & Paie', end: true, icon: 'badge' }, collabItem('forum'), SETTINGS_NAV_ITEM],
+  comptable: [{ to: '/portal', label: 'Comptabilite', end: true, icon: 'account_balance' }, collabItem('forum'), SETTINGS_NAV_ITEM],
+  censeur: [{ to: '/portal', label: 'Censorat', end: true, icon: 'insights' }, collabItem('forum'), SETTINGS_NAV_ITEM],
+  surveillant: [{ to: '/portal', label: 'Surveillance', end: true, icon: 'shield' }, collabItem('forum'), SETTINGS_NAV_ITEM],
+  canteen: [{ to: '/portal', label: 'Cantine', end: true, icon: 'restaurant' }, collabItem('forum'), SETTINGS_NAV_ITEM],
+  librarian: [{ to: '/portal', label: 'Librairie', end: true, icon: 'menu_book' }, collabItem('forum'), SETTINGS_NAV_ITEM],
+  student: [{ to: '/portal', label: 'Mon espace', end: true, icon: 'person' }, SETTINGS_NAV_ITEM],
+  auditor: [{ to: '/portal', label: 'Audit', end: true, icon: 'fact_check' }, SETTINGS_NAV_ITEM],
+  superadmin: [{ to: '/portal', label: 'Administration', end: true, icon: 'admin_panel_settings' }, collabItem('forum')],
+  support_agent: [{ to: '/portal', label: 'Support Tickets', end: true, icon: 'support_agent' }, collabItem('forum')],
 }
 
 const PORTAL_BY_ROLE = {

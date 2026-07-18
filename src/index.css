@@ -211,4 +211,18 @@
   #root {
     min-height: 100svh;
   }
+
+  /* Base rendering rules for the Material Symbols Outlined webfont
+     (loaded in index.html) - the standard snippet Google ships with
+     it, so an icon never wraps, inherits letter-spacing, etc. */
+  .material-symbols-outlined {
+    font-variation-settings: "FILL" 0, "wght" 400, "GRAD" 0, "opsz" 24;
+    display: inline-block;
+    line-height: 1;
+    text-transform: none;
+    letter-spacing: normal;
+    word-wrap: normal;
+    white-space: nowrap;
+    direction: ltr;
+  }
 }
