@@ -7,6 +7,9 @@ import Badge from '../ui/Badge.jsx'
 import Spinner from '../ui/Spinner.jsx'
 import EmptyState from '../ui/EmptyState.jsx'
 import SpreadsheetEditor from './SpreadsheetEditor.jsx'
+import NoteEditor from './NoteEditor.jsx'
+
+const isNote = (doc) => doc.kind === 'freeform' && doc.content_type === 'text/html'
 
 const INPUT_CLASS =
   'block w-full rounded-control border-0 py-2 px-3 bg-surface-raised text-ink ring-1 ring-inset ring-border focus:ring-2 focus:ring-primary-500 sm:text-sm'
@@ -79,7 +82,9 @@ export default function DocumentsPanel() {
   const [busy, setBusy] = useState(null)
   const [error, setError] = useState(null)
   const [creatingSheet, setCreatingSheet] = useState(false)
+  const [creatingNote, setCreatingNote] = useState(false)
   const [openSheet, setOpenSheet] = useState(null)
+  const [openNote, setOpenNote] = useState(null)
   const documents = useApiGet('/api/collab/documents/')
 
   const filtered = (documents.data || []).filter((d) =>
@@ -128,11 +133,35 @@ export default function DocumentsPanel() {
     }
   }
 
+  const createNote = async () => {
+    setCreatingNote(true)
+    setError(null)
+    try {
+      const created = await api.post('/api/collab/documents/notes/', { title: 'Nouvelle note' })
+      await documents.refetch()
+      setOpenNote(created)
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'Erreur inattendue.')
+    } finally {
+      setCreatingNote(false)
+    }
+  }
+
   if (openSheet) {
     return (
       <SpreadsheetEditor
         document={openSheet}
         onClose={() => setOpenSheet(null)}
+        onSaved={() => documents.refetch()}
+      />
+    )
+  }
+
+  if (openNote) {
+    return (
+      <NoteEditor
+        document={openNote}
+        onClose={() => setOpenNote(null)}
         onSaved={() => documents.refetch()}
       />
     )
@@ -148,6 +177,9 @@ export default function DocumentsPanel() {
           onChange={(e) => setSearch(e.target.value)}
         />
         <div className="flex flex-wrap gap-2">
+          <Button size="sm" variant="secondary" onClick={createNote} disabled={creatingNote}>
+            {creatingNote ? 'Creation...' : '+ Nouvelle note'}
+          </Button>
           <Button size="sm" variant="secondary" onClick={createSpreadsheet} disabled={creatingSheet}>
             {creatingSheet ? 'Creation...' : '+ Nouvelle feuille de calcul'}
           </Button>
@@ -181,6 +213,10 @@ export default function DocumentsPanel() {
                 <Badge tone={STATUS_TONE[doc.status] || 'neutral'}>{STATUS_LABEL[doc.status] || doc.status}</Badge>
                 {doc.kind === 'spreadsheet' ? (
                   <Button size="sm" onClick={() => setOpenSheet(doc)}>
+                    Ouvrir
+                  </Button>
+                ) : isNote(doc) ? (
+                  <Button size="sm" onClick={() => setOpenNote(doc)}>
                     Ouvrir
                   </Button>
                 ) : (
