@@ -19,8 +19,15 @@ const TABS = [
   { key: 'discipline', label: 'Discipline' },
   { key: 'exampaper', label: "Epreuve" },
   { key: 'timetable', label: 'Emploi du temps' },
+  { key: 'availability', label: 'Disponibilites' },
   { key: 'rh', label: 'Mon espace RH' },
 ]
+
+const AVAILABILITY_STATUS = {
+  submitted: { label: 'Soumis', tone: 'neutral' },
+  drafted: { label: 'Brouillon envoye', tone: 'warning' },
+  approved: { label: 'Approuve', tone: 'success' },
+}
 
 const MEASURES = [
   { value: 'warning', label: 'Avertissement' },
@@ -87,8 +94,9 @@ export default function TeacherPortal() {
 
           {tab === 'dashboard' && <DashboardTab myClasses={myClasses.data} onNavigate={setTab} />}
           {tab === 'timetable' && <TimetablePanel />}
+          {tab === 'availability' && <AvailabilityPanel />}
 
-          {tab !== 'rh' && tab !== 'dashboard' && tab !== 'timetable' && (!myClasses.data || myClasses.data.length === 0) && (
+          {tab !== 'rh' && tab !== 'dashboard' && tab !== 'timetable' && tab !== 'availability' && (!myClasses.data || myClasses.data.length === 0) && (
             <EmptyState
               title="Aucune classe assignee"
               description="Contactez le Censeur si vous devriez avoir des classes ici."
@@ -150,6 +158,98 @@ function TimetablePanel() {
         <EmptyState title="Aucun creneau assigne" description="Contactez le Censeur si vous devriez avoir des creneaux ici." />
       )}
       {!slots.loading && (slots.data || []).length > 0 && <WeeklyTimetableGrid slots={slots.data} />}
+    </div>
+  )
+}
+
+function AvailabilityPanel() {
+  const submissions = useApiGet('/api/hr/teacher-availability/')
+  const [notes, setNotes] = useState('')
+  const [hoursRequested, setHoursRequested] = useState('')
+  const [submitting, setSubmitting] = useState(false)
+  const [error, setError] = useState(null)
+
+  const submit = async (e) => {
+    e.preventDefault()
+    setSubmitting(true)
+    setError(null)
+    try {
+      await api.post('/api/hr/teacher-availability/', {
+        notes,
+        hours_requested: hoursRequested ? Number(hoursRequested) : null,
+      })
+      setNotes('')
+      setHoursRequested('')
+      submissions.refetch()
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'Erreur inattendue.')
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  return (
+    <div className="space-y-4">
+      <Card>
+        <CardHeader
+          title="Soumettre mes disponibilites"
+          subtitle="Preferences pour la prochaine planification (ex: matinees pour la 3eme, pas le mercredi apres-midi)."
+        />
+        <CardBody>
+          <form onSubmit={submit} className="space-y-3">
+            <textarea
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              rows={4}
+              placeholder="Vos preferences pour le prochain trimestre..."
+              className="w-full rounded-control border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-primary-500"
+            />
+            <div className="flex flex-wrap items-end gap-3">
+              <div>
+                <label className="mb-1 block text-xs font-medium text-ink-muted">Heures souhaitees (optionnel)</label>
+                <input
+                  type="number"
+                  min="0"
+                  value={hoursRequested}
+                  onChange={(e) => setHoursRequested(e.target.value)}
+                  className="w-32 rounded-control border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-primary-500"
+                />
+              </div>
+              <Button type="submit" disabled={submitting || !notes.trim()}>
+                {submitting ? 'Envoi...' : 'Soumettre'}
+              </Button>
+            </div>
+            {error && <p className="text-sm text-danger-600">{error}</p>}
+          </form>
+        </CardBody>
+      </Card>
+
+      <Card>
+        <CardHeader title="Mes soumissions" />
+        <CardBody className="p-0">
+          {submissions.loading && <div className="flex justify-center py-8"><Spinner /></div>}
+          {!submissions.loading && (submissions.data || []).length === 0 && (
+            <div className="p-4"><EmptyState title="Aucune soumission" description="Vos disponibilites soumises apparaitront ici." /></div>
+          )}
+          <ul className="divide-y divide-border">
+            {(submissions.data || []).map((s) => {
+              const status = AVAILABILITY_STATUS[s.status] || { label: s.status, tone: 'neutral' }
+              return (
+                <li key={s.id} className="flex flex-col gap-2 p-4 sm:flex-row sm:items-start sm:justify-between">
+                  <div>
+                    <p className="text-sm text-ink">{s.notes}</p>
+                    <p className="mt-1 text-xs text-ink-muted">
+                      {s.hours_requested != null && `${s.hours_requested} h souhaitees - `}
+                      {new Date(s.created_at).toLocaleDateString('fr-FR')}
+                    </p>
+                  </div>
+                  <Badge tone={status.tone}>{status.label}</Badge>
+                </li>
+              )
+            })}
+          </ul>
+        </CardBody>
+      </Card>
     </div>
   )
 }
