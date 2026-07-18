@@ -3,6 +3,7 @@ import { api } from '../../shared/api/client.js'
 import { Card, CardHeader, CardBody } from '../../shared/ui/Card.jsx'
 import Button from '../../shared/ui/Button.jsx'
 import Spinner from '../../shared/ui/Spinner.jsx'
+import LetterheadSettings from '../../shared/components/LetterheadSettings.jsx'
 
 export default function SchoolSettings() {
   const [settings, setSettings] = useState(null)
@@ -82,6 +83,7 @@ export default function SchoolSettings() {
   if (loading) return <div className="py-10 flex justify-center"><Spinner /></div>
 
   return (
+    <div className="space-y-6">
     <Card>
       <CardHeader title="Paramètres de l'école" subtitle="Modifiez les informations publiques de l'établissement" />
       <CardBody>
@@ -138,5 +140,7 @@ export default function SchoolSettings() {
         </form>
       </CardBody>
     </Card>
+    <LetterheadSettings />
+    </div>
   )
 }

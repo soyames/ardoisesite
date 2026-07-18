@@ -10,6 +10,7 @@ import EmptyState from '../../shared/ui/EmptyState.jsx'
 import CycleSwitcher from '../../shared/ui/CycleSwitcher.jsx'
 import PortalTabs from '../../shared/ui/PortalTabs.jsx'
 import StatCard from '../../shared/ui/StatCard.jsx'
+import LetterheadSettings from '../../shared/components/LetterheadSettings.jsx'
 
 const INPUT_CLASS =
   'block w-full rounded-control border-0 py-2 px-3 bg-surface-raised text-ink ring-1 ring-inset ring-border focus:ring-2 focus:ring-primary-500 sm:text-sm'
@@ -21,6 +22,7 @@ const TABS = [
   { key: 'calendrier', label: 'Calendrier' },
   { key: 'timelogs', label: 'Heures vacataires' },
   { key: 'exams', label: 'Epreuves' },
+  { key: 'letterhead', label: 'Lettre a en-tete' },
 ]
 
 const DAYS = [
@@ -50,6 +52,7 @@ export default function CenseurPortal() {
       {tab === 'calendrier' && <CalendrierTab />}
       {tab === 'timelogs' && <TimeLogsTab />}
       {tab === 'exams' && <ExamsTab />}
+      {tab === 'letterhead' && <LetterheadSettings />}
     </div>
   )
 }
