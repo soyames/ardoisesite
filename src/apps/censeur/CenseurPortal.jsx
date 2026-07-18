@@ -135,7 +135,9 @@ function BulletinsTab() {
   }
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-4">
+      <GenerateBulletinsForm onGenerated={() => pending.refetch()} />
+
       <div className="flex justify-end">
         <CycleSwitcher userCycleScope={user?.cycle_scope} value={cycle} onChange={setCycle} />
       </div>
@@ -147,7 +149,10 @@ function BulletinsTab() {
           <CardBody className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-ink">{b.student_name} - {b.exam_period_label}</p>
-              <p className="text-xs text-ink-muted">Moyenne {b.average} - Rang {b.class_rank}/{b.class_size}</p>
+              <p className="text-xs text-ink-muted">
+                Moyenne {b.average} - Rang {b.class_rank}/{b.class_size}
+                {b.discipline_score != null && ` - ${b.discipline_score} pts discipline`}
+              </p>
             </div>
             <Button size="sm" onClick={() => approve(b.id)} disabled={busy === b.id}>
               {busy === b.id ? 'Validation...' : 'Approuver'}
@@ -156,6 +161,54 @@ function BulletinsTab() {
         </Card>
       ))}
     </div>
+  )
+}
+
+function GenerateBulletinsForm({ onGenerated }) {
+  const classrooms = useApiGet('/api/students/classrooms/')
+  const examPeriods = useApiGet('/api/academics/exam-periods/')
+  const [classroomId, setClassroomId] = useState('')
+  const [examPeriodId, setExamPeriodId] = useState('')
+  const [submitting, setSubmitting] = useState(false)
+  const [result, setResult] = useState(null)
+  const [error, setError] = useState(null)
+
+  const generate = async () => {
+    setSubmitting(true)
+    setError(null)
+    setResult(null)
+    try {
+      const res = await api.post('/api/academics/bulletins/generate/', {
+        classroom: Number(classroomId), exam_period: Number(examPeriodId),
+      })
+      setResult(res.length)
+      onGenerated?.()
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'Erreur inattendue.')
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  return (
+    <Card>
+      <CardHeader title="Generer les bulletins" subtitle="Calcule la moyenne, le rang, la presence et les points de discipline pour chaque eleve ayant des notes saisies." />
+      <CardBody className="flex flex-wrap items-end gap-3">
+        <select className={INPUT_CLASS} value={classroomId} onChange={(e) => setClassroomId(e.target.value)}>
+          <option value="">Choisir la classe...</option>
+          {classrooms.data?.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+        </select>
+        <select className={INPUT_CLASS} value={examPeriodId} onChange={(e) => setExamPeriodId(e.target.value)}>
+          <option value="">Choisir la periode...</option>
+          {examPeriods.data?.map((p) => <option key={p.id} value={p.id}>{p.label}</option>)}
+        </select>
+        <Button size="sm" onClick={generate} disabled={!classroomId || !examPeriodId || submitting}>
+          {submitting ? 'Generation...' : 'Generer'}
+        </Button>
+        {error && <p className="w-full text-sm text-danger-600">{error}</p>}
+        {result != null && <p className="w-full text-sm text-success-600">{result} bulletin(s) genere(s).</p>}
+      </CardBody>
+    </Card>
   )
 }
 
