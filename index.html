@@ -5,9 +5,24 @@
     <link rel="icon" type="image/png" href="/favicon.png" />
     <link rel="apple-touch-icon" href="/icons/icon-192.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#33475b" />
+    <meta name="theme-color" content="#2B2621" />
     <meta name="description" content="Ardoise -- gestion scolaire tout-en-un pour les etablissements prives au Benin." />
     <title>Ardoise</title>
+    <!--
+      Hanken Grotesk, the sole typeface of the Academic Precision
+      design system (see brand/DESIGN.md in the ardoise backend
+      repo). No font was actually being loaded before this (index.css
+      referenced "Inter" in its font-family stack, but nothing ever
+      fetched it, so browsers were silently falling back to the
+      system sans-serif) -- this is the first real loading mechanism,
+      added via the standard Google Fonts <link> approach.
+    -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
     <script src="https://cdn.fedapay.com/checkout.js?v=1.1.7"></script>
   </head>
   <body>
