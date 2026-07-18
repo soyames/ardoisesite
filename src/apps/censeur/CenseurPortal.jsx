@@ -437,12 +437,24 @@ function CalendrierTab() {
       {upcomingEvents.length > 0 && (
         <Card>
           <CardHeader title="Jours non enseignes a venir" />
-          <CardBody className="flex flex-wrap gap-2">
-            {upcomingEvents.map((ev) => (
-              <Badge key={ev.id} tone={ev.kind === 'holiday' ? 'neutral' : 'warning'}>
-                {ev.date} - {ev.label}
-              </Badge>
-            ))}
+          <CardBody className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            {upcomingEvents.map((ev) => {
+              const d = new Date(ev.date)
+              return (
+                <div key={ev.id} className="flex items-center gap-3 rounded-card border border-border p-3 transition hover:shadow-elevated">
+                  <div className="flex h-14 w-14 shrink-0 flex-col items-center justify-center rounded-control bg-surface">
+                    <span className="text-[10px] font-semibold uppercase tracking-wide text-ink-muted">
+                      {d.toLocaleDateString('fr-FR', { month: 'short' }).replace('.', '')}
+                    </span>
+                    <span className="text-lg font-bold text-ink">{d.getDate()}</span>
+                  </div>
+                  <div className="min-w-0">
+                    <Badge tone={ev.kind === 'holiday' ? 'neutral' : 'warning'}>{ev.kind === 'holiday' ? 'Ferie' : 'Evenement'}</Badge>
+                    <p className="mt-1 truncate text-sm font-medium text-ink">{ev.label}</p>
+                  </div>
+                </div>
+              )
+            })}
           </CardBody>
         </Card>
       )}
