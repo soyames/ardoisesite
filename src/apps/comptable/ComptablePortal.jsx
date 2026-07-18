@@ -7,6 +7,8 @@ import Badge from '../../shared/ui/Badge.jsx'
 import Spinner from '../../shared/ui/Spinner.jsx'
 import EmptyState from '../../shared/ui/EmptyState.jsx'
 import StatCard from '../../shared/ui/StatCard.jsx'
+import ActivityList from '../../shared/ui/ActivityList.jsx'
+import QuickActionButton from '../../shared/ui/QuickActionButton.jsx'
 import PortalTabs from '../../shared/ui/PortalTabs.jsx'
 import Encaissement from '../../shared/components/Encaissement.jsx'
 
@@ -62,26 +64,28 @@ function DashboardTab({ onNavigate }) {
   const loading = incomeStatement.loading || pendingExpenses.loading || budgets.loading || payrollPending.loading || leavePending.loading
   const pendingAmount = (pendingExpenses.data || []).reduce((sum, e) => sum + Number(e.amount), 0)
 
+  const approvalItems = (pendingExpenses.data || []).slice(0, 6).map((e) => ({
+    id: e.id,
+    icon: 'receipt_long',
+    iconTone: 'accent',
+    title: e.description,
+    subtitle: `${e.budget_department} - ${e.requested_by_name}`,
+    badge: `${Number(e.amount).toLocaleString()} F`,
+    badgeTone: 'neutral',
+  }))
+
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       <div>
-        <h2 className="text-lg font-semibold text-ink">Bonjour</h2>
+        <p className="text-xs font-semibold uppercase tracking-wider text-accent-700">Comptabilite &amp; RH</p>
+        <h2 className="mt-1 text-xl font-bold text-ink">Bonjour</h2>
         <p className="mt-1 text-sm text-ink-muted">Voici l'etat financier de l'ecole aujourd'hui.</p>
       </div>
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-        <button onClick={() => onNavigate('encaissement')} className="rounded-card border border-border bg-primary-950 p-4 text-left text-white transition hover:bg-primary-900">
-          <p className="text-sm font-semibold">Encaisser</p>
-          <p className="mt-1 text-xs text-white/70">Rechercher un eleve</p>
-        </button>
-        <button onClick={() => onNavigate('batch-invoices')} className="rounded-card border border-border bg-primary-800 p-4 text-left text-white transition hover:bg-primary-700">
-          <p className="text-sm font-semibold">Generer des factures</p>
-          <p className="mt-1 text-xs text-white/70">Facturation groupee par tranche</p>
-        </button>
-        <button onClick={() => onNavigate('payroll')} className="rounded-card border border-border bg-accent-600 p-4 text-left text-white transition hover:bg-accent-700">
-          <p className="text-sm font-semibold">Traiter la paie</p>
-          <p className="mt-1 text-xs text-white/70">Valider les cycles en attente</p>
-        </button>
+        <QuickActionButton icon="point_of_sale" title="Encaisser" description="Rechercher un eleve" onClick={() => onNavigate('encaissement')} />
+        <QuickActionButton icon="receipt_long" title="Generer des factures" description="Facturation groupee par tranche" onClick={() => onNavigate('batch-invoices')} />
+        <QuickActionButton icon="payments" title="Traiter la paie" description="Valider les cycles en attente" onClick={() => onNavigate('payroll')} />
       </div>
 
       {loading && <div className="flex justify-center py-8"><Spinner /></div>}
@@ -89,15 +93,19 @@ function DashboardTab({ onNavigate }) {
       {!loading && (
         <>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <StatCard label="Resultat net (mois)" value={`${Number(incomeStatement.data?.net_income || 0).toLocaleString()} F`} />
+            <StatCard icon="account_balance" label="Resultat net (mois)" value={`${Number(incomeStatement.data?.net_income || 0).toLocaleString()} F`} />
             <StatCard
+              icon="request_quote"
               label="Depenses en attente"
               value={pendingExpenses.data?.length || 0}
               hint={`${pendingAmount.toLocaleString()} FCFA`}
-              tone={pendingExpenses.data?.length > 0 ? 'accent' : 'success'}
+              badge={pendingExpenses.data?.length > 0 ? 'A traiter' : undefined}
+              tone={pendingExpenses.data?.length > 0 ? 'warning' : 'success'}
+              linkLabel="Voir les depenses"
+              onLinkClick={() => onNavigate('expenses')}
             />
-            <StatCard label="Cycles de paie a valider" value={payrollPending.data?.length || 0} tone={payrollPending.data?.length > 0 ? 'accent' : 'success'} />
-            <StatCard label="Conges en attente" value={leavePending.data?.length || 0} tone={leavePending.data?.length > 0 ? 'accent' : 'success'} />
+            <StatCard icon="badge" label="Cycles de paie a valider" value={payrollPending.data?.length || 0} tone={payrollPending.data?.length > 0 ? 'warning' : 'success'} />
+            <StatCard icon="event_busy" label="Conges en attente" value={leavePending.data?.length || 0} tone={leavePending.data?.length > 0 ? 'warning' : 'success'} />
           </div>
 
           {budgets.data?.length > 0 && (
@@ -127,20 +135,7 @@ function DashboardTab({ onNavigate }) {
 
           <Card>
             <CardHeader title="Approbations en attente" action={<button onClick={() => onNavigate('expenses')} className="text-xs font-medium text-primary-600 hover:text-primary-700">Voir tout</button>} />
-            <CardBody className="p-0">
-              {(pendingExpenses.data || []).length === 0 && <div className="p-4"><EmptyState title="Aucune depense en attente" /></div>}
-              <ul className="divide-y divide-border">
-                {(pendingExpenses.data || []).slice(0, 5).map((e) => (
-                  <li key={e.id} className="flex items-center justify-between p-4">
-                    <div>
-                      <p className="text-sm font-medium text-ink">{e.description}</p>
-                      <p className="text-xs text-ink-muted">{e.budget_department} - {e.requested_by_name}</p>
-                    </div>
-                    <Badge tone="neutral">{Number(e.amount).toLocaleString()} F</Badge>
-                  </li>
-                ))}
-              </ul>
-            </CardBody>
+            <ActivityList items={approvalItems} emptyLabel="Aucune depense en attente." />
           </Card>
         </>
       )}
