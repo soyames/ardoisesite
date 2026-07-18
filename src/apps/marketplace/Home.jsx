@@ -74,9 +74,16 @@ export default function Home() {
     <div className="flex flex-col bg-surface">
       {/* Premium Hero Section - the map itself is the hero now */}
       <section className="relative overflow-hidden bg-primary-950 pb-16 pt-20 sm:pt-32">
-        <div className="absolute inset-x-0 -top-40 -z-10 transform-gpu overflow-hidden blur-3xl sm:-top-80" aria-hidden="true">
-          <div className="relative left-[calc(50%-11rem)] aspect-[1155/678] w-[36.125rem] -translate-x-1/2 rotate-[30deg] bg-accent-500 opacity-10 sm:left-[calc(50%-30rem)] sm:w-[72.1875rem]" />
-        </div>
+        {/* Soft glow via radial-gradient, not filter: blur() - a large
+            blurred layer sitting behind content that repaints often (the
+            map's hover states below) is a known GPU-compositing trigger
+            for visible tearing/ghosting on some Windows GPU drivers. A
+            gradient gives the same soft-glow look with no blur cost. */}
+        <div
+          className="pointer-events-none absolute inset-x-0 -top-40 -z-10 h-[600px] sm:-top-60 sm:h-[800px]"
+          style={{ background: 'radial-gradient(ellipse 60% 50% at 50% 0%, oklch(0.68 0.1108 72 / 0.15), transparent 70%)' }}
+          aria-hidden="true"
+        />
 
         <div className="mx-auto max-w-[1600px] px-6 lg:px-12">
           <div className="grid grid-cols-1 gap-10 rounded-card border border-white/10 bg-surface-raised p-8 shadow-elevated lg:grid-cols-[1fr_320px] lg:items-center">
