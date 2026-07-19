@@ -58,15 +58,15 @@ export default function Home() {
 
   const regionLabel = selectedCommune || selectedDepartment
   const schoolsHref = selectedCommune
-    ? `/schools?commune=${encodeURIComponent(selectedCommune)}`
+    ? `/schools?country=${activeCountry}&commune=${encodeURIComponent(selectedCommune)}`
     : selectedDepartment
-      ? `/schools?department=${encodeURIComponent(selectedDepartment)}`
-      : '/schools'
+      ? `/schools?country=${activeCountry}&department=${encodeURIComponent(selectedDepartment)}`
+      : `/schools?country=${activeCountry}`
   const teachersHref = selectedCommune
-    ? `/teachers?commune=${encodeURIComponent(selectedCommune)}`
+    ? `/teachers?country=${activeCountry}&commune=${encodeURIComponent(selectedCommune)}`
     : selectedDepartment
-      ? `/teachers?department=${encodeURIComponent(selectedDepartment)}`
-      : '/teachers'
+      ? `/teachers?country=${activeCountry}&department=${encodeURIComponent(selectedDepartment)}`
+      : `/teachers?country=${activeCountry}`
 
   // Auto-filtered the moment a region is picked on the map - no extra
   // click needed to see who's actually there. The "Voir tout" links below
@@ -201,7 +201,7 @@ export default function Home() {
             <h2 className="text-3xl font-bold tracking-tight text-ink sm:text-4xl">Écoles d'Excellence</h2>
             <p className="mt-2 text-lg text-ink-muted">Les établissements les mieux classés cette année.</p>
           </div>
-          <Link to="/schools" className="hidden text-sm font-semibold text-primary-600 hover:text-primary-500 sm:block">
+          <Link to={`/schools?country=${activeCountry}`} className="hidden text-sm font-semibold text-primary-600 hover:text-primary-500 sm:block">
             Voir tout le classement &rarr;
           </Link>
         </div>
@@ -239,7 +239,7 @@ export default function Home() {
               <h2 className="text-3xl font-bold tracking-tight text-white sm:text-4xl">Tuteurs à Domicile</h2>
               <p className="mt-2 text-lg text-primary-300">Des professionnels certifiés pour accompagner votre enfant.</p>
             </div>
-            <Link to="/teachers" className="hidden text-sm font-semibold text-accent-400 hover:text-accent-300 sm:block">
+            <Link to={`/teachers?country=${activeCountry}`} className="hidden text-sm font-semibold text-accent-400 hover:text-accent-300 sm:block">
               Trouver par matière &rarr;
             </Link>
           </div>
