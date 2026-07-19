@@ -36,7 +36,7 @@ export default function SupportPage() {
     
     try {
       await addDoc(collection(db, 'support_tickets'), {
-        name: user.name || 'Founder',
+        name: `${user.firstName || ''} ${user.lastName || ''}`.trim() || 'Founder',
         email: user.email,
         subject,
         message,
@@ -150,7 +150,7 @@ function TicketThread({ ticket, currentUser, onBack }) {
       await addDoc(collection(db, `support_tickets/${ticket.id}/replies`), {
         message: replyText,
         authorId: currentUser.id || currentUser.uid,
-        authorName: currentUser.name || currentUser.email,
+        authorName: `${currentUser.firstName || ''} ${currentUser.lastName || ''}`.trim() || currentUser.email,
         authorRole: 'customer',
         createdAt: new Date().toISOString()
       })

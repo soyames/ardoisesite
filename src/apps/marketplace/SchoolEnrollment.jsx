@@ -102,7 +102,7 @@ export default function SchoolEnrollment() {
       const docRef = await addDoc(collection(db, 'school_enrollment_requests'), {
         schoolId: school.id,
         parentId: user.uid,
-        parentName: user.name || '',
+        parentName: `${user.firstName || ''} ${user.lastName || ''}`.trim() || '',
         parentPhone: user.phone || '',
         childName,
         childAge,
@@ -180,7 +180,7 @@ export default function SchoolEnrollment() {
           <div className="bg-surface p-4 rounded-control border border-border">
             <h3 className="text-sm font-semibold text-ink mb-3">Informations du Parent (Pré-remplies)</h3>
             <div className="grid grid-cols-2 gap-4 text-sm text-ink-muted">
-              <div><span className="block text-xs text-ink-muted">Nom Complet</span>{user.name}</div>
+              <div><span className="block text-xs text-ink-muted">Nom Complet</span>{`${user.firstName || ''} ${user.lastName || ''}`.trim()}</div>
               <div><span className="block text-xs text-ink-muted">Téléphone</span>{user.phone}</div>
             </div>
           </div>
@@ -243,8 +243,8 @@ export default function SchoolEnrollment() {
               amount={registrationFee}
               description={`Frais d'inscription pour ${childName} en ${selectedClass?.name}`}
               customerEmail={user.email}
-              customerFirstname={user.name?.split(' ')[0] || 'Parent'}
-              customerLastname={user.name?.split(' ').slice(1).join(' ') || ''}
+              customerFirstname={user.firstName || 'Parent'}
+              customerLastname={user.lastName || ''}
               customerPhoneNumber={user.phone}
               customMetadata={{ enrollment_request_id: requestDocId, school_id: school.id }}
               onBeforeOpen={handleStartPayment}

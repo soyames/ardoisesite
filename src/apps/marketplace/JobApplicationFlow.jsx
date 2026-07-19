@@ -69,7 +69,7 @@ export default function JobApplicationFlow() {
         jobTitle: job.title,
         schoolId: job.schoolId,
         teacherId: user.uid,
-        teacherName: user.name || '',
+        teacherName: `${user.firstName || ''} ${user.lastName || ''}`.trim() || '',
         email: user.email,
         motivation,
         status: 'pending',
@@ -100,7 +100,7 @@ export default function JobApplicationFlow() {
           <div className="bg-surface p-4 rounded-control border border-border">
             <h3 className="text-sm font-semibold text-ink mb-3">Votre Profil (Pré-rempli)</h3>
             <div className="grid grid-cols-2 gap-4 text-sm text-ink-muted">
-              <div><span className="block text-xs text-ink-muted">Nom Complet</span>{user.name}</div>
+              <div><span className="block text-xs text-ink-muted">Nom Complet</span>{`${user.firstName || ''} ${user.lastName || ''}`.trim()}</div>
               <div><span className="block text-xs text-ink-muted">Téléphone</span>{user.phone}</div>
               <div className="col-span-2"><span className="block text-xs text-ink-muted">Email</span>{user.email}</div>
             </div>

@@ -234,7 +234,7 @@ function TicketDetail({ ticket, onBack, onUpdate, teamMembers, currentUser }) {
       await addDoc(collection(db, `support_tickets/${ticket.id}/replies`), {
         message: replyText,
         authorId: currentUser.id || currentUser.uid,
-        authorName: currentUser.name || currentUser.email,
+        authorName: `${currentUser.firstName || ''} ${currentUser.lastName || ''}`.trim() || currentUser.email,
         authorRole: 'agent', // To distinguish from customer replies
         createdAt: new Date().toISOString()
       })
