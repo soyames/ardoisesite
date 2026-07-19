@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { collection, query, where, orderBy, onSnapshot, doc, updateDoc, deleteDoc } from 'firebase/firestore'
 import { db, auth } from '../../shared/api/firebase.js'
 import { getApiBaseUrl } from '../../config/env.js'
@@ -307,10 +307,7 @@ function UsersRegistry() {
   const handleDeleteUser = async (userId) => {
     if (!window.confirm("ÃŠtes-vous sÃ»r de vouloir supprimer cet utilisateur ? Cette action supprimera ses donnÃ©es de la base de donnÃ©es. Pour la suppression de l'authentification (login), assurez-vous que la Cloud Function est configurÃ©e.")) return
     try {
-      // 1. Delete from Firestore
-      await deleteDoc(doc(db, 'users', userId))
-      
-      // 2. Call Django Backend to delete the Auth record
+      // 1. Call Django Backend to delete the Auth record first
       const idToken = await auth.currentUser.getIdToken()
       const res = await fetch(`${getApiBaseUrl()}/api/auth/firebase-delete-user/`, {
         method: 'POST',
@@ -324,7 +321,10 @@ function UsersRegistry() {
         throw new Error('Erreur API backend lors de la suppression Auth')
       }
       
-      alert("Utilisateur supprimÃ© avec succÃ¨s de la base de donnÃ©es et de l'authentification.")
+      // 2. Delete from Firestore only if backend deletion succeeded
+      await deleteDoc(doc(db, 'users', userId))
+      
+      alert("Utilisateur supprimé avec succès de la base de données et de l'authentification.")
     } catch (error) {
       console.error("Erreur lors de la suppression:", error)
       alert("Erreur lors de la suppression.")
