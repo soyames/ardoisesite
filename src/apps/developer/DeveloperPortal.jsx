@@ -26,14 +26,14 @@ export default function DeveloperPortal() {
   useEffect(() => {
     if (!user) return
 
-    const keysQuery = query(collection(db, 'api_keys'), where('developerId', '==', user.id))
+    const keysQuery = query(collection(db, 'api_keys'), where('developerId', '==', user.uid))
     const unsubscribeKeys = onSnapshot(keysQuery, (snapshot) => {
       const keys = []
       snapshot.forEach(doc => keys.push({ id: doc.id, ...doc.data() }))
       setApiKeys(keys)
     })
 
-    const hooksQuery = query(collection(db, 'webhooks'), where('developerId', '==', user.id))
+    const hooksQuery = query(collection(db, 'webhooks'), where('developerId', '==', user.uid))
     const unsubscribeHooks = onSnapshot(hooksQuery, (snapshot) => {
       const hooks = []
       snapshot.forEach(doc => hooks.push({ id: doc.id, ...doc.data() }))
@@ -41,7 +41,7 @@ export default function DeveloperPortal() {
     })
 
     // Fetch settings
-    const settingsUnsub = onSnapshot(doc(db, 'developer_settings', user.id), (docSnap) => {
+    const settingsUnsub = onSnapshot(doc(db, 'developer_settings', user.uid), (docSnap) => {
       if (docSnap.exists()) {
         const data = docSnap.data()
         setPayoutMethod(data.payoutMethod || 'bank_transfer')
@@ -63,7 +63,7 @@ export default function DeveloperPortal() {
     e.preventDefault()
     setSavingSettings(true)
     try {
-      await setDoc(doc(db, 'developer_settings', user.id), {
+      await setDoc(doc(db, 'developer_settings', user.uid), {
         payoutMethod,
         payoutBankIban,
         payoutBankName,
@@ -79,10 +79,10 @@ export default function DeveloperPortal() {
   }
 
   const generateApiKey = async (type) => {
-    const newKey = sk__ + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15)
+    const newKey = "sk_" + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15)
     
     await addDoc(collection(db, 'api_keys'), {
-      developerId: user.id,
+      developerId: user.uid,
       key: newKey,
       type: type,
       createdAt: new Date().toISOString()
@@ -100,7 +100,7 @@ export default function DeveloperPortal() {
     if (!newWebhookUrl) return
     
     await addDoc(collection(db, 'webhooks'), {
-      developerId: user.id,
+      developerId: user.uid,
       url: newWebhookUrl,
       events: ['all'],
       createdAt: new Date().toISOString()
@@ -116,7 +116,7 @@ export default function DeveloperPortal() {
 
   if (loading) return <div className="p-4">Chargement...</div>
 
-  const partnerLink = `https://saas.ardoise.soyames.com/register?ref=${user?.id}`
+  const partnerLink = `https://saas.ardoise.soyames.com/register?ref=${user?.uid}`
 
   return (
     <div className="space-y-6 max-w-5xl">
