@@ -41,7 +41,7 @@ export default function StudentPortal() {
     <div className="space-y-6">
       <div>
         <p className="text-xs font-semibold uppercase tracking-wider text-accent-700">Mon espace</p>
-        <h1 className="mt-1 text-2xl font-bold text-ink">{me.data.first_name} {me.data.last_name}</h1>
+        <h1 className="mt-1 text-2xl font-bold text-ink">{me.data.firstName} {me.data.lastName}</h1>
         <p className="mt-1 text-sm text-ink-muted">
           {me.data.current_enrollment?.classroom_name} · {me.data.current_enrollment?.academic_year_label} · Matricule {me.data.matricule}
         </p>

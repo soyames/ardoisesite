@@ -90,7 +90,7 @@ function DashboardTab({ onNavigate }) {
 
   const recentEnrollments = [...(enrollments.data ?? [])].sort((a, b) => b.id - a.id).slice(0, 5)
 
-  const firstName = user?.firstName || user?.first_name || 'Secretaire'
+  const firstName = user?.firstName || 'Secretaire'
 
   const recentEnrollmentItems = recentEnrollments.map((e) => ({
     id: e.id,
@@ -172,7 +172,7 @@ function StudentsTab() {
   const students = useApiGet('/api/students/students/')
   const [showForm, setShowForm] = useState(false)
   const [selectedId, setSelectedId] = useState(null)
-  const [form, setForm] = useState({ matricule: '', first_name: '', last_name: '', sex: 'M', date_of_birth: '', birth_place: '' })
+  const [form, setForm] = useState({ matricule: '', firstName: '', lastName: '', sex: 'M', date_of_birth: '', birth_place: '' })
   const [error, setError] = useState(null)
   const [submitting, setSubmitting] = useState(false)
 
@@ -182,7 +182,7 @@ function StudentsTab() {
     setError(null)
     try {
       await api.post('/api/students/students/', form)
-      setForm({ matricule: '', first_name: '', last_name: '', sex: 'M', date_of_birth: '', birth_place: '' })
+      setForm({ matricule: '', firstName: '', lastName: '', sex: 'M', date_of_birth: '', birth_place: '' })
       setShowForm(false)
       students.refetch()
     } catch (err) {
@@ -212,8 +212,8 @@ function StudentsTab() {
                 <option value="M">Masculin</option>
                 <option value="F">Feminin</option>
               </select>
-              <input required className={INPUT_CLASS} placeholder="Prenom" value={form.first_name} onChange={(e) => setForm({ ...form, first_name: e.target.value })} />
-              <input required className={INPUT_CLASS} placeholder="Nom" value={form.last_name} onChange={(e) => setForm({ ...form, last_name: e.target.value })} />
+              <input required className={INPUT_CLASS} placeholder="Prenom" value={form.firstName} onChange={(e) => setForm({ ...form, firstName: e.target.value })} />
+              <input required className={INPUT_CLASS} placeholder="Nom" value={form.lastName} onChange={(e) => setForm({ ...form, lastName: e.target.value })} />
               <input type="date" className={INPUT_CLASS} value={form.date_of_birth} onChange={(e) => setForm({ ...form, date_of_birth: e.target.value })} />
               <input className={INPUT_CLASS} placeholder="Lieu de naissance" value={form.birth_place} onChange={(e) => setForm({ ...form, birth_place: e.target.value })} />
               {error && <p className="text-sm text-danger-600 sm:col-span-2">{error}</p>}
@@ -240,10 +240,10 @@ function StudentsTab() {
               >
                 <div className="flex items-center gap-3">
                   <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary-100 text-xs font-bold text-primary-700">
-                    {s.first_name?.[0]}{s.last_name?.[0]}
+                    {s.firstName?.[0]}{s.lastName?.[0]}
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-ink">{s.last_name} {s.first_name}</p>
+                    <p className="text-sm font-medium text-ink">{s.lastName} {s.firstName}</p>
                     <p className="text-xs text-ink-muted">{s.matricule} {s.date_of_birth && `- ne(e) le ${s.date_of_birth}`}</p>
                   </div>
                 </div>
@@ -275,7 +275,7 @@ function StudentProfile({ studentId, onBack, onUpdated }) {
 
   const startEditing = () => {
     setForm({
-      matricule: student.data.matricule, first_name: student.data.first_name, last_name: student.data.last_name,
+      matricule: student.data.matricule, firstName: student.data.firstName, lastName: student.data.lastName,
       sex: student.data.sex, date_of_birth: student.data.date_of_birth || '', birth_place: student.data.birth_place || '',
     })
     setEditing(true)
@@ -316,10 +316,10 @@ function StudentProfile({ studentId, onBack, onUpdated }) {
         <CardBody className="flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-4">
             <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary-100 text-xl font-bold text-primary-700">
-              {student.data.first_name?.[0]}{student.data.last_name?.[0]}
+              {student.data.firstName?.[0]}{student.data.lastName?.[0]}
             </div>
             <div>
-              <h2 className="text-xl font-bold text-ink">{student.data.last_name} {student.data.first_name}</h2>
+              <h2 className="text-xl font-bold text-ink">{student.data.lastName} {student.data.firstName}</h2>
               <p className="text-sm text-ink-muted">
                 {student.data.matricule} - {currentEnrollment?.classroom_name || 'Non inscrit(e)'}
               </p>
@@ -342,8 +342,8 @@ function StudentProfile({ studentId, onBack, onUpdated }) {
                 <option value="M">Masculin</option>
                 <option value="F">Feminin</option>
               </select>
-              <input required className={INPUT_CLASS} placeholder="Prenom" value={form.first_name} onChange={(e) => setForm({ ...form, first_name: e.target.value })} />
-              <input required className={INPUT_CLASS} placeholder="Nom" value={form.last_name} onChange={(e) => setForm({ ...form, last_name: e.target.value })} />
+              <input required className={INPUT_CLASS} placeholder="Prenom" value={form.firstName} onChange={(e) => setForm({ ...form, firstName: e.target.value })} />
+              <input required className={INPUT_CLASS} placeholder="Nom" value={form.lastName} onChange={(e) => setForm({ ...form, lastName: e.target.value })} />
               <input type="date" className={INPUT_CLASS} value={form.date_of_birth} onChange={(e) => setForm({ ...form, date_of_birth: e.target.value })} />
               <input className={INPUT_CLASS} placeholder="Lieu de naissance" value={form.birth_place} onChange={(e) => setForm({ ...form, birth_place: e.target.value })} />
               {error && <p className="text-sm text-danger-600 sm:col-span-2">{error}</p>}
@@ -490,7 +490,7 @@ function GuardianshipsTab() {
         <form onSubmit={submit} className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <select required className={INPUT_CLASS} value={studentId} onChange={(e) => setStudentId(e.target.value)}>
             <option value="">Choisir l'eleve...</option>
-            {students.data?.map((s) => <option key={s.id} value={s.id}>{s.last_name} {s.first_name} ({s.matricule})</option>)}
+            {students.data?.map((s) => <option key={s.id} value={s.id}>{s.lastName} {s.firstName} ({s.matricule})</option>)}
           </select>
           <select required className={INPUT_CLASS} value={parentId} onChange={(e) => setParentId(e.target.value)}>
             <option value="">Choisir le parent...</option>
@@ -558,7 +558,7 @@ function EnrollmentsTab() {
             <form onSubmit={submit} className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <select required className={INPUT_CLASS} value={studentId} onChange={(e) => setStudentId(e.target.value)}>
                 <option value="">Choisir l'eleve...</option>
-                {students.data?.map((s) => <option key={s.id} value={s.id}>{s.last_name} {s.first_name} ({s.matricule})</option>)}
+                {students.data?.map((s) => <option key={s.id} value={s.id}>{s.lastName} {s.firstName} ({s.matricule})</option>)}
               </select>
               <select required className={INPUT_CLASS} value={classroomId} onChange={(e) => setClassroomId(e.target.value)}>
                 <option value="">Choisir la classe...</option>

@@ -118,7 +118,7 @@ function DashboardTab({ onNavigate }) {
 function StaffTab() {
   const staff = useApiGet('/api/hr/staff/')
   const [showForm, setShowForm] = useState(false)
-  const [form, setForm] = useState({ first_name: '', last_name: '', phone: '', function: 'teacher', bank_or_momo_account: '' })
+  const [form, setForm] = useState({ firstName: '', lastName: '', phone: '', function: 'teacher', bank_or_momo_account: '' })
   const [error, setError] = useState(null)
   const [submitting, setSubmitting] = useState(false)
 
@@ -128,7 +128,7 @@ function StaffTab() {
     setError(null)
     try {
       await api.post('/api/hr/staff/', form)
-      setForm({ first_name: '', last_name: '', phone: '', function: 'teacher', bank_or_momo_account: '' })
+      setForm({ firstName: '', lastName: '', phone: '', function: 'teacher', bank_or_momo_account: '' })
       setShowForm(false)
       staff.refetch()
     } catch (err) {
@@ -148,8 +148,8 @@ function StaffTab() {
           <CardHeader title="Nouveau membre du personnel" />
           <CardBody>
             <form onSubmit={submit} className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              <input required className={INPUT_CLASS} placeholder="Prenom" value={form.first_name} onChange={(e) => setForm({ ...form, first_name: e.target.value })} />
-              <input required className={INPUT_CLASS} placeholder="Nom" value={form.last_name} onChange={(e) => setForm({ ...form, last_name: e.target.value })} />
+              <input required className={INPUT_CLASS} placeholder="Prenom" value={form.firstName} onChange={(e) => setForm({ ...form, firstName: e.target.value })} />
+              <input required className={INPUT_CLASS} placeholder="Nom" value={form.lastName} onChange={(e) => setForm({ ...form, lastName: e.target.value })} />
               <input required className={INPUT_CLASS} placeholder="Telephone" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
               <select className={INPUT_CLASS} value={form.function} onChange={(e) => setForm({ ...form, function: e.target.value })}>
                 {FUNCTIONS.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
@@ -169,7 +169,7 @@ function StaffTab() {
             {staff.data?.map((s) => (
               <li key={s.id} className="flex items-center justify-between p-4">
                 <div>
-                  <p className="text-sm font-medium text-ink">{s.last_name} {s.first_name}</p>
+                  <p className="text-sm font-medium text-ink">{s.lastName} {s.firstName}</p>
                   <p className="text-xs text-ink-muted">{FUNCTIONS.find(([v]) => v === s.function)?.[1] || s.function} - {s.phone}</p>
                 </div>
                 <Badge tone={s.is_active ? 'success' : 'neutral'}>{s.is_active ? 'Actif' : 'Inactif'}</Badge>
@@ -216,7 +216,7 @@ function ContractsTab() {
         <form onSubmit={submit} className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <select required className={`sm:col-span-2 ${INPUT_CLASS}`} value={form.staff} onChange={(e) => setForm({ ...form, staff: e.target.value })}>
             <option value="">Choisir le membre du personnel...</option>
-            {staff.data?.map((s) => <option key={s.id} value={s.id}>{s.last_name} {s.first_name}</option>)}
+            {staff.data?.map((s) => <option key={s.id} value={s.id}>{s.lastName} {s.firstName}</option>)}
           </select>
           <select className={INPUT_CLASS} value={form.contract_type} onChange={(e) => setForm({ ...form, contract_type: e.target.value })}>
             <option value="permanent">Permanent</option>
@@ -344,7 +344,7 @@ function AdvancesTab() {
           <form onSubmit={submit} className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <select required className={INPUT_CLASS} value={form.staff} onChange={(e) => setForm({ ...form, staff: e.target.value })}>
               <option value="">Choisir...</option>
-              {staff.data?.map((s) => <option key={s.id} value={s.id}>{s.last_name} {s.first_name}</option>)}
+              {staff.data?.map((s) => <option key={s.id} value={s.id}>{s.lastName} {s.firstName}</option>)}
             </select>
             <input required type="number" step="0.01" className={INPUT_CLASS} placeholder="Montant (FCFA)" value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} />
             <textarea required className={`sm:col-span-2 ${INPUT_CLASS}`} placeholder="Motif" rows={2} value={form.reason} onChange={(e) => setForm({ ...form, reason: e.target.value })} />
@@ -406,7 +406,7 @@ function LeaveTab() {
           <form onSubmit={submit} className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <select required className={INPUT_CLASS} value={form.staff} onChange={(e) => setForm({ ...form, staff: e.target.value })}>
               <option value="">Choisir...</option>
-              {staff.data?.map((s) => <option key={s.id} value={s.id}>{s.last_name} {s.first_name}</option>)}
+              {staff.data?.map((s) => <option key={s.id} value={s.id}>{s.lastName} {s.firstName}</option>)}
             </select>
             <select className={INPUT_CLASS} value={form.leave_type} onChange={(e) => setForm({ ...form, leave_type: e.target.value })}>
               <option value="paid">Conge paye</option>
@@ -490,7 +490,7 @@ function AssetsTab() {
               </select>
               <select className={`sm:col-span-2 ${INPUT_CLASS}`} value={form.assigned_to} onChange={(e) => setForm({ ...form, assigned_to: e.target.value })}>
                 <option value="">Non assigne</option>
-                {staff.data?.map((s) => <option key={s.id} value={s.id}>{s.last_name} {s.first_name}</option>)}
+                {staff.data?.map((s) => <option key={s.id} value={s.id}>{s.lastName} {s.firstName}</option>)}
               </select>
               {error && <p className="text-sm text-danger-600 sm:col-span-2">{error}</p>}
               <div className="sm:col-span-2"><Button type="submit" disabled={submitting}>{submitting ? 'Enregistrement...' : 'Enregistrer'}</Button></div>

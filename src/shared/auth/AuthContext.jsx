@@ -143,15 +143,16 @@ export function AuthProvider({ children }) {
             }
           }
 
-          setUser({
+          setUser(prev => ({
+            ...(prev || {}),
             uid: firebaseUser.uid,
             email: firebaseUser.email,
             emailVerified: firebaseUser.emailVerified,
             needsEmailVerification,
-            role,
-            schoolId,
+            role: prev?.role || role,
+            schoolId: prev?.schoolId || schoolId,
             ...(userData || {})
-          })
+          }))
           setStatus('authenticated')
         } catch (error) {
           // A real Django-side auth failure (the re-thrown error from

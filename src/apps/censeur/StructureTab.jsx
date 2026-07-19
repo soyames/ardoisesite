@@ -157,7 +157,7 @@ export default function StructureTab() {
             required
           >
             <option value="">-- Sélectionner Professeur --</option>
-            {staff.data?.map(s => <option key={s.id} value={s.id}>{s.last_name} {s.first_name}</option>)}
+            {staff.data?.map(s => <option key={s.id} value={s.id}>{s.lastName} {s.firstName}</option>)}
           </select>
           <button type="submit" className="rounded-control bg-primary-600 px-6 py-2 font-bold text-white hover:bg-primary-700">Affecter</button>
         </form>

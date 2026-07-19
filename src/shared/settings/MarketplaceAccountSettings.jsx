@@ -33,8 +33,8 @@ function formatDate(iso) {
  */
 export default function MarketplaceAccountSettings() {
   const { user, refreshUser } = useAuth()
-  const [firstName, setFirstName] = useState(user?.firstName || user?.first_name || '')
-  const [lastName, setLastName] = useState(user?.lastName || user?.last_name || '')
+  const [firstName, setFirstName] = useState(user?.firstName || '')
+  const [lastName, setLastName] = useState(user?.lastName || '')
   const [phone, setPhone] = useState(user?.phone || '')
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)

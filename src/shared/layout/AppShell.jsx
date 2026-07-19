@@ -96,7 +96,7 @@ export default function AppShell({ navItems, children }) {
 
             <div className="hidden text-right sm:block">
               <p className="text-sm font-medium text-ink">
-                {user?.firstName || user?.first_name} {user?.lastName || user?.last_name}
+                {user?.firstName} {user?.lastName}
               </p>
               <p className="text-xs text-ink-muted">{user?.role_display}</p>
             </div>
