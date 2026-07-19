@@ -90,7 +90,7 @@ function DashboardTab({ onNavigate }) {
 
   const recentEnrollments = [...(enrollments.data ?? [])].sort((a, b) => b.id - a.id).slice(0, 5)
 
-  const firstName = user?.first_name || user?.name?.split(' ')[0] || 'Secretaire'
+  const firstName = user?.firstName || user?.first_name || 'Secretaire'
 
   const recentEnrollmentItems = recentEnrollments.map((e) => ({
     id: e.id,

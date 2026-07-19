@@ -61,7 +61,7 @@ export default function AnalyticsDashboard({ onNavigate }) {
     <div className="space-y-6">
       <div>
         <p className="text-xs font-semibold uppercase tracking-wider text-accent-700">Command Center</p>
-        <h1 className="mt-1 text-2xl font-bold text-ink">Bonjour, {user?.first_name || 'Fondateur'}</h1>
+        <h1 className="mt-1 text-2xl font-bold text-ink">Bonjour, {user?.firstName || user?.first_name || 'Fondateur'}</h1>
         <p className="mt-1 text-sm text-ink-muted">Voici ce qui se passe a l'ecole aujourd'hui.</p>
       </div>
 
