@@ -68,7 +68,7 @@ function GenericCountryMap({
             &larr; Retour national
           </button>
         )}
-        <svg viewBox={activeViewBox} className="w-full max-w-[220px] mx-auto transition-all duration-500 ease-in-out" role="img">
+        <svg viewBox={activeViewBox} className="w-full max-w-xs sm:max-w-sm md:max-w-md lg:max-w-[400px] xl:max-w-[500px] mx-auto transition-all duration-500 ease-in-out" role="img">
           {!isCommuneView && Object.keys(departmentPaths).map((name) => {
             const count = departmentCounts[name] || 0
             const intensity = count / maxDeptCount

@@ -39,18 +39,22 @@ export default function Home() {
     return () => unsubscribe()
   }, [])
 
+  const activeSchools = useMemo(() => {
+    return schools.filter((s) => communeDepartmentMap[s.city] !== undefined)
+  }, [schools, communeDepartmentMap])
+
   const topSchools = useMemo(
-    () => [...schools].sort((a, b) => (b.successRate || 0) - (a.successRate || 0)).slice(0, 3),
-    [schools]
+    () => [...activeSchools].sort((a, b) => (b.successRate || 0) - (a.successRate || 0)).slice(0, 3),
+    [activeSchools]
   )
 
   const cityCounts = useMemo(() => {
     const counts = {}
-    schools.forEach((school) => {
+    activeSchools.forEach((school) => {
       if (school.city) counts[school.city] = (counts[school.city] || 0) + 1
     })
     return counts
-  }, [schools])
+  }, [activeSchools])
 
   const regionLabel = selectedCommune || selectedDepartment
   const schoolsHref = selectedCommune
@@ -70,13 +74,21 @@ export default function Home() {
   // browsing (those pages have their own map + filters already).
   const regionSchools = useMemo(() => {
     if (!regionLabel) return []
-    return schools.filter((s) => (selectedCommune ? s.city === selectedCommune : communeDepartmentMap[s.city] === selectedDepartment))
-  }, [schools, selectedCommune, selectedDepartment, regionLabel, communeDepartmentMap])
+    return activeSchools.filter((s) => (selectedCommune ? s.city === selectedCommune : communeDepartmentMap[s.city] === selectedDepartment))
+  }, [activeSchools, selectedCommune, selectedDepartment, regionLabel, communeDepartmentMap])
+
+  const activeTeachers = useMemo(() => {
+    return TEACHERS_DATA.filter((t) => communeDepartmentMap[t.city] !== undefined)
+  }, [communeDepartmentMap])
 
   const regionTeachers = useMemo(() => {
     if (!regionLabel) return []
-    return TEACHERS_DATA.filter((t) => (selectedCommune ? t.city === selectedCommune : communeDepartmentMap[t.city] === selectedDepartment))
-  }, [selectedCommune, selectedDepartment, regionLabel, communeDepartmentMap])
+    return activeTeachers.filter((t) => (selectedCommune ? t.city === selectedCommune : communeDepartmentMap[t.city] === selectedDepartment))
+  }, [activeTeachers, selectedCommune, selectedDepartment, regionLabel, communeDepartmentMap])
+
+  const displayFeaturedTutors = useMemo(() => {
+    return activeTeachers.slice(0, 3)
+  }, [activeTeachers])
 
   return (
     <div className="flex flex-col bg-surface">
@@ -94,7 +106,7 @@ export default function Home() {
         />
 
         <div className="mx-auto max-w-[1600px] px-6 lg:px-12">
-          <div className="grid grid-cols-1 gap-10 rounded-card border border-white/10 bg-surface-raised p-8 shadow-elevated lg:grid-cols-[1fr_320px] lg:items-center">
+          <div className="grid grid-cols-1 gap-10 rounded-card border border-white/10 bg-surface-raised p-8 shadow-elevated lg:grid-cols-[1fr_450px] lg:items-center xl:grid-cols-[1fr_550px]">
             <div>
               <div className="mb-6 inline-block">
                 <label htmlFor="country-select" className="sr-only">Choisir un pays</label>
@@ -215,7 +227,7 @@ export default function Home() {
             ))}
           </div>
         ) : (
-          <p className="text-sm text-ink-muted">Les écoles partenaires apparaîtront ici dès leur inscription.</p>
+          <p className="text-sm text-ink-muted">Aucune école enregistrée dans ce pays pour le moment.</p>
         )}
       </section>
 
@@ -231,30 +243,34 @@ export default function Home() {
               Trouver par matière &rarr;
             </Link>
           </div>
-          <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
-            {FEATURED_TUTORS.map(tutor => (
-              <div key={tutor.id} className="group relative flex flex-col rounded-card bg-primary-900 p-6 shadow-elevated ring-1 ring-white/10 transition-all hover:bg-primary-800">
-                <div className="flex items-center gap-4">
-                  <img src={tutor.image} alt={tutor.name} className="h-16 w-16 rounded-full object-cover ring-2 ring-accent-500/30" />
-                  <div>
-                    <h3 className="text-lg font-bold text-white">{tutor.name}</h3>
-                    <p className="text-sm font-medium text-accent-400">{tutor.subject}</p>
+          {displayFeaturedTutors.length > 0 ? (
+            <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
+              {displayFeaturedTutors.map(tutor => (
+                <div key={tutor.id} className="group relative flex flex-col rounded-card bg-primary-900 p-6 shadow-elevated ring-1 ring-white/10 transition-all hover:bg-primary-800">
+                  <div className="flex items-center gap-4">
+                    <img src={tutor.image} alt={tutor.name} className="h-16 w-16 rounded-full object-cover ring-2 ring-accent-500/30" />
+                    <div>
+                      <h3 className="text-lg font-bold text-white">{tutor.name}</h3>
+                      <p className="text-sm font-medium text-accent-400">{tutor.subject}</p>
+                    </div>
                   </div>
+                  <div className="mt-6 flex items-center justify-between border-t border-white/10 pt-6">
+                    <div className="flex items-center gap-1 text-sm text-primary-200">
+                      <span className="text-accent-400">★</span> {tutor.rating}/5
+                    </div>
+                    <div className="text-sm font-semibold text-white">
+                      {tutor.price} <span className="text-primary-300 font-normal">/ mois</span>
+                    </div>
+                  </div>
+                  <Link to={`/teachers/${tutor.id}`} className="mt-6 flex w-full items-center justify-center rounded-control bg-white/10 px-3 py-2.5 text-sm font-semibold text-white transition hover:bg-white/20">
+                    Voir le profil
+                  </Link>
                 </div>
-                <div className="mt-6 flex items-center justify-between border-t border-white/10 pt-6">
-                  <div className="flex items-center gap-1 text-sm text-primary-200">
-                    <span className="text-accent-400">★</span> {tutor.rating}/5
-                  </div>
-                  <div className="text-sm font-semibold text-white">
-                    {tutor.price} <span className="text-primary-300 font-normal">/ mois</span>
-                  </div>
-                </div>
-                <Link to={`/teachers/${tutor.id}`} className="mt-6 flex w-full items-center justify-center rounded-control bg-white/10 px-3 py-2.5 text-sm font-semibold text-white transition hover:bg-white/20">
-                  Voir le profil
-                </Link>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm text-primary-300">Aucun enseignant enregistré dans ce pays pour le moment.</p>
+          )}
         </div>
       </section>
     </div>
