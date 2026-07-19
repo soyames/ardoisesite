@@ -1,8 +1,8 @@
 import { useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import EmptyState from '../../shared/ui/EmptyState.jsx'
-import { FRANCOPHONE_AFRICA_DATA } from '../../shared/constants/locations.js'
-import { BENIN_COMMUNE_DEPARTMENT } from '../../shared/constants/beninGeoCommunes.js'
+import CountryMapWrapper from '../../shared/ui/CountryMapWrapper.jsx'
+import { OHADA_COUNTRIES } from '../../shared/constants/locations.js'
 
 export const TEACHERS_DATA = [
   { id: 1, name: 'Dr. Jean Dupont', subject: 'Mathématiques', country: 'Benin', city: 'Cotonou', rating: 4.9, price: '15 000 F / mois', image: 'https://images.unsplash.com/photo-1568602471122-7832951cc4c5?w=400&q=80', description: 'Docteur en mathématiques appliquées, 10 ans d\'expérience.' },
@@ -14,24 +14,37 @@ export const TEACHERS_DATA = [
 export default function TeacherList() {
   const [searchParams, setSearchParams] = useSearchParams()
   const [search, setSearch] = useState('')
-  const [countryFilter, setCountryFilter] = useState('Tous')
   const [cityFilter, setCityFilter] = useState('Toutes')
   const [subjectFilter, setSubjectFilter] = useState('Toutes')
-  // Region filters carried over from the Home page map (see BeninMap.jsx's
-  // onSelectDepartment/onSelectCommune) - kept separate from the visible
-  // cityFilter select above, same split SchoolList.jsx already uses.
+  const [communeDepartmentMap, setCommuneDepartmentMap] = useState({})
+  
+  const country = searchParams.get('country') || 'BEN'
   const department = searchParams.get('department')
   const commune = searchParams.get('commune')
 
+  const cityCounts = useMemo(() => {
+    const counts = {}
+    TEACHERS_DATA.forEach((teacher) => {
+      if (teacher.city && communeDepartmentMap[teacher.city] !== undefined) {
+        counts[teacher.city] = (counts[teacher.city] || 0) + 1
+      }
+    })
+    return counts
+  }, [communeDepartmentMap])
+
   const filteredTeachers = TEACHERS_DATA.filter(teacher => {
+    const matchesCountry = communeDepartmentMap[teacher.city] !== undefined
     const matchesSearch = teacher.name.toLowerCase().includes(search.toLowerCase())
-    const matchesCountry = countryFilter === 'Tous' || teacher.country === countryFilter
     const matchesCity = cityFilter === 'Toutes' || teacher.city === cityFilter
     const matchesSubject = subjectFilter === 'Toutes' || teacher.subject === subjectFilter
-    const matchesDepartment = !department || BENIN_COMMUNE_DEPARTMENT[teacher.city] === department
+    const matchesDepartment = !department || communeDepartmentMap[teacher.city] === department
     const matchesCommune = !commune || teacher.city === commune
-    return matchesSearch && matchesCountry && matchesCity && matchesSubject && matchesDepartment && matchesCommune
+    return matchesCountry && matchesSearch && matchesCity && matchesSubject && matchesDepartment && matchesCommune
   })
+
+  const availableCities = useMemo(() => {
+    return Object.keys(communeDepartmentMap).sort()
+  }, [communeDepartmentMap])
 
   return (
     <div className="min-h-screen bg-surface py-12">
@@ -47,100 +60,128 @@ export default function TeacherList() {
           </div>
         </div>
 
-        <div className="mt-10 flex flex-col sm:flex-row gap-4 flex-wrap">
-          <input
-            type="text"
-            placeholder="Rechercher par nom..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full sm:flex-1 sm:min-w-[200px] rounded-control border-0 bg-surface-raised px-4 py-3 text-ink shadow-sm ring-1 ring-inset ring-border placeholder:text-ink-muted focus:ring-2 focus:ring-inset focus:ring-primary-500 sm:text-sm"
-          />
-          <select
-            value={countryFilter}
-            onChange={(e) => {
-              setCountryFilter(e.target.value)
-              setCityFilter('Toutes')
-            }}
-            className="w-full sm:max-w-[180px] rounded-control border-0 bg-surface-raised px-4 py-3 text-ink shadow-sm ring-1 ring-inset ring-border focus:ring-2 focus:ring-inset focus:ring-primary-500 sm:text-sm"
-          >
-            <option value="Tous">Tous les pays</option>
-            {Object.keys(FRANCOPHONE_AFRICA_DATA).map(country => (
-              <option key={country} value={country}>{country}</option>
-            ))}
-          </select>
-          <select
-            value={cityFilter}
-            onChange={(e) => setCityFilter(e.target.value)}
-            disabled={countryFilter === 'Tous'}
-            className="w-full sm:max-w-[180px] rounded-control border-0 bg-surface-raised px-4 py-3 text-ink shadow-sm ring-1 ring-inset ring-border focus:ring-2 focus:ring-inset focus:ring-primary-500 sm:text-sm disabled:opacity-50"
-          >
-            <option value="Toutes">Toutes les villes</option>
-            {countryFilter !== 'Tous' && FRANCOPHONE_AFRICA_DATA[countryFilter].map(city => (
-              <option key={city} value={city}>{city}</option>
-            ))}
-          </select>
-          <select
-            value={subjectFilter}
-            onChange={(e) => setSubjectFilter(e.target.value)}
-            className="w-full sm:max-w-[180px] rounded-control border-0 bg-surface-raised px-4 py-3 text-ink shadow-sm ring-1 ring-inset ring-border focus:ring-2 focus:ring-inset focus:ring-primary-500 sm:text-sm"
-          >
-            <option value="Toutes">Toutes les matières</option>
-            <option value="Mathématiques">Mathématiques</option>
-            <option value="Physique-Chimie">Physique-Chimie</option>
-            <option value="SVT">SVT</option>
-            <option value="Philosophie">Philosophie</option>
-          </select>
-        </div>
+        <div className="mt-10 grid grid-cols-1 gap-8 lg:grid-cols-[280px_1fr]">
+          <div className="rounded-card border border-border bg-surface-raised p-5 shadow-card lg:sticky lg:top-6 lg:self-start">
+            <h3 className="text-sm font-semibold text-ink">Parcourir par département</h3>
+            <p className="mt-1 text-xs text-ink-muted">Cliquez une région pour filtrer l'annuaire, ou passez aux communes.</p>
+            <div className="mt-4">
+              <CountryMapWrapper
+                countryCode={country}
+                onMapDataLoaded={(data) => setCommuneDepartmentMap(data?.communeDepartmentMap || {})}
+                schoolCounts={cityCounts}
+                selectedDepartment={department}
+                onSelectDepartment={(dept) => setSearchParams(dept ? { country, department: dept } : { country })}
+                onSelectCommune={(c) => setSearchParams({ country, commune: c })}
+              />
+            </div>
+            {(department || commune) && (
+              <button
+                onClick={() => setSearchParams({ country })}
+                className="mt-3 text-xs font-semibold text-primary-600 hover:text-primary-500"
+              >
+                &larr; Effacer le filtre régional ({commune || department})
+              </button>
+            )}
+          </div>
 
-        {(department || commune) && (
-          <p className="mt-4 text-sm text-ink-muted">
-            Filtre regional : <span className="font-semibold text-ink">{commune || department}</span>
-            <button
-              onClick={() => setSearchParams({})}
-              className="ml-3 text-sm font-semibold text-primary-600 hover:text-primary-500"
-            >
-              &larr; Effacer
-            </button>
-          </p>
-        )}
-
-        <div className="mt-12 grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4">
-          {filteredTeachers.map((teacher) => (
-            <Link key={teacher.id} to={`/teachers/${teacher.id}`} className="group relative flex flex-col overflow-hidden rounded-card bg-surface-raised shadow-card ring-1 ring-border transition-all hover:shadow-elevated hover:-translate-y-1 hover:ring-primary-200">
-              <div className="aspect-[4/3] w-full overflow-hidden bg-primary-100">
-                <img src={teacher.image} alt={teacher.name} className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
-              </div>
-              <div className="flex flex-1 flex-col justify-between p-6">
-                <div>
-                  <div className="flex items-center justify-between">
-                    <p className="text-sm font-medium text-primary-600">{teacher.subject}</p>
-                    <div className="flex items-center gap-1 text-sm font-semibold text-ink">
-                      <span className="text-accent-400">★</span> {teacher.rating}
+          <div>
+            <div className="flex flex-col sm:flex-row gap-4 flex-wrap">
+              <select
+                value={country}
+                onChange={(e) => setSearchParams({ country: e.target.value })}
+                className="w-full sm:max-w-[180px] rounded-control border-0 bg-surface-raised px-4 py-3 text-ink shadow-sm ring-1 ring-inset ring-border focus:ring-2 focus:ring-inset focus:ring-primary-500 sm:text-sm"
+              >
+                {OHADA_COUNTRIES.map((c) => (
+                  <option key={c.code} value={c.code}>
+                    {c.name}
+                  </option>
+                ))}
+              </select>
+              <input
+                type="text"
+                placeholder="Rechercher par nom..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="w-full sm:flex-1 sm:min-w-[200px] rounded-control border-0 bg-surface-raised px-4 py-3 text-ink shadow-sm ring-1 ring-inset ring-border placeholder:text-ink-muted focus:ring-2 focus:ring-inset focus:ring-primary-500 sm:text-sm"
+              />
+              <select
+                value={cityFilter}
+                onChange={(e) => setCityFilter(e.target.value)}
+                className="w-full sm:max-w-[180px] rounded-control border-0 bg-surface-raised px-4 py-3 text-ink shadow-sm ring-1 ring-inset ring-border focus:ring-2 focus:ring-inset focus:ring-primary-500 sm:text-sm"
+              >
+                <option value="Toutes">Toutes les villes</option>
+                {availableCities.map(city => (
+                  <option key={city} value={city}>{city}</option>
+                ))}
+              </select>
+              <select
+                value={subjectFilter}
+                onChange={(e) => setSubjectFilter(e.target.value)}
+                className="w-full sm:max-w-[180px] rounded-control border-0 bg-surface-raised px-4 py-3 text-ink shadow-sm ring-1 ring-inset ring-border focus:ring-2 focus:ring-inset focus:ring-primary-500 sm:text-sm"
+              >
+                <option value="Toutes">Toutes les matières</option>
+                <option value="Mathématiques">Mathématiques</option>
+                <option value="Physique-Chimie">Physique-Chimie</option>
+                <option value="SVT">SVT</option>
+                <option value="Philosophie">Philosophie</option>
+              </select>
+            </div>
+            
+            <div className="mt-12 grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
+              {filteredTeachers.map((teacher) => (
+                <Link key={teacher.id} to={`/teachers/${teacher.id}`} className="group relative flex flex-col overflow-hidden rounded-card bg-surface-raised shadow-card ring-1 ring-border transition-all hover:shadow-elevated hover:-translate-y-1 hover:ring-primary-200">
+                  <div className="aspect-[4/3] w-full overflow-hidden bg-primary-100">
+                    <img src={teacher.image} alt={teacher.name} className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                  </div>
+                  <div className="flex flex-1 flex-col justify-between p-6">
+                    <div>
+                      <div className="flex items-center justify-between">
+                        <p className="text-sm font-medium text-primary-600">{teacher.subject}</p>
+                        <div className="flex items-center gap-1 text-sm font-semibold text-ink">
+                          <span className="text-accent-400">★</span> {teacher.rating}
+                        </div>
+                      </div>
+                      <h3 className="mt-2 text-xl font-bold text-ink group-hover:text-primary-600 transition-colors">
+                        {teacher.name}
+                      </h3>
+                      <p className="mt-1 text-xs text-ink-muted">{teacher.city}</p>
+                      <p className="mt-3 text-sm text-ink-muted line-clamp-2">{teacher.description}</p>
+                    </div>
+                    <div className="mt-6 flex items-center justify-between border-t border-border pt-4">
+                      <div className="text-sm font-bold text-ink">
+                        {teacher.price}
+                      </div>
+                      <span className="text-sm font-semibold text-primary-600 group-hover:text-primary-500">Profil &rarr;</span>
                     </div>
                   </div>
-                  <h3 className="mt-2 text-xl font-bold text-ink group-hover:text-primary-600 transition-colors">
-                    {teacher.name}
-                  </h3>
-                  <p className="mt-1 text-xs text-ink-muted">{teacher.city}, {teacher.country}</p>
-                  <p className="mt-3 text-sm text-ink-muted line-clamp-2">{teacher.description}</p>
-                </div>
-                <div className="mt-6 flex items-center justify-between border-t border-border pt-4">
-                  <div className="text-sm font-bold text-ink">
-                    {teacher.price}
-                  </div>
-                  <span className="text-sm font-semibold text-primary-600 group-hover:text-primary-500">Profil &rarr;</span>
-                </div>
-              </div>
-            </Link>
-          ))}
-          {filteredTeachers.length === 0 && (
-            <div className="col-span-full py-20">
-              <EmptyState title="Aucun tuteur ne correspond à vos critères." />
+                </Link>
+              ))}
             </div>
-          )}
+
+            {filteredTeachers.length === 0 && (
+              <div className="mt-12">
+                <EmptyState
+                  icon="person"
+                  title="Aucun tuteur ne correspond à vos critères"
+                  description={
+                    Object.keys(communeDepartmentMap).length === 0 || !TEACHERS_DATA.some(t => communeDepartmentMap[t.city] !== undefined)
+                      ? "Aucun tuteur enregistré dans ce pays pour le moment."
+                      : "Essayez une autre région, une autre ville, ou un autre terme de recherche."
+                  }
+                  action={
+                    <button
+                      onClick={() => { setSearch(''); setCityFilter('Toutes'); setSubjectFilter('Toutes'); setSearchParams({ country }) }}
+                      className="text-sm font-semibold text-primary-600 hover:text-primary-500"
+                    >
+                      Réinitialiser les filtres
+                    </button>
+                  }
+                />
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>
   )
 }
-
