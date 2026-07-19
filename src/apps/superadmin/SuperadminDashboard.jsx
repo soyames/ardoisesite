@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+﻿import { useState, useEffect } from 'react'
 import { collection, query, where, orderBy, onSnapshot, doc, updateDoc, deleteDoc } from 'firebase/firestore'
 import { db, auth } from '../../shared/api/firebase.js'
 import { getApiBaseUrl } from '../../config/env.js'
@@ -11,82 +11,106 @@ import Icon from '../../shared/ui/Icon.jsx'
 import { getPlatformApiBaseUrl } from '../../config/env.js'
 import MarketplaceAccountSettings from '../../shared/settings/MarketplaceAccountSettings.jsx'
 import PlatformAnalytics from './PlatformAnalytics.jsx'
+import SupportTickets from './SupportTickets.jsx'
+import { TeamManagement } from './TeamManagement.jsx'
+
+const TABS_BY_ROLE = {
+  superadmin: ['analytics', 'tickets', 'schools', 'payments', 'users', 'team', 'settings'],
+  support_agent: ['tickets', 'settings'],
+  school_onboarding: ['schools', 'tickets', 'settings'],
+  dev_onboarding: ['users', 'tickets', 'settings'],
+  billing_agent: ['payments', 'analytics', 'tickets', 'settings'],
+  marketing_agent: ['analytics', 'settings']
+}
 
 export default function SuperadminDashboard() {
   const { user } = useAuth()
-  const [activeTab, setActiveTab] = useState('analytics') // 'analytics', 'tickets', 'schools', 'payments', 'users', 'team', 'settings'
+  const availableTabs = TABS_BY_ROLE[user?.role] || ['settings']
+  const [activeTab, setActiveTab] = useState(availableTabs[0])
 
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-xl font-semibold text-ink">Administration Ardoise</h1>
         <p className="mt-1 text-sm text-ink-muted">
-          Espace de gestion globale de la plateforme (Support et équipe).
+          Espace de gestion globale de la plateforme (Support et Ã©quipe).
         </p>
       </div>
 
       <div className="flex flex-wrap gap-3 border-b border-border pb-4">
-        <Button
-          variant={activeTab === 'analytics' ? 'primary' : 'ghost'}
-          onClick={() => setActiveTab('analytics')}
-          className={activeTab === 'analytics' ? '' : 'text-ink-muted hover:text-ink'}
-        >
-          <Icon name="monitoring" className="mr-2" /> Analytiques
-        </Button>
-        <Button
-          variant={activeTab === 'tickets' ? 'primary' : 'ghost'}
-          onClick={() => setActiveTab('tickets')}
-          className={activeTab === 'tickets' ? '' : 'text-ink-muted hover:text-ink'}
-        >
-          Tickets de Support
-        </Button>
-        <Button
-          variant={activeTab === 'schools' ? 'primary' : 'ghost'}
-          onClick={() => setActiveTab('schools')}
-          className={activeTab === 'schools' ? '' : 'text-ink-muted hover:text-ink'}
-        >
-          Écoles
-        </Button>
-        <Button
-          variant={activeTab === 'payments' ? 'primary' : 'ghost'}
-          onClick={() => setActiveTab('payments')}
-          className={activeTab === 'payments' ? '' : 'text-ink-muted hover:text-ink'}
-        >
-          Paiements & Abonnements
-        </Button>
-        <Button
-          variant={activeTab === 'users' ? 'primary' : 'ghost'}
-          onClick={() => setActiveTab('users')}
-          className={activeTab === 'users' ? '' : 'text-ink-muted hover:text-ink'}
-        >
-          Utilisateurs
-        </Button>
-        {user?.role === 'superadmin' && (
+        {availableTabs.includes('analytics') && (
+          <Button
+            variant={activeTab === 'analytics' ? 'primary' : 'ghost'}
+            onClick={() => setActiveTab('analytics')}
+            className={activeTab === 'analytics' ? '' : 'text-ink-muted hover:text-ink'}
+          >
+            <Icon name="monitoring" className="mr-2" /> Analytiques
+          </Button>
+        )}
+        {availableTabs.includes('tickets') && (
+          <Button
+            variant={activeTab === 'tickets' ? 'primary' : 'ghost'}
+            onClick={() => setActiveTab('tickets')}
+            className={activeTab === 'tickets' ? '' : 'text-ink-muted hover:text-ink'}
+          >
+            Tickets de Support
+          </Button>
+        )}
+        {availableTabs.includes('schools') && (
+          <Button
+            variant={activeTab === 'schools' ? 'primary' : 'ghost'}
+            onClick={() => setActiveTab('schools')}
+            className={activeTab === 'schools' ? '' : 'text-ink-muted hover:text-ink'}
+          >
+            Ã‰coles
+          </Button>
+        )}
+        {availableTabs.includes('payments') && (
+          <Button
+            variant={activeTab === 'payments' ? 'primary' : 'ghost'}
+            onClick={() => setActiveTab('payments')}
+            className={activeTab === 'payments' ? '' : 'text-ink-muted hover:text-ink'}
+          >
+            Paiements & Abonnements
+          </Button>
+        )}
+        {availableTabs.includes('users') && (
+          <Button
+            variant={activeTab === 'users' ? 'primary' : 'ghost'}
+            onClick={() => setActiveTab('users')}
+            className={activeTab === 'users' ? '' : 'text-ink-muted hover:text-ink'}
+          >
+            Utilisateurs
+          </Button>
+        )}
+        {availableTabs.includes('team') && (
           <Button
             variant={activeTab === 'team' ? 'primary' : 'ghost'}
             onClick={() => setActiveTab('team')}
             className={activeTab === 'team' ? '' : 'text-ink-muted hover:text-ink'}
           >
-            Gestion de l'Équipe
+            Gestion de l'Ã©quipe
           </Button>
         )}
-        <Button
-          variant={activeTab === 'settings' ? 'primary' : 'ghost'}
-          onClick={() => setActiveTab('settings')}
-          className={activeTab === 'settings' ? '' : 'text-ink-muted hover:text-ink'}
-        >
-          Mon Compte
-        </Button>
+        {availableTabs.includes('settings') && (
+          <Button
+            variant={activeTab === 'settings' ? 'primary' : 'ghost'}
+            onClick={() => setActiveTab('settings')}
+            className={activeTab === 'settings' ? '' : 'text-ink-muted hover:text-ink'}
+          >
+            Mon Compte
+          </Button>
+        )}
       </div>
 
       <div className="mt-6">
-        {activeTab === 'analytics' && <PlatformAnalytics />}
-        {activeTab === 'tickets' && <SupportTickets />}
-        {activeTab === 'schools' && <SchoolsRegistry />}
-        {activeTab === 'payments' && <PaymentsAndSubscriptions />}
-        {activeTab === 'users' && <UsersRegistry />}
-        {activeTab === 'team' && user?.role === 'superadmin' && <TeamManagement />}
-        {activeTab === 'settings' && <MarketplaceAccountSettings />}
+        {activeTab === 'analytics' && availableTabs.includes('analytics') && <PlatformAnalytics />}
+        {activeTab === 'tickets' && availableTabs.includes('tickets') && <SupportTickets />}
+        {activeTab === 'schools' && availableTabs.includes('schools') && <SchoolsRegistry />}
+        {activeTab === 'payments' && availableTabs.includes('payments') && <PaymentsAndSubscriptions />}
+        {activeTab === 'users' && availableTabs.includes('users') && <UsersRegistry />}
+        {activeTab === 'team' && availableTabs.includes('team') && <TeamManagement />}
+        {activeTab === 'settings' && availableTabs.includes('settings') && <MarketplaceAccountSettings />}
       </div>
     </div>
   )
@@ -111,7 +135,7 @@ function isExpired(school) {
 
 function subscriptionBadge(school) {
   if (!school.subscriptionActive) return <Badge tone="neutral">Gratuit</Badge>
-  if (isExpired(school)) return <Badge tone="danger">Expiré</Badge>
+  if (isExpired(school)) return <Badge tone="danger">ExpirÃ©</Badge>
   return <Badge tone="success">Actif</Badge>
 }
 
@@ -213,13 +237,13 @@ function SchoolsRegistry() {
     return () => unsubscribe()
   }, [])
 
-  if (loading) return <div className="text-sm text-ink-muted">Chargement des écoles...</div>
+  if (loading) return <div className="text-sm text-ink-muted">Chargement des Ã©coles...</div>
 
   if (schools.length === 0) {
     return (
       <EmptyState
-        title="Aucune école enregistrée"
-        description="Les écoles apparaissent ici une fois leur inscription terminée sur le marketplace."
+        title="Aucune Ã©cole enregistrÃ©e"
+        description="Les Ã©coles apparaissent ici une fois leur inscription terminÃ©e sur le marketplace."
       />
     )
   }
@@ -242,8 +266,8 @@ function SchoolsRegistry() {
                     {school.name || 'Sans nom'}
                   </p>
                   <p className="text-xs text-ink-muted mt-1">
-                    {[school.city, school.country].filter(Boolean).join(', ') || 'Ville non renseignée'}
-                    {school.backendUrl && <span className="ml-2 text-ink-muted">· {school.backendUrl}</span>}
+                    {[school.city, school.country].filter(Boolean).join(', ') || 'Ville non renseignÃ©e'}
+                    {school.backendUrl && <span className="ml-2 text-ink-muted">Â· {school.backendUrl}</span>}
                   </p>
                 </div>
                 <div className="flex items-center gap-3">
@@ -281,7 +305,7 @@ function UsersRegistry() {
   }, [])
 
   const handleDeleteUser = async (userId) => {
-    if (!window.confirm("Êtes-vous sûr de vouloir supprimer cet utilisateur ? Cette action supprimera ses données de la base de données. Pour la suppression de l'authentification (login), assurez-vous que la Cloud Function est configurée.")) return
+    if (!window.confirm("ÃŠtes-vous sÃ»r de vouloir supprimer cet utilisateur ? Cette action supprimera ses donnÃ©es de la base de donnÃ©es. Pour la suppression de l'authentification (login), assurez-vous que la Cloud Function est configurÃ©e.")) return
     try {
       // 1. Delete from Firestore
       await deleteDoc(doc(db, 'users', userId))
@@ -300,7 +324,7 @@ function UsersRegistry() {
         throw new Error('Erreur API backend lors de la suppression Auth')
       }
       
-      alert("Utilisateur supprimé avec succès de la base de données et de l'authentification.")
+      alert("Utilisateur supprimÃ© avec succÃ¨s de la base de donnÃ©es et de l'authentification.")
     } catch (error) {
       console.error("Erreur lors de la suppression:", error)
       alert("Erreur lors de la suppression.")
@@ -313,19 +337,19 @@ function UsersRegistry() {
 
   return (
     <Card>
-      <CardHeader title="Utilisateurs Inscrits" subtitle="Gestion des parents, professeurs, développeurs et superadmins." />
+      <CardHeader title="Utilisateurs Inscrits" subtitle="Gestion des parents, professeurs, dÃ©veloppeurs et superadmins." />
       <CardBody className="p-0">
         <div className="p-4 border-b border-border bg-surface-raised flex gap-2 overflow-x-auto">
           <Button size="sm" variant={filterRole === 'all' ? 'primary' : 'secondary'} onClick={() => setFilterRole('all')}>Tous</Button>
           <Button size="sm" variant={filterRole === 'parent' ? 'primary' : 'secondary'} onClick={() => setFilterRole('parent')}>Parents</Button>
           <Button size="sm" variant={filterRole === 'teacher' ? 'primary' : 'secondary'} onClick={() => setFilterRole('teacher')}>Professeurs</Button>
-          <Button size="sm" variant={filterRole === 'developer' ? 'primary' : 'secondary'} onClick={() => setFilterRole('developer')}>Développeurs</Button>
+          <Button size="sm" variant={filterRole === 'developer' ? 'primary' : 'secondary'} onClick={() => setFilterRole('developer')}>DÃ©veloppeurs</Button>
           <Button size="sm" variant={filterRole === 'superadmin' ? 'primary' : 'secondary'} onClick={() => setFilterRole('superadmin')}>Superadmins</Button>
         </div>
         
         {filteredUsers.length === 0 ? (
           <div className="p-6">
-            <EmptyState title="Aucun utilisateur" description="Aucun utilisateur trouvé pour ce filtre." />
+            <EmptyState title="Aucun utilisateur" description="Aucun utilisateur trouvÃ© pour ce filtre." />
           </div>
         ) : (
           <ul className="divide-y divide-border">
@@ -392,18 +416,18 @@ function PaymentsAndSubscriptions() {
     }
   }, [])
 
-  if (loading) return <div className="text-sm text-ink-muted">Chargement des données...</div>
+  if (loading) return <div className="text-sm text-ink-muted">Chargement des donnÃ©es...</div>
 
   const premiumSchools = schools.filter(s => s.subscriptionActive)
 
   return (
     <div className="space-y-8">
       <Card>
-        <CardHeader title="Abonnements SaaS (Écoles)" subtitle="Suivi des abonnements actifs au logiciel de gestion." />
+        <CardHeader title="Abonnements SaaS (Ã‰coles)" subtitle="Suivi des abonnements actifs au logiciel de gestion." />
         <CardBody className="p-0">
           {premiumSchools.length === 0 ? (
             <div className="p-6">
-              <EmptyState title="Aucun abonnement" description="Aucune école n'a d'abonnement SaaS actif." />
+              <EmptyState title="Aucun abonnement" description="Aucune Ã©cole n'a d'abonnement SaaS actif." />
             </div>
           ) : (
             <ul className="divide-y divide-border">
@@ -425,11 +449,11 @@ function PaymentsAndSubscriptions() {
       </Card>
 
       <Card>
-        <CardHeader title="Contrats de Tutorat (Marketplace)" subtitle="Suivi des réservations de tuteurs par les parents." />
+        <CardHeader title="Contrats de Tutorat (Marketplace)" subtitle="Suivi des rÃ©servations de tuteurs par les parents." />
         <CardBody className="p-0">
           {contracts.length === 0 ? (
             <div className="p-6">
-              <EmptyState title="Aucun contrat" description="Aucun tuteur n'a encore été réservé via la plateforme." />
+              <EmptyState title="Aucun contrat" description="Aucun tuteur n'a encore Ã©tÃ© rÃ©servÃ© via la plateforme." />
             </div>
           ) : (
             <ul className="divide-y divide-border">
@@ -437,13 +461,13 @@ function PaymentsAndSubscriptions() {
                 <li key={c.id} className="p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                   <div>
                     <p className="text-sm font-bold text-ink">{c.parentName} &rarr; {c.teacherName}</p>
-                    <p className="text-xs text-ink-muted mt-1">{c.hoursPerWeek}h/semaine · Début: {c.startDate}</p>
+                    <p className="text-xs text-ink-muted mt-1">{c.hoursPerWeek}h/semaine Â· DÃ©but: {c.startDate}</p>
                     <p className="text-xs text-ink-muted">Contact Parent: {c.parentEmail}</p>
                   </div>
                   <div className="text-right">
                     <p className="text-sm font-bold text-primary-600">{c.total?.toLocaleString() || 0} F / mois</p>
                     <p className="text-xs text-ink-muted">Commission: {c.commission?.toLocaleString() || 0} F</p>
-                    <Badge tone="success" className="mt-1">Prélevé le {c.paymentDate}</Badge>
+                    <Badge tone="success" className="mt-1">PrÃ©levÃ© le {c.paymentDate}</Badge>
                   </div>
                 </li>
               ))}
@@ -481,7 +505,7 @@ function HealthPing({ backendUrl }) {
   return (
     <div className="flex items-center gap-2">
       {status === 'loading' && <span className="text-sm text-ink-muted">Ping en cours...</span>}
-      {status === 'up' && <Badge tone="success">Connecté (Backend Actif)</Badge>}
+      {status === 'up' && <Badge tone="success">ConnectÃ© (Backend Actif)</Badge>}
       {status === 'down' && <Badge tone="danger">Injoignable (Erreur de connexion)</Badge>}
     </div>
   )
@@ -493,14 +517,14 @@ function SchoolDetailView({ school, onBack }) {
   return (
     <div className="space-y-6">
       <button onClick={onBack} className="flex items-center gap-1 text-sm font-medium text-primary-600 hover:text-primary-700">
-        <Icon name="arrow_back" className="text-base" /> Retour aux écoles
+        <Icon name="arrow_back" className="text-base" /> Retour aux Ã©coles
       </button>
 
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold text-ink">{school.name || 'Sans nom'}</h2>
           <p className="text-sm text-ink-muted">
-            ID: {school.id} · Ajouté le {school.createdAt ? new Date(school.createdAt).toLocaleDateString() : 'N/A'}
+            ID: {school.id} Â· AjoutÃ© le {school.createdAt ? new Date(school.createdAt).toLocaleDateString() : 'N/A'}
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -511,23 +535,23 @@ function SchoolDetailView({ school, onBack }) {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Card>
-          <CardHeader title="Informations de l'établissement" />
+          <CardHeader title="Informations de l'Ã©tablissement" />
           <CardBody className="space-y-3">
             <div>
               <span className="block text-xs font-semibold text-ink-muted uppercase">Adresse & Localisation</span>
-              <p className="text-sm text-ink">{school.address || 'Non renseignée'}</p>
-              <p className="text-sm text-ink">{[school.city, school.country].filter(Boolean).join(', ') || 'Non renseigné'}</p>
+              <p className="text-sm text-ink">{school.address || 'Non renseignÃ©e'}</p>
+              <p className="text-sm text-ink">{[school.city, school.country].filter(Boolean).join(', ') || 'Non renseignÃ©'}</p>
             </div>
             <div>
               <span className="block text-xs font-semibold text-ink-muted uppercase">Contact</span>
-              <p className="text-sm text-ink">{school.email || 'Non renseigné'}</p>
-              <p className="text-sm text-ink">{school.phone || 'Non renseigné'}</p>
+              <p className="text-sm text-ink">{school.email || 'Non renseignÃ©'}</p>
+              <p className="text-sm text-ink">{school.phone || 'Non renseignÃ©'}</p>
             </div>
           </CardBody>
         </Card>
 
         <Card>
-          <CardHeader title="Santé de l'intégration" />
+          <CardHeader title="SantÃ© de l'intÃ©gration" />
           <CardBody className="space-y-4">
             <div>
               <span className="block text-xs font-semibold text-ink-muted uppercase mb-1">URL du Serveur ERP (Backend)</span>
@@ -536,7 +560,7 @@ function SchoolDetailView({ school, onBack }) {
                   {school.backendUrl}
                 </a>
               ) : (
-                <p className="text-sm text-warning-600 font-medium">Aucune URL configurée. Le logiciel de l'école n'est pas encore lié.</p>
+                <p className="text-sm text-warning-600 font-medium">Aucune URL configurÃ©e. Le logiciel de l'Ã©cole n'est pas encore liÃ©.</p>
               )}
             </div>
             
@@ -553,7 +577,7 @@ function SchoolDetailView({ school, onBack }) {
           title="Abonnement & Licences" 
           action={
             <Button size="sm" variant={managing ? 'ghost' : 'secondary'} onClick={() => setManaging(!managing)}>
-              {managing ? 'Fermer' : 'Gérer l\'abonnement'}
+              {managing ? 'Fermer' : 'GÃ©rer l\'abonnement'}
             </Button>
           } 
         />
@@ -570,12 +594,12 @@ function SchoolDetailView({ school, onBack }) {
               </p>
             </div>
             <div>
-              <span className="block text-xs font-semibold text-ink-muted uppercase">Fonctionnalités</span>
+              <span className="block text-xs font-semibold text-ink-muted uppercase">FonctionnalitÃ©s</span>
               <div className="flex flex-wrap gap-1 mt-1">
                 {school.features && school.features.length > 0 ? (
                   school.features.map(f => <Badge key={f} tone="neutral">{f}</Badge>)
                 ) : (
-                  <span className="text-sm text-ink-muted">Aucune fonctionnalité Premium</span>
+                  <span className="text-sm text-ink-muted">Aucune fonctionnalitÃ© Premium</span>
                 )}
               </div>
             </div>
@@ -592,199 +616,3 @@ function SchoolDetailView({ school, onBack }) {
   )
 }
 
-function SupportTickets() {
-  const [tickets, setTickets] = useState([])
-  const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    const q = query(collection(db, 'support_tickets'), orderBy('createdAt', 'desc'))
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const t = []
-      snapshot.forEach((doc) => {
-        t.push({ id: doc.id, ...doc.data() })
-      })
-      setTickets(t)
-      setLoading(false)
-    }, (err) => {
-      console.error(err)
-      setLoading(false)
-    })
-    return () => unsubscribe()
-  }, [])
-
-  const updateStatus = async (id, newStatus) => {
-    try {
-      await updateDoc(doc(db, 'support_tickets', id), { ticket_status: newStatus })
-    } catch (e) {
-      console.error("Erreur de mise à jour:", e)
-    }
-  }
-
-  if (loading) return <div className="text-sm text-ink-muted">Chargement des tickets...</div>
-
-  return (
-    <div className="space-y-4">
-      {tickets.length === 0 ? (
-        <EmptyState
-          title="Inbox zero"
-          description="Aucun ticket de support en attente. Beau travail."
-        />
-      ) : (
-        tickets.map((ticket) => (
-          <Card key={ticket.id} className="transition-all hover:shadow-md">
-            <CardBody className="flex flex-col sm:flex-row gap-4 justify-between">
-              <div>
-                <div className="flex items-center gap-3 mb-2">
-                  <h3 className="text-base font-semibold text-ink">{ticket.subject}</h3>
-                  <Badge tone={ticket.ticket_status === 'open' ? 'warning' : ticket.ticket_status === 'resolved' ? 'success' : 'info'}>
-                    {ticket.ticket_status === 'open' ? 'Ouvert' : ticket.ticket_status === 'resolved' ? 'Résolu' : 'En cours'}
-                  </Badge>
-                </div>
-                <p className="text-sm text-ink-muted mb-2">{ticket.message}</p>
-                <div className="text-xs text-ink-muted flex flex-wrap gap-4">
-                  <span>De: {ticket.name} ({ticket.email})</span>
-                  {ticket.school && <span>École: {ticket.school}</span>}
-                </div>
-              </div>
-              <div className="flex sm:flex-col gap-2 shrink-0">
-                {ticket.ticket_status !== 'in_progress' && (
-                  <Button size="sm" variant="secondary" onClick={() => updateStatus(ticket.id, 'in_progress')}>
-                    Mettre en cours
-                  </Button>
-                )}
-                {ticket.ticket_status !== 'resolved' && (
-                  <Button size="sm" variant="primary" onClick={() => updateStatus(ticket.id, 'resolved')}>
-                    Marquer Résolu
-                  </Button>
-                )}
-              </div>
-            </CardBody>
-          </Card>
-        ))
-      )}
-    </div>
-  )
-}
-
-function TeamManagement() {
-  const [email, setEmail] = useState('')
-  const [role, setRole] = useState('support_agent')
-  const [members, setMembers] = useState([])
-  const [membersLoading, setMembersLoading] = useState(true)
-  const [status, setStatus] = useState(null) // { kind: 'success' | 'error', text: string }
-  const [submitting, setSubmitting] = useState(false)
-
-  // Reads the real access-control source of truth (users/{uid}.role) --
-  // not a separate collection. What's listed here IS who can log in,
-  // no separate "did the grant actually take effect" question.
-  useEffect(() => {
-    const q = query(collection(db, 'users'), where('role', 'in', ['superadmin', 'support_agent']))
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const m = []
-      snapshot.forEach((doc) => m.push({ id: doc.id, ...doc.data() }))
-      setMembers(m)
-      setMembersLoading(false)
-    }, (err) => {
-      console.error(err)
-      setMembersLoading(false)
-    })
-    return () => unsubscribe()
-  }, [])
-
-  const handleAddMember = async (e) => {
-    e.preventDefault()
-    if (!email) return
-    setSubmitting(true)
-    setStatus(null)
-    try {
-      const idToken = await auth.currentUser.getIdToken()
-      const res = await fetch(`${getPlatformApiBaseUrl()}/api/team/invite`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${idToken}`,
-        },
-        body: JSON.stringify({ email, role }),
-      })
-      const data = await res.json()
-
-      if (!res.ok) {
-        setStatus({ kind: 'error', text: data.message || data.error || 'Erreur lors de l\'ajout' })
-        return
-      }
-
-      setStatus({ kind: 'success', text: `${data.email} a maintenant accès (${data.role === 'superadmin' ? 'Superadmin' : 'Agent de Support'}).` })
-      setEmail('')
-    } catch (error) {
-      console.error(error)
-      setStatus({ kind: 'error', text: 'Erreur réseau lors de l\'ajout. Réessayez.' })
-    } finally {
-      setSubmitting(false)
-    }
-  }
-
-  return (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader title="Ajouter un collaborateur" subtitle="La personne doit déjà avoir un compte Ardoise (elle s'inscrit normalement sur ardoise.soyames.com, puis vous lui donnez accès ici)." />
-        <CardBody>
-          <form onSubmit={handleAddMember} className="flex flex-col sm:flex-row gap-4 items-end">
-            <div className="flex-1 w-full">
-              <label className="block text-sm font-semibold leading-6 text-ink">Email du collaborateur</label>
-              <input
-                type="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="mt-2 block w-full rounded-control border-0 px-3.5 py-2 text-ink shadow-sm ring-1 ring-inset ring-border bg-surface-raised focus:ring-2 focus:ring-primary-600 sm:text-sm"
-              />
-            </div>
-            <div className="w-full sm:w-48">
-              <label className="block text-sm font-semibold leading-6 text-ink">Rôle</label>
-              <select
-                value={role}
-                onChange={(e) => setRole(e.target.value)}
-                className="mt-2 block w-full rounded-control border-0 px-3.5 py-2 text-ink shadow-sm ring-1 ring-inset ring-border bg-surface-raised focus:ring-2 focus:ring-primary-600 sm:text-sm"
-              >
-                <option value="support_agent">Agent de Support</option>
-                <option value="superadmin">Superadmin</option>
-              </select>
-            </div>
-            <Button type="submit" variant="primary" className="w-full sm:w-auto h-[38px]" disabled={submitting}>
-              {submitting ? 'Ajout en cours...' : 'Donner accès'}
-            </Button>
-          </form>
-          {status && (
-            <p className={`mt-4 text-sm font-medium ${status.kind === 'success' ? 'text-success-600' : 'text-danger-600'}`}>
-              {status.text}
-            </p>
-          )}
-        </CardBody>
-      </Card>
-
-      <Card>
-        <CardHeader title="Membres de l'équipe" />
-        <CardBody className="p-0">
-          {membersLoading ? (
-            <div className="p-5 text-sm text-ink-muted">Chargement...</div>
-          ) : members.length === 0 ? (
-            <div className="p-5">
-              <EmptyState title="Aucun membre configuré" description="Ajoutez votre premier collaborateur ci-dessus." />
-            </div>
-          ) : (
-            <ul className="divide-y divide-border">
-              {members.map((m) => (
-                <li key={m.id} className="p-5 flex items-center justify-between">
-                  <span className="text-sm font-medium text-ink">{m.email}</span>
-                  <Badge tone={m.role === 'superadmin' ? 'warning' : 'info'}>
-                    {m.role === 'superadmin' ? 'Superadmin' : 'Support'}
-                  </Badge>
-                </li>
-              ))}
-            </ul>
-          )}
-        </CardBody>
-      </Card>
-    </div>
-  )
-}
