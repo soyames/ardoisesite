@@ -135,7 +135,7 @@ export default function RegisterPage() {
         <form className="mt-8 space-y-6" onSubmit={handleRegister}>
           <div className="space-y-4 rounded-card shadow-card bg-surface-raised p-6">
             <Link to="/" className="mx-auto mb-6 flex justify-center">
-              <img src="/images/ardoise_lockup_horizontal.png" alt="Ardoise Logo" className="h-12 w-auto" />
+              <img src="/images/ardoise_lockup_horizontal_white.png" alt="Ardoise Logo" className="h-12 w-auto" />
             </Link>
 
             {/* Only schools register here (saas.ardoise.soyames.com) -
