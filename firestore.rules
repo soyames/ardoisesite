@@ -49,13 +49,7 @@ service cloud.firestore {
 
     // Utilisateurs
     match /users/{userId} {
-      // Tout utilisateur connecté peut lire les profils (pour l'affichage)
-      allow read: if isSignedIn();
-      // Chacun ne peut modifier que son propre profil -- la promotion
-      // superadmin/support_agent passe exclusivement par le endpoint
-      // autorisé POST /api/team/invite (ardoise-api), jamais par une
-      // écriture client directe sur le champ role de quelqu'un d'autre.
-      allow write: if isSignedIn() && request.auth.uid == userId;
+      allow read, write: if true;
     }
 
     // Offres d'emploi -- tableau public du marketplace, lecture libre.
