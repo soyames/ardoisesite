@@ -76,6 +76,10 @@ const NAV_BY_ROLE = {
   auditor: [{ to: '/portal', label: 'Audit', end: true, icon: 'fact_check' }, SETTINGS_NAV_ITEM],
   superadmin: [{ to: '/portal', label: 'Administration', end: true, icon: 'admin_panel_settings' }, collabItem('forum')],
   support_agent: [{ to: '/portal', label: 'Support Tickets', end: true, icon: 'support_agent' }, collabItem('forum')],
+  school_onboarding: [{ to: '/portal', label: 'Onboarding Écoles', end: true, icon: 'school' }, collabItem('forum')],
+  dev_onboarding: [{ to: '/portal', label: 'Onboarding Devs', end: true, icon: 'integration_instructions' }, collabItem('forum')],
+  billing_agent: [{ to: '/portal', label: 'Paiements & Abonnements', end: true, icon: 'payments' }, collabItem('forum')],
+  marketing_agent: [{ to: '/portal', label: 'Marketing & Analytiques', end: true, icon: 'campaign' }, collabItem('forum')],
   developer: [{ to: '/portal', label: 'Espace Developpeur', end: true, icon: 'code' }, SETTINGS_NAV_ITEM],
 }
 
@@ -96,6 +100,10 @@ const PORTAL_BY_ROLE = {
   auditor: AuditorPortal,
   superadmin: SuperadminDashboard,
   support_agent: SuperadminDashboard,
+  school_onboarding: SuperadminDashboard,
+  dev_onboarding: SuperadminDashboard,
+  billing_agent: SuperadminDashboard,
+  marketing_agent: SuperadminDashboard,
   developer: DeveloperPortal,
 }
 

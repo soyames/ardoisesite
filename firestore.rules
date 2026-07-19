@@ -100,11 +100,11 @@ service cloud.firestore {
 
     // Tickets de support -- n'importe qui (y compris un visiteur anonyme)
     // peut créer un ticket via le formulaire de contact public
-    // (ContactForm.jsx) ; seuls superadmin/support_agent peuvent les lire
-    // et les mettre à jour (SuperadminDashboard.jsx).
+    // (ContactForm.jsx) ; les agents de la plateforme peuvent les lire
+    // et les mettre à jour.
     match /support_tickets/{ticketId} {
       allow create: if true;
-      allow read, update: if isSignedIn() && getUserData().role in ['superadmin', 'support_agent'];
+      allow read, update: if isSignedIn() && getUserData().role in ['superadmin', 'support_agent', 'school_onboarding', 'dev_onboarding', 'billing_agent', 'marketing_agent'];
     }
 
     // Transactions FedaPay -- écrites uniquement par le Worker
