@@ -1,6 +1,8 @@
+import { useState } from 'react'
 import { NavLink } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext.jsx'
 import EmailVerificationBanner from '../auth/EmailVerificationBanner.jsx'
+import { usePwaInstall } from '../hooks/usePwaInstall.js'
 import Icon from '../ui/Icon.jsx'
 
 /**
@@ -17,6 +19,16 @@ import Icon from '../ui/Icon.jsx'
  */
 export default function AppShell({ navItems, children }) {
   const { user, logout } = useAuth()
+  const { promptInstall, isIOS, canOfferInstall } = usePwaInstall()
+  const [showIosInstructions, setShowIosInstructions] = useState(false)
+
+  const handleInstallClick = () => {
+    if (isIOS) {
+      setShowIosInstructions((v) => !v)
+    } else {
+      promptInstall()
+    }
+  }
 
   return (
     <div className="flex min-h-svh flex-col bg-surface">
@@ -54,6 +66,34 @@ export default function AppShell({ navItems, children }) {
           </nav>
 
           <div className="flex items-center gap-3">
+            <div className="relative flex items-center gap-4">
+              {/* PWA Install Button */}
+              {canOfferInstall && (
+                <button
+                  onClick={handleInstallClick}
+                  className="hidden md:block rounded-control bg-primary-50 px-4 py-1.5 text-xs font-bold text-primary-700 ring-1 ring-inset ring-primary-200 transition hover:bg-primary-100"
+                >
+                  Installer l'App
+                </button>
+              )}
+              {showIosInstructions && (
+                <div className="absolute right-0 top-full z-50 mt-2 w-72 rounded-card bg-surface-raised p-4 text-sm text-ink-muted shadow-elevated ring-1 ring-border">
+                  <p className="mb-2 font-semibold text-ink">Installer sur iPhone/iPad</p>
+                  <ol className="list-decimal space-y-1 pl-4">
+                    <li>Appuyez sur l'icône Partager <span aria-hidden>↗️</span> en bas de Safari</li>
+                    <li>Choisissez « Sur l'écran d'accueil »</li>
+                    <li>Appuyez sur « Ajouter »</li>
+                  </ol>
+                  <button
+                    onClick={() => setShowIosInstructions(false)}
+                    className="mt-3 text-xs font-semibold text-primary-600 hover:text-primary-500"
+                  >
+                    Fermer
+                  </button>
+                </div>
+              )}
+            </div>
+
             <div className="hidden text-right sm:block">
               <p className="text-sm font-medium text-ink">
                 {user?.first_name} {user?.last_name}

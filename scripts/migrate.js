@@ -29,6 +29,46 @@ const mockDb = {
       name: 'M. le Directeur',
       phone: '+229 95 00 00 00',
       schoolId: 1
+    },
+    censeur: {
+      email: 'censeur1@ardoise.com',
+      password: 'Ardoise2026!',
+      role: 'censeur',
+      name: 'M. le Censeur',
+      phone: '+229 95 00 00 01',
+      schoolId: 1
+    },
+    directeur: {
+      email: 'directeur@ardoise.com',
+      password: 'Ardoise2026!',
+      role: 'director',
+      name: 'M. le Directeur',
+      phone: '+229 95 00 00 02',
+      schoolId: 1
+    },
+    comptable: {
+      email: 'comptable@ardoise.com',
+      password: 'Ardoise2026!',
+      role: 'comptable',
+      name: 'Mme la Comptable',
+      phone: '+229 95 00 00 03',
+      schoolId: 1
+    },
+    surveillant: {
+      email: 'surveillant@ardoise.com',
+      password: 'Ardoise2026!',
+      role: 'surveillant',
+      name: 'M. le Surveillant',
+      phone: '+229 95 00 00 04',
+      schoolId: 1
+    },
+    secretaire: {
+      email: 'secretaire@ardoise.com',
+      password: 'Ardoise2026!',
+      role: 'secretary',
+      name: 'Mme la Secrétaire',
+      phone: '+229 95 00 00 05',
+      schoolId: 1
     }
   },
 
@@ -89,20 +129,23 @@ async function signUpUser(email, password) {
         body: JSON.stringify({ email, password, returnSecureToken: true })
       })
       const loginData = await loginRes.json()
-      return loginData.localId
+      return { uid: loginData.localId, token: loginData.idToken }
     }
     throw new Error(`Auth Error: ${data.error.message}`)
   }
-  return data.localId // This is the UID
+  return { uid: data.localId, token: data.idToken } // This is the UID and token
 }
 
-async function writeFirestoreDoc(collection, docId, data) {
+async function writeFirestoreDoc(collection, docId, data, token) {
   const url = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/${collection}?documentId=${docId}`
   const firestoreData = { fields: convertToFirestoreFormat(data) }
   
+  const headers = { 'Content-Type': 'application/json' }
+  if (token) headers['Authorization'] = `Bearer ${token}`
+
   const res = await fetch(url, {
     method: 'POST', // POST with documentId creates. Or PATCH to update if exists.
-    headers: { 'Content-Type': 'application/json' },
+    headers,
     body: JSON.stringify(firestoreData)
   })
   
@@ -112,7 +155,7 @@ async function writeFirestoreDoc(collection, docId, data) {
     const patchUrl = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/${collection}/${docId}`
     await fetch(patchUrl, {
       method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
+      headers,
       body: JSON.stringify(firestoreData)
     })
   } else if (result.error) {
@@ -124,29 +167,31 @@ async function migrate() {
   console.log("Starting migration...")
 
   // 1. Users
+  let founderToken = null;
   for (const [key, user] of Object.entries(mockDb.users)) {
     console.log(`Creating user: ${user.email}`)
-    const uid = await signUpUser(user.email, user.password)
+    const { uid, token } = await signUpUser(user.email, user.password)
+    if (user.role === 'founder') founderToken = token;
     
     // Remove password from the data we store in Firestore
     const firestoreProfile = { ...user }
     delete firestoreProfile.password
     firestoreProfile.createdAt = new Date().toISOString()
 
-    await writeFirestoreDoc('users', uid, firestoreProfile)
+    await writeFirestoreDoc('users', uid, firestoreProfile, token)
     console.log(`Created user ${user.email} in Firestore with UID ${uid}`)
   }
 
   // 2. Schools
   for (const [id, school] of Object.entries(mockDb.schools)) {
     console.log(`Migrating school: ${school.name}`)
-    await writeFirestoreDoc('schools', id.toString(), school)
+    await writeFirestoreDoc('schools', id.toString(), school, founderToken)
   }
 
   // 3. Jobs
   for (const job of mockDb.jobs) {
     console.log(`Migrating job: ${job.title}`)
-    await writeFirestoreDoc('jobs', job.id.toString(), job)
+    await writeFirestoreDoc('jobs', job.id.toString(), job, founderToken)
   }
 
   console.log("Migration complete!")
