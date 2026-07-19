@@ -35,3 +35,23 @@ export const FRANCOPHONE_AFRICA_DATA = {
   'Sierra Leone': ['Freetown', 'Bo', 'Kenema', 'Makeni', 'Koidu Town'],
   'Togo': ['Lomé', 'Sokodé', 'Kara', 'Kpalimé', 'Atakpamé', 'Bassar', 'Tsévié', 'Aného', 'Mango', 'Dapaong']
 }
+
+export const OHADA_COUNTRIES = [
+  { code: 'BEN', name: 'Bénin' },
+  { code: 'BFA', name: 'Burkina Faso' },
+  { code: 'CMR', name: 'Cameroun' },
+  { code: 'CAF', name: 'Centrafrique' },
+  { code: 'COM', name: 'Comores' },
+  { code: 'COG', name: 'Congo' },
+  { code: 'COD', name: 'RDC' },
+  { code: 'CIV', name: "Côte d'Ivoire" },
+  { code: 'GAB', name: 'Gabon' },
+  { code: 'GIN', name: 'Guinée' },
+  { code: 'GNB', name: 'Guinée-Bissau' },
+  { code: 'GNQ', name: 'Guinée équatoriale' },
+  { code: 'MLI', name: 'Mali' },
+  { code: 'NER', name: 'Niger' },
+  { code: 'SEN', name: 'Sénégal' },
+  { code: 'TCD', name: 'Tchad' },
+  { code: 'TGO', name: 'Togo' }
+]

@@ -4,7 +4,7 @@ import { collection, onSnapshot } from 'firebase/firestore'
 import { db } from '../../shared/api/firebase.js'
 import Badge from '../../shared/ui/Badge.jsx'
 import CountryMapWrapper from '../../shared/ui/CountryMapWrapper.jsx'
-import { BENIN_COMMUNE_DEPARTMENT } from '../../shared/constants/beninGeoCommunes.js'
+import { OHADA_COUNTRIES } from '../../shared/constants/locations.js'
 import { TEACHERS_DATA } from './TeacherList.jsx'
 
 // Tutors aren't wired to Firestore yet - TeacherList/TeacherDetail still
@@ -21,6 +21,14 @@ export default function Home() {
   const [schools, setSchools] = useState([])
   const [selectedDepartment, setSelectedDepartment] = useState(null)
   const [selectedCommune, setSelectedCommune] = useState(null)
+  const [activeCountry, setActiveCountry] = useState('BEN')
+  const [communeDepartmentMap, setCommuneDepartmentMap] = useState({})
+
+  // Clear selections when country changes
+  useEffect(() => {
+    setSelectedDepartment(null)
+    setSelectedCommune(null)
+  }, [activeCountry])
 
   useEffect(() => {
     const unsubscribe = onSnapshot(collection(db, 'schools'), (snapshot) => {
@@ -62,13 +70,13 @@ export default function Home() {
   // browsing (those pages have their own map + filters already).
   const regionSchools = useMemo(() => {
     if (!regionLabel) return []
-    return schools.filter((s) => (selectedCommune ? s.city === selectedCommune : BENIN_COMMUNE_DEPARTMENT[s.city] === selectedDepartment))
-  }, [schools, selectedCommune, selectedDepartment, regionLabel])
+    return schools.filter((s) => (selectedCommune ? s.city === selectedCommune : communeDepartmentMap[s.city] === selectedDepartment))
+  }, [schools, selectedCommune, selectedDepartment, regionLabel, communeDepartmentMap])
 
   const regionTeachers = useMemo(() => {
     if (!regionLabel) return []
-    return TEACHERS_DATA.filter((t) => (selectedCommune ? t.city === selectedCommune : BENIN_COMMUNE_DEPARTMENT[t.city] === selectedDepartment))
-  }, [selectedCommune, selectedDepartment, regionLabel])
+    return TEACHERS_DATA.filter((t) => (selectedCommune ? t.city === selectedCommune : communeDepartmentMap[t.city] === selectedDepartment))
+  }, [selectedCommune, selectedDepartment, regionLabel, communeDepartmentMap])
 
   return (
     <div className="flex flex-col bg-surface">
@@ -88,6 +96,21 @@ export default function Home() {
         <div className="mx-auto max-w-[1600px] px-6 lg:px-12">
           <div className="grid grid-cols-1 gap-10 rounded-card border border-white/10 bg-surface-raised p-8 shadow-elevated lg:grid-cols-[1fr_320px] lg:items-center">
             <div>
+              <div className="mb-6 inline-block">
+                <label htmlFor="country-select" className="sr-only">Choisir un pays</label>
+                <select
+                  id="country-select"
+                  value={activeCountry}
+                  onChange={(e) => setActiveCountry(e.target.value)}
+                  className="rounded-control border border-white/20 bg-primary-900/50 py-2 pl-3 pr-10 text-sm font-semibold text-white shadow-sm focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500"
+                >
+                  {OHADA_COUNTRIES.map((c) => (
+                    <option key={c.code} value={c.code}>
+                      {c.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
               <h1 className="font-display text-4xl font-extrabold tracking-tight text-ink sm:text-5xl">
                 L'excellence éducative, <span className="text-accent-600">à portée de clic</span>
               </h1>
@@ -97,7 +120,8 @@ export default function Home() {
             </div>
             <div className="flex justify-center">
               <CountryMapWrapper
-                countryCode="BEN"
+                countryCode={activeCountry}
+                onMapDataLoaded={(data) => setCommuneDepartmentMap(data?.communeDepartmentMap || {})}
                 schoolCounts={cityCounts}
                 selectedDepartment={selectedDepartment}
                 onSelectDepartment={(dept) => { setSelectedDepartment(dept); setSelectedCommune(null) }}
