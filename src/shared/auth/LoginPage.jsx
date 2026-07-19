@@ -45,10 +45,7 @@ export default function LoginPage() {
   return (
     <div className="min-h-svh flex items-center justify-center bg-surface px-4">
       <div className="w-full max-w-sm">
-        <div className="mb-8 text-center">
-          <Link to="/" className="mx-auto mb-4 flex justify-center">
-            <img src="/images/ardoise_lockup_horizontal.png" alt="Ardoise Logo" className="h-12 w-auto mix-blend-multiply" />
-          </Link>
+        <div className="mb-6 text-center">
           <h1 className="text-2xl font-semibold text-ink">Connexion</h1>
           <p className="mt-1 text-sm text-ink-muted">Accédez à votre espace</p>
         </div>
@@ -57,6 +54,10 @@ export default function LoginPage() {
           onSubmit={handleSubmit}
           className="rounded-card border border-border bg-surface-raised p-6 shadow-card"
         >
+          <Link to="/" className="mx-auto mb-6 flex justify-center">
+            <img src="/images/ardoise_lockup_horizontal.png" alt="Ardoise Logo" className="h-12 w-auto" />
+          </Link>
+
           <div className="mb-4">
             <label htmlFor="username" className="mb-1.5 block text-sm font-medium text-ink">
               Identifiant ou Email
