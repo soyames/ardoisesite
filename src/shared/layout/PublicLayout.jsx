@@ -1,31 +1,24 @@
 import { useState } from 'react'
-import { Link, Outlet } from 'react-router-dom'
+import { Link, Outlet, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext.jsx'
 import { isSaasHost } from '../auth/domainRedirect.js'
 import EmailVerificationBanner from '../auth/EmailVerificationBanner.jsx'
 import { usePwaInstall } from '../hooks/usePwaInstall.js'
 import Icon from '../ui/Icon.jsx'
-
-// Real official education portals for Benin - not made up. Verified
-// against each ministry's own site before linking (see the ardoisesite
-// footer redesign task): MEMP covers nursery/primary, the "secondaire"
-// ministry also covers technical/vocational (METFP), MESRS is higher
-// education, and EducMaster is the national cross-level data portal -
-// four genuinely distinct destinations, not padding.
-const OFFICIAL_RESOURCES = [
-  { label: 'EducMaster', description: 'Portail national de l’éducation', href: 'https://educmaster.bj/' },
-  { label: 'MEMP', description: 'Enseignements Maternel et Primaire', href: 'https://memp.gouv.bj/' },
-  { label: 'Enseignement Secondaire', description: 'Secondaire, Technique et Formation Pro.', href: 'https://enseignementsecondaire.gouv.bj/' },
-  { label: 'Enseignement Supérieur', description: 'Enseignement Supérieur et Recherche', href: 'https://enseignementsuperieur.gouv.bj/' },
-]
+import { OFFICIAL_RESOURCES } from '../constants/officialResources.js'
 
 export default function PublicLayout() {
   const { user, logout } = useAuth()
   const { promptInstall, isIOS, canOfferInstall } = usePwaInstall()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [showIosInstructions, setShowIosInstructions] = useState(false)
+  const [searchParams] = useSearchParams()
 
   const isSaas = isSaasHost()
+  
+  const urlCountry = searchParams.get('country')
+  const activeCountryCode = isSaas ? (user?.school?.country || 'BEN') : (urlCountry || 'BEN')
+  const countryResources = OFFICIAL_RESOURCES[activeCountryCode] || OFFICIAL_RESOURCES['BEN']
 
   const handleInstallClick = () => {
     if (isIOS) {
@@ -220,7 +213,7 @@ export default function PublicLayout() {
             <div>
               <h3 className="text-xs font-semibold uppercase tracking-wide text-ink">Ressources officielles</h3>
               <ul className="mt-4 space-y-3">
-                {OFFICIAL_RESOURCES.map((r) => (
+                {countryResources.map((r) => (
                   <li key={r.href}>
                     <a
                       href={r.href}
@@ -232,7 +225,9 @@ export default function PublicLayout() {
                         {r.label}
                         <span className="block text-xs text-ink-muted/70">{r.description}</span>
                       </span>
-                      <Icon name="open_in_new" className="mt-0.5 shrink-0 text-[14px] opacity-0 transition-opacity group-hover:opacity-100" />
+                      <svg className="h-3 w-3 shrink-0 opacity-0 transition-opacity group-hover:opacity-100 mt-0.5" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M5.22 14.78a.75.75 0 001.06 0l7.22-7.22v5.69a.75.75 0 001.5 0v-7.5a.75.75 0 00-.75-.75h-7.5a.75.75 0 000 1.5h5.69l-7.22 7.22a.75.75 0 000 1.06z" clipRule="evenodd" />
+                      </svg>
                     </a>
                   </li>
                 ))}
