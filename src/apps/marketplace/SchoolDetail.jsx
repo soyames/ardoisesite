@@ -91,6 +91,24 @@ export default function SchoolDetail() {
             <p className="mt-4 text-lg text-ink-muted leading-relaxed">{description}</p>
           </section>
 
+          {(school.enrollmentRequirements || school.hasPreselectionTest) && (
+            <section className="bg-primary-50 rounded-xl p-6 border border-primary-100">
+              <h2 className="text-2xl font-bold text-primary-900 mb-4">Conditions d'admission</h2>
+              {school.enrollmentRequirements && (
+                <div className="mb-4">
+                  <h3 className="font-bold text-primary-800 mb-2">Pièces à fournir :</h3>
+                  <p className="text-primary-900 whitespace-pre-wrap">{school.enrollmentRequirements}</p>
+                </div>
+              )}
+              {school.hasPreselectionTest && (
+                <div className="flex items-center gap-2 text-accent-700 font-semibold">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+                  Cette école exige un test de présélection.
+                </div>
+              )}
+            </section>
+          )}
+
           <section>
             <h2 className="text-2xl font-bold text-ink">Offres d'emploi</h2>
             <div className="mt-6 space-y-4">

@@ -8,18 +8,37 @@ export function FedaPayButton({
   customerName,
   publicKey,
   onComplete,
+  onBeforeOpen,
   className = "w-full rounded-control bg-accent-500 px-3 py-2 text-sm font-semibold text-primary-950 shadow-sm hover:bg-accent-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-500",
   children
 }) {
   const [isProcessing, setIsProcessing] = useState(false)
 
-  const handlePayment = () => {
+  const handlePayment = async () => {
     if (!window.FedaPay) {
       alert("Le module de paiement n'a pas pu être chargé. Veuillez rafraîchir la page.")
       return
     }
 
     setIsProcessing(true)
+
+    let finalMetadata = customMetadata || {}
+
+    if (onBeforeOpen) {
+      try {
+        const result = await onBeforeOpen()
+        if (result === false) {
+          setIsProcessing(false)
+          return // Abort if hook returns false
+        }
+        if (typeof result === 'object') {
+          finalMetadata = { ...finalMetadata, ...result }
+        }
+      } catch (err) {
+        setIsProcessing(false)
+        return // Abort on error
+      }
+    }
 
     // Si le composant reçoit une clé en prop (ex: clé de l'école), on l'utilise
     // Sinon on prend la clé globale (Ardoise)
@@ -37,7 +56,7 @@ export function FedaPayButton({
       transaction: {
         amount: amount,
         description: description,
-        custom_metadata: customMetadata
+        custom_metadata: finalMetadata
       },
       customer: {
         email: customerEmail,

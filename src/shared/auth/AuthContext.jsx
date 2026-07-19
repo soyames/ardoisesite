@@ -164,13 +164,14 @@ export function AuthProvider({ children }) {
           setStatus('anonymous')
         }
 
-        // Store the unsubscribe function so we can clean it up when the user logs out
-        firebaseUser._firestoreUnsubscribe = firestoreUnsubscribe
+        // Note: moved outside callback
       } else {
         setUser(null)
         setStatus('anonymous')
       }
     })
+    
+    firebaseUser._firestoreUnsubscribe = firestoreUnsubscribe
 
     return () => unsubscribe()
   }, [])

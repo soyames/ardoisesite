@@ -13,6 +13,7 @@ import StatCard from '../../shared/ui/StatCard.jsx'
 import QuickActionButton from '../../shared/ui/QuickActionButton.jsx'
 import CalendarGrid from '../../shared/ui/CalendarGrid.jsx'
 import WeeklyTimetableGrid from '../../shared/ui/WeeklyTimetableGrid.jsx'
+import StructureTab from './StructureTab.jsx'
 import LetterheadSettings from '../../shared/components/LetterheadSettings.jsx'
 
 const INPUT_CLASS =
@@ -20,6 +21,7 @@ const INPUT_CLASS =
 
 const TABS = [
   { key: 'dashboard', label: 'Tableau de bord' },
+  { key: 'structure', label: 'Classes & Matières' },
   { key: 'bulletins', label: 'Bulletins' },
   { key: 'discipline', label: 'Discipline' },
   { key: 'calendrier', label: 'Calendrier' },
@@ -51,12 +53,13 @@ export default function CenseurPortal() {
     <div className="space-y-4">
       <div>
         <h1 className="text-xl font-semibold text-ink">Censorat</h1>
-        <p className="mt-1 text-sm text-ink-muted">Approbation des bulletins, discipline, heures vacataires et epreuves.</p>
+        <p className="mt-1 text-sm text-ink-muted">Approbation des bulletins, discipline, heures vacataires, classes, matières et épreuves.</p>
       </div>
 
       <PortalTabs tabs={TABS} active={tab} onChange={setTab} />
 
       {tab === 'dashboard' && <DashboardTab onNavigate={setTab} />}
+      {tab === 'structure' && <StructureTab />}
       {tab === 'bulletins' && <BulletinsTab />}
       {tab === 'discipline' && <DisciplineTab />}
       {tab === 'calendrier' && <CalendrierTab />}

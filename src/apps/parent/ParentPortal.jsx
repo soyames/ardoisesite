@@ -1,7 +1,7 @@
 import { useMemo, useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../../shared/auth/AuthContext.jsx'
-import { doc, getDoc } from 'firebase/firestore'
+import { doc, getDoc, collection, query, where, onSnapshot } from 'firebase/firestore'
 import { db } from '../../shared/api/firebase.js'
 import { FedaPayButton } from '../../shared/components/FedaPayButton.jsx'
 import { useApiGet } from '../../shared/hooks/useApi.js'
@@ -76,6 +76,9 @@ export default function ParentPortal() {
         </>
       )}
 
+      {/* Enrollment Requests Section */}
+      <EnrollmentRequests parentId={user?.uid} />
+
       {/* Explore Marketplace Section */}
       <div className="mt-12 pt-8 border-t border-border">
         <h2 className="text-lg font-bold text-ink mb-6">Explorer les services Ardoise</h2>
@@ -106,6 +109,62 @@ export default function ParentPortal() {
             </CardBody>
           </Card>
         </div>
+      </div>
+    </div>
+  )
+}
+
+function EnrollmentRequests({ parentId }) {
+  const [requests, setRequests] = useState([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    if (!parentId) return
+    const q = query(collection(db, 'school_enrollment_requests'), where('parentId', '==', parentId))
+    const unsub = onSnapshot(q, (snap) => {
+      const data = []
+      snap.forEach(doc => data.push({ id: doc.id, ...doc.data() }))
+      // Sort descending by createdAt (could be null if just created, so handle carefully)
+      data.sort((a, b) => (b.createdAt?.toMillis() || 0) - (a.createdAt?.toMillis() || 0))
+      setRequests(data)
+      setLoading(false)
+    })
+    return () => unsub()
+  }, [parentId])
+
+  if (loading) return null
+  if (requests.length === 0) return null
+
+  return (
+    <div className="mt-8">
+      <h2 className="text-lg font-bold text-ink mb-4">Demandes d'inscription en cours</h2>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {requests.map(req => (
+          <Card key={req.id} className="border border-border">
+            <CardBody>
+              <div className="flex justify-between items-start mb-2">
+                <div>
+                  <h3 className="font-bold text-ink">{req.childName}</h3>
+                  <p className="text-sm text-ink-muted">Classe : {req.childClassName}</p>
+                </div>
+                <Badge tone={
+                  req.status === 'accepted' ? 'success' :
+                  req.status === 'rejected' ? 'danger' :
+                  req.status === 'pending_payment' ? 'warning' : 'neutral'
+                }>
+                  {req.status === 'pending_payment' ? 'Paiement requis' : 
+                   req.status === 'accepted' ? 'Acceptée' : 
+                   req.status === 'rejected' ? 'Refusée' : 'En attente'}
+                </Badge>
+              </div>
+              {req.status === 'pending_payment' && (
+                <div className="mt-3 text-sm text-warning-700 bg-warning-50 p-2 rounded">
+                  Le paiement a échoué ou n'a pas été terminé. Veuillez contacter le support.
+                </div>
+              )}
+            </CardBody>
+          </Card>
+        ))}
       </div>
     </div>
   )
