@@ -39,6 +39,7 @@ import TutoringBookingFlow from './apps/marketplace/TutoringBookingFlow.jsx'
 import Recruitment from './apps/marketplace/Recruitment.jsx'
 import TeacherMarketplaceDashboard from './apps/marketplace/TeacherMarketplaceDashboard.jsx'
 import Privacy from './apps/marketplace/Privacy.jsx'
+import CookiesPolicy from './apps/marketplace/CookiesPolicy.jsx'
 import Terms from './apps/marketplace/Terms.jsx'
 import InstallGuide from './apps/marketplace/InstallGuide.jsx'
 import ContactForm from './apps/marketplace/ContactForm.jsx'
@@ -147,6 +148,7 @@ export default function App() {
           <Route path="/jobs/:id/apply" element={<JobApplicationFlow />} />
           <Route path="/teacher-dashboard" element={<TeacherMarketplaceDashboard />} />
           <Route path="privacy" element={<Privacy />} />
+          <Route path="cookies" element={<CookiesPolicy />} />
           <Route path="terms" element={<Terms />} />
           <Route path="install" element={<InstallGuide />} />
           <Route path="contact" element={<ContactForm />} />
