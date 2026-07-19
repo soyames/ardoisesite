@@ -122,10 +122,7 @@ export default function RegisterPage() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-surface px-4 py-12 sm:px-6 lg:px-8">
       <div className="w-full max-w-md space-y-8">
-        <div className="mb-8 text-center">
-          <Link to="/" className="mx-auto mb-4 flex justify-center">
-            <img src="/images/ardoise_lockup_horizontal.png" alt="Ardoise Logo" className="h-12 w-auto mix-blend-multiply" />
-          </Link>
+        <div className="mb-6 text-center">
           <h2 className="text-3xl font-bold tracking-tight text-ink">
             {isSaas ? 'Inscrivez votre école' : 'Inscription'}
           </h2>
@@ -136,7 +133,10 @@ export default function RegisterPage() {
           </p>
         </div>
         <form className="mt-8 space-y-6" onSubmit={handleRegister}>
-          <div className="space-y-4 rounded-card shadow-card">
+          <div className="space-y-4 rounded-card shadow-card bg-surface-raised p-6">
+            <Link to="/" className="mx-auto mb-6 flex justify-center">
+              <img src="/images/ardoise_lockup_horizontal.png" alt="Ardoise Logo" className="h-12 w-auto" />
+            </Link>
 
             {/* Only schools register here (saas.ardoise.soyames.com) -
                 only parents/teachers register on the marketplace - see
