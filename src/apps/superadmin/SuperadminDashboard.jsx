@@ -12,7 +12,7 @@ import MarketplaceAccountSettings from '../../shared/settings/MarketplaceAccount
 
 export default function SuperadminDashboard() {
   const { user } = useAuth()
-  const [activeTab, setActiveTab] = useState('tickets') // 'tickets', 'schools', 'payments', 'team', 'settings'
+  const [activeTab, setActiveTab] = useState('tickets') // 'tickets', 'schools', 'payments', 'developers', 'team', 'settings'
 
   return (
     <div className="space-y-6">
@@ -45,6 +45,13 @@ export default function SuperadminDashboard() {
         >
           Paiements & Abonnements
         </Button>
+        <Button
+          variant={activeTab === 'developers' ? 'primary' : 'ghost'}
+          onClick={() => setActiveTab('developers')}
+          className={activeTab === 'developers' ? '' : 'text-ink-muted hover:text-ink'}
+        >
+          Développeurs
+        </Button>
         {user?.role === 'superadmin' && (
           <Button
             variant={activeTab === 'team' ? 'primary' : 'ghost'}
@@ -67,6 +74,7 @@ export default function SuperadminDashboard() {
         {activeTab === 'tickets' && <SupportTickets />}
         {activeTab === 'schools' && <SchoolsRegistry />}
         {activeTab === 'payments' && <PaymentsAndSubscriptions />}
+        {activeTab === 'developers' && <DevelopersRegistry />}
         {activeTab === 'team' && user?.role === 'superadmin' && <TeamManagement />}
         {activeTab === 'settings' && <MarketplaceAccountSettings />}
       </div>
@@ -237,6 +245,58 @@ function SchoolsRegistry() {
             </li>
           ))}
         </ul>
+      </CardBody>
+    </Card>
+  )
+}
+
+function DevelopersRegistry() {
+  const [developers, setDevelopers] = useState([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const q = query(collection(db, 'users'), where('role', '==', 'developer'))
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const devs = []
+      snapshot.forEach((doc) => devs.push({ id: doc.id, ...doc.data() }))
+      // Sort by creation date if available, otherwise just use the array order
+      devs.sort((a, b) => {
+        if (a.createdAt && b.createdAt) return new Date(b.createdAt) - new Date(a.createdAt)
+        return 0
+      })
+      setDevelopers(devs)
+      setLoading(false)
+    })
+    return unsubscribe
+  }, [])
+
+  if (loading) return <div className="text-sm text-ink-muted">Chargement des développeurs...</div>
+
+  return (
+    <Card>
+      <CardHeader title="Développeurs Inscrits" subtitle="Suivi des développeurs et accès à l'API Ardoise." />
+      <CardBody className="p-0">
+        {developers.length === 0 ? (
+          <div className="p-6">
+            <EmptyState title="Aucun développeur" description="Aucun développeur ne s'est inscrit pour le moment." />
+          </div>
+        ) : (
+          <ul className="divide-y divide-border">
+            {developers.map(dev => (
+              <li key={dev.id} className="p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                  <p className="text-sm font-bold text-ink">{dev.name}</p>
+                  <p className="text-xs text-ink-muted mt-1">{dev.email}</p>
+                  <p className="text-xs text-ink-muted mt-1">Inscrit le {dev.createdAt ? new Date(dev.createdAt).toLocaleDateString() : 'N/A'}</p>
+                </div>
+                <div className="text-right">
+                  <Badge tone="neutral" className="mb-2">API: En attente</Badge>
+                  <p className="text-xs text-ink-muted">Clés générées: 0</p>
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
       </CardBody>
     </Card>
   )
