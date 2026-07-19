@@ -22,6 +22,12 @@ export default function SchoolList() {
   const commune = searchParams.get('commune')
 
   useEffect(() => {
+    // Deliberately unfiltered by subscriptionActive - a public
+    // marketplace profile is free for every registered school (the
+    // freemium hook: it's what gets a school to register at all).
+    // Only *processing* enrollment/recruitment leads is paywalled -
+    // see apps/core/api_views.py's MARKETPLACE_ENROLLMENT_PROCESSING_FEATURE_CODE
+    // / MARKETPLACE_RECRUITMENT_PROCESSING_FEATURE_CODE on the Django side.
     const unsubscribe = onSnapshot(collection(db, 'schools'), (snapshot) => {
       const rows = []
       snapshot.forEach((d) => rows.push({ id: d.id, ...d.data() }))
