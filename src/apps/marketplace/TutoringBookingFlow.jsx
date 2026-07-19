@@ -212,7 +212,7 @@ export default function TutoringBookingFlow() {
                             teacherName: teacher.name,
                             parentId: user.id,
                             parentEmail: user.email,
-                            parentName: user.name,
+                            parentName: `${user.firstName || ''} ${user.lastName || ''}`.trim(),
                             startDate,
                             hoursPerWeek: Number(hoursPerWeek),
                             proposedPrice: Number(proposedPrice),

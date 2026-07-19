@@ -34,7 +34,8 @@ export default function RegisterPage() {
     const formData = new FormData(e.target)
     const email = formData.get('email')
     const password = formData.get('password')
-    const name = formData.get('name')
+    const firstName = formData.get('firstName')
+    const lastName = formData.get('lastName')
     const phone = formData.get('phone')
 
     try {
@@ -72,7 +73,8 @@ export default function RegisterPage() {
       // 3. Save profile to Firestore
       await setDoc(doc(db, 'users', user.uid), {
         email,
-        name,
+        firstName,
+        lastName,
         phone,
         role,
         country,
@@ -170,16 +172,29 @@ export default function RegisterPage() {
               </div>
             )}
 
-            <div>
-              <label htmlFor="name" className="sr-only">Nom complet</label>
-              <input
-                id="name"
-                name="name"
-                type="text"
-                required
-                className={INPUT_CLASS}
-                placeholder="Nom complet"
-              />
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label htmlFor="firstName" className="sr-only">Prénom</label>
+                <input
+                  id="firstName"
+                  name="firstName"
+                  type="text"
+                  required
+                  className={INPUT_CLASS}
+                  placeholder="Prénom"
+                />
+              </div>
+              <div>
+                <label htmlFor="lastName" className="sr-only">Nom</label>
+                <input
+                  id="lastName"
+                  name="lastName"
+                  type="text"
+                  required
+                  className={INPUT_CLASS}
+                  placeholder="Nom"
+                />
+              </div>
             </div>
             {role === 'founder' && (
               <div>
