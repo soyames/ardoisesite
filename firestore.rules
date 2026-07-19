@@ -132,6 +132,13 @@ service cloud.firestore {
                     && resource.data.developerId == request.auth.uid;
     }
 
+    // Programme Développeur : Paramètres (Payout, etc)
+    match /developer_settings/{settingId} {
+      allow create, read, update: if isSignedIn() 
+                    && getUserData().role == 'developer'
+                    && request.auth.uid == settingId;
+    }
+
     // Collection historique, remplacée par users/{uid}.role +
     // POST /api/team/invite (voir SuperadminDashboard.jsx) -- plus rien
     // ne doit y écrire.
