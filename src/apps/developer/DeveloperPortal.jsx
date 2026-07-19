@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react'
-import { collection, query, where, onSnapshot, addDoc, deleteDoc, doc } from 'firebase/firestore'
+import React, { useState, useEffect } from 'react'
+import { collection, query, where, onSnapshot, addDoc, deleteDoc, doc, setDoc } from 'firebase/firestore'
 import { db } from '../../shared/api/firebase.js'
 import { useAuth } from '../../shared/auth/AuthContext.jsx'
 import { Card, CardHeader, CardBody } from '../../shared/ui/Card.jsx'
@@ -12,6 +12,16 @@ export default function DeveloperPortal() {
   const [webhooks, setWebhooks] = useState([])
   const [newWebhookUrl, setNewWebhookUrl] = useState('')
   const [loading, setLoading] = useState(true)
+  
+  const [payoutMethod, setPayoutMethod] = useState('bank_transfer')
+  const [payoutBankIban, setPayoutBankIban] = useState('')
+  const [payoutBankName, setPayoutBankName] = useState('')
+  const [payoutPaypalEmail, setPayoutPaypalEmail] = useState('')
+  const [savingSettings, setSavingSettings] = useState(false)
+  
+  // Dummy earnings state for now
+  const totalSchools = 0
+  const totalEarnings = 0
 
   useEffect(() => {
     if (!user) return
@@ -28,23 +38,53 @@ export default function DeveloperPortal() {
       const hooks = []
       snapshot.forEach(doc => hooks.push({ id: doc.id, ...doc.data() }))
       setWebhooks(hooks)
+    })
+
+    // Fetch settings
+    const settingsUnsub = onSnapshot(doc(db, 'developer_settings', user.id), (docSnap) => {
+      if (docSnap.exists()) {
+        const data = docSnap.data()
+        setPayoutMethod(data.payoutMethod || 'bank_transfer')
+        setPayoutBankIban(data.payoutBankIban || '')
+        setPayoutBankName(data.payoutBankName || '')
+        setPayoutPaypalEmail(data.payoutPaypalEmail || '')
+      }
       setLoading(false)
     })
 
     return () => {
       unsubscribeKeys()
       unsubscribeHooks()
+      settingsUnsub()
     }
   }, [user])
 
+  const saveSettings = async (e) => {
+    e.preventDefault()
+    setSavingSettings(true)
+    try {
+      await setDoc(doc(db, 'developer_settings', user.id), {
+        payoutMethod,
+        payoutBankIban,
+        payoutBankName,
+        payoutPaypalEmail,
+        updatedAt: new Date().toISOString()
+      }, { merge: true })
+      alert("Paramètres enregistrés avec succès !")
+    } catch (err) {
+      console.error(err)
+      alert("Erreur lors de la sauvegarde")
+    }
+    setSavingSettings(false)
+  }
+
   const generateApiKey = async (type) => {
-    // Basic UUID for demonstration. A real backend would generate a secure hashed key.
-    const newKey = `sk_${type}_` + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15)
+    const newKey = sk__ + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15)
     
     await addDoc(collection(db, 'api_keys'), {
       developerId: user.id,
       key: newKey,
-      type: type, // 'live' or 'test'
+      type: type,
       createdAt: new Date().toISOString()
     })
   }
@@ -163,31 +203,94 @@ export default function DeveloperPortal() {
         </Card>
         
         <Card className="md:col-span-2">
-          <CardHeader title="Programme Partenaire" subtitle="Parrainez des écoles et gagnez des commissions." />
+          <CardHeader title="Programme Partenaire & Représentant" subtitle="Parrainez des écoles ou devenez représentant officiel." />
           <CardBody>
-            <div className="rounded-card bg-primary-50 border border-primary-100 p-5 flex flex-col md:flex-row items-center gap-6">
-              <div className="flex-1">
-                <h3 className="font-bold text-primary-900 mb-2">Votre lien d'affiliation unique</h3>
-                <p className="text-sm text-primary-800 mb-4">
-                  Partagez ce lien avec des directeurs d'école. Lorsqu'ils s'inscrivent et paient leur abonnement Ardoise SaaS, 
-                  vous recevrez une commission automatique de 20% sur leur abonnement à vie.
-                </p>
-                <div className="flex items-center gap-2">
-                  <code className="bg-white px-3 py-2 rounded-lg text-sm font-mono border border-primary-200 select-all flex-1">
-                    {partnerLink}
-                  </code>
-                  <Button size="sm" variant="primary" onClick={() => {
-                    navigator.clipboard.writeText(partnerLink)
-                    alert("Lien copié !")
-                  }}>
-                    Copier
-                  </Button>
+            <div className="space-y-8">
+              <div className="rounded-card bg-primary-50 border border-primary-100 p-5 flex flex-col md:flex-row items-center gap-6">
+                <div className="flex-1">
+                  <h3 className="font-bold text-primary-900 mb-2">Votre lien d'affiliation unique</h3>
+                  <p className="text-sm text-primary-800 mb-4">
+                    Partagez ce lien avec des directeurs d'école. Lorsqu'ils s'inscrivent et paient leur abonnement Ardoise SaaS, 
+                    vous recevrez une commission automatique de <strong>10%</strong> sur leur abonnement.
+                    Devenez également notre <strong>Représentant Local</strong> dans votre pays pour des revenus supplémentaires !
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <code className="bg-white px-3 py-2 rounded-lg text-sm font-mono border border-primary-200 select-all flex-1">
+                      {partnerLink}
+                    </code>
+                    <Button size="sm" variant="primary" onClick={() => {
+                      navigator.clipboard.writeText(partnerLink)
+                      alert("Lien copié !")
+                    }}>
+                      Copier
+                    </Button>
+                  </div>
+                </div>
+                <div className="w-full md:w-48 bg-white rounded-xl p-4 text-center shadow-sm border border-primary-100">
+                  <p className="text-xs font-bold text-ink-muted uppercase tracking-wider mb-1">Écoles parrainées</p>
+                  <p className="text-3xl font-extrabold text-primary-600">{totalSchools}</p>
+                  <p className="text-xs text-ink-muted mt-2">Gains: {totalEarnings} FCFA</p>
                 </div>
               </div>
-              <div className="w-full md:w-48 bg-white rounded-xl p-4 text-center shadow-sm border border-primary-100">
-                <p className="text-xs font-bold text-ink-muted uppercase tracking-wider mb-1">Écoles parrainées</p>
-                <p className="text-3xl font-extrabold text-primary-600">0</p>
-                <p className="text-xs text-ink-muted mt-2">Commission totale: 0 FCFA</p>
+
+              <div>
+                <h3 className="font-bold text-ink mb-4 border-b border-border pb-2">Configuration de vos Payouts</h3>
+                <form onSubmit={saveSettings} className="space-y-4 max-w-md">
+                  <div>
+                    <label className="block text-sm font-medium text-ink mb-1">Mode de Paiement Préféré</label>
+                    <select 
+                      value={payoutMethod} 
+                      onChange={e => setPayoutMethod(e.target.value)}
+                      className="w-full rounded-card border-border bg-surface px-3 py-2 text-sm focus:ring-primary-500 focus:border-primary-500"
+                    >
+                      <option value="bank_transfer">Virement Bancaire / Mobile Money</option>
+                      <option value="paypal">PayPal</option>
+                    </select>
+                  </div>
+
+                  {payoutMethod === 'bank_transfer' && (
+                    <div className="space-y-3 p-4 bg-surface-raised rounded-card border border-border">
+                      <div>
+                        <label className="block text-xs font-medium text-ink-muted mb-1">Nom de la Banque ou Opérateur</label>
+                        <input 
+                          type="text" 
+                          value={payoutBankName} 
+                          onChange={e => setPayoutBankName(e.target.value)} 
+                          className="w-full rounded border-border px-2 py-1 text-sm" 
+                          placeholder="Ex: Ecobank, MTN Mobile Money..."
+                          required
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-ink-muted mb-1">Numéro de Compte (RIB / IBAN / Numéro)</label>
+                        <input 
+                          type="text" 
+                          value={payoutBankIban} 
+                          onChange={e => setPayoutBankIban(e.target.value)} 
+                          className="w-full rounded border-border px-2 py-1 text-sm" 
+                          required
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  {payoutMethod === 'paypal' && (
+                    <div className="p-4 bg-surface-raised rounded-card border border-border">
+                      <label className="block text-xs font-medium text-ink-muted mb-1">Adresse Email PayPal</label>
+                      <input 
+                        type="email" 
+                        value={payoutPaypalEmail} 
+                        onChange={e => setPayoutPaypalEmail(e.target.value)} 
+                        className="w-full rounded border-border px-2 py-1 text-sm" 
+                        required
+                      />
+                    </div>
+                  )}
+
+                  <Button type="submit" variant="primary" disabled={savingSettings}>
+                    {savingSettings ? 'Enregistrement...' : 'Enregistrer mes paramètres'}
+                  </Button>
+                </form>
               </div>
             </div>
           </CardBody>

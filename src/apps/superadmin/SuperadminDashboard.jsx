@@ -10,10 +10,11 @@ import EmptyState from '../../shared/ui/EmptyState.jsx'
 import Icon from '../../shared/ui/Icon.jsx'
 import { getPlatformApiBaseUrl } from '../../config/env.js'
 import MarketplaceAccountSettings from '../../shared/settings/MarketplaceAccountSettings.jsx'
+import PlatformAnalytics from './PlatformAnalytics.jsx'
 
 export default function SuperadminDashboard() {
   const { user } = useAuth()
-  const [activeTab, setActiveTab] = useState('tickets') // 'tickets', 'schools', 'payments', 'users', 'team', 'settings'
+  const [activeTab, setActiveTab] = useState('analytics') // 'analytics', 'tickets', 'schools', 'payments', 'users', 'team', 'settings'
 
   return (
     <div className="space-y-6">
@@ -25,6 +26,13 @@ export default function SuperadminDashboard() {
       </div>
 
       <div className="flex flex-wrap gap-3 border-b border-border pb-4">
+        <Button
+          variant={activeTab === 'analytics' ? 'primary' : 'ghost'}
+          onClick={() => setActiveTab('analytics')}
+          className={activeTab === 'analytics' ? '' : 'text-ink-muted hover:text-ink'}
+        >
+          <Icon name="monitoring" className="mr-2" /> Analytiques
+        </Button>
         <Button
           variant={activeTab === 'tickets' ? 'primary' : 'ghost'}
           onClick={() => setActiveTab('tickets')}
@@ -72,6 +80,7 @@ export default function SuperadminDashboard() {
       </div>
 
       <div className="mt-6">
+        {activeTab === 'analytics' && <PlatformAnalytics />}
         {activeTab === 'tickets' && <SupportTickets />}
         {activeTab === 'schools' && <SchoolsRegistry />}
         {activeTab === 'payments' && <PaymentsAndSubscriptions />}
