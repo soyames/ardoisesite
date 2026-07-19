@@ -1,5 +1,6 @@
 import { NavLink } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext.jsx'
+import EmailVerificationBanner from '../auth/EmailVerificationBanner.jsx'
 import Icon from '../ui/Icon.jsx'
 
 /**
@@ -19,51 +20,59 @@ export default function AppShell({ navItems, children }) {
 
   return (
     <div className="flex min-h-svh flex-col bg-surface">
-      <header className="fixed inset-x-0 top-0 z-40 flex items-center justify-between border-b border-border bg-surface px-4 py-2.5 md:px-10">
-        <div className="flex items-center gap-3">
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary-950 text-sm font-bold text-white">
-            A
+      {/* sticky, not fixed: occupies real flow space so EmailVerificationBanner
+          (rendered only when needed, variable height) pushes `main` down on
+          its own - no hardcoded padding to keep in sync with a fixed header's
+          height the way the old pt-20/pt-24 compensation did. */}
+      <div className="sticky top-0 z-40">
+        <header className="flex items-center justify-between border-b border-border bg-surface px-4 py-2.5 md:px-10">
+          <div className="flex items-center gap-3">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary-950 text-sm font-bold text-white">
+              A
+            </div>
+            <div className="min-w-0">
+              <span className="text-lg font-bold text-ink">Ardoise</span>
+              <p className="hidden truncate text-xs text-ink-muted md:block">{user?.school?.name}</p>
+            </div>
           </div>
-          <div className="min-w-0">
-            <span className="text-lg font-bold text-ink">Ardoise</span>
-            <p className="hidden truncate text-xs text-ink-muted md:block">{user?.school?.name}</p>
-          </div>
-        </div>
 
-        <nav className="hidden items-center gap-7 md:flex">
-          {navItems.map((item) => (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              end={item.end}
-              className={({ isActive }) =>
-                `text-xs uppercase tracking-wider transition ${
-                  isActive ? 'font-bold text-ink' : 'font-semibold text-ink-muted hover:text-primary-700'
-                }`
-              }
+          <nav className="hidden items-center gap-7 md:flex">
+            {navItems.map((item) => (
+              <NavLink
+                key={item.to}
+                to={item.to}
+                end={item.end}
+                className={({ isActive }) =>
+                  `text-xs uppercase tracking-wider transition ${
+                    isActive ? 'font-bold text-ink' : 'font-semibold text-ink-muted hover:text-primary-700'
+                  }`
+                }
+              >
+                {item.label}
+              </NavLink>
+            ))}
+          </nav>
+
+          <div className="flex items-center gap-3">
+            <div className="hidden text-right sm:block">
+              <p className="text-sm font-medium text-ink">
+                {user?.first_name} {user?.last_name}
+              </p>
+              <p className="text-xs text-ink-muted">{user?.role_display}</p>
+            </div>
+            <button
+              onClick={logout}
+              className="rounded-control px-3 py-1.5 text-xs font-medium text-ink-muted transition hover:bg-primary-50 hover:text-primary-700"
             >
-              {item.label}
-            </NavLink>
-          ))}
-        </nav>
-
-        <div className="flex items-center gap-3">
-          <div className="hidden text-right sm:block">
-            <p className="text-sm font-medium text-ink">
-              {user?.first_name} {user?.last_name}
-            </p>
-            <p className="text-xs text-ink-muted">{user?.role_display}</p>
+              Deconnexion
+            </button>
           </div>
-          <button
-            onClick={logout}
-            className="rounded-control px-3 py-1.5 text-xs font-medium text-ink-muted transition hover:bg-primary-50 hover:text-primary-700"
-          >
-            Deconnexion
-          </button>
-        </div>
-      </header>
+        </header>
 
-      <main className="flex-1 px-4 pb-24 pt-20 md:px-10 md:pb-6 md:pt-24">{children}</main>
+        <EmailVerificationBanner />
+      </div>
+
+      <main className="flex-1 px-4 pb-24 md:px-10 md:pb-6">{children}</main>
 
       <nav className="fixed inset-x-0 bottom-0 z-40 flex items-center justify-around border-t border-border bg-surface-raised px-2 py-2 shadow-lg md:hidden">
         {navItems.map((item) => (

@@ -4,6 +4,7 @@ import { createUserWithEmailAndPassword, sendEmailVerification } from 'firebase/
 import { doc, setDoc, addDoc, collection } from 'firebase/firestore'
 import { auth, db } from '../api/firebase.js'
 import { useAuth } from './AuthContext.jsx'
+import { isSaasHost } from './domainRedirect.js'
 
 import { FRANCOPHONE_AFRICA_DATA as WEST_AFRICA_DATA } from '../constants/locations.js'
 
@@ -12,7 +13,14 @@ const INPUT_CLASS = "relative block w-full rounded-control border-0 bg-surface-r
 export default function RegisterPage() {
   const navigate = useNavigate()
   const { refreshUser } = useAuth()
-  const [role, setRole] = useState('parent')
+  // Only schools register here on the SaaS domain; parents and
+  // teachers register on the marketplace (see domainRedirect.js) - the
+  // role picker below only ever offers the one choice that's actually
+  // valid on the current domain, rather than letting someone create a
+  // founder account on the marketplace or a parent account on saas.*
+  // and never see the right dashboard.
+  const isSaas = isSaasHost()
+  const [role, setRole] = useState(isSaas ? 'founder' : 'parent')
   const [country, setCountry] = useState('Benin')
   const [city, setCity] = useState(WEST_AFRICA_DATA['Benin'][0])
   const [error, setError] = useState('')
@@ -35,16 +43,22 @@ export default function RegisterPage() {
       const user = userCredential.user
 
       // 2. Setup School if founder
+      // No backendUrl here - there is nothing real to put yet.
+      // Ardoise never hosts a school's own data; backendUrl is
+      // reported by the school's own self-hosted Django instance once
+      // deployed, authenticated via its activation code (see
+      // ardoise-api's POST /api/marketplace/backend-url and
+      // apps/core/marketplace_client.report_backend_url on the Django
+      // side). Writing a fake placeholder here used to make this
+      // account look immediately usable when it wasn't - see
+      // handleRegister's post-registration messaging below.
       let schoolId = null;
       if (role === 'founder') {
         const schoolName = formData.get('schoolName') || 'Mon École';
-        const slug = schoolName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
-        const backendUrl = `https://ardoise.soyames.com/${slug}`;
         const schoolDocRef = await addDoc(collection(db, 'schools'), {
           name: schoolName,
           city,
           country,
-          backendUrl,
           isFull: false,
           createdAt: new Date().toISOString()
         });
@@ -71,13 +85,25 @@ export default function RegisterPage() {
       // 4. Force auth context to fetch the new Firestore document
       await refreshUser()
 
-      alert('Inscription réussie ! Un email de vérification vous a été envoyé (facultatif pour les tests).')
-
       if (role === 'founder') {
-        navigate('/portal')
+        // Honest about what just happened: a founder account exists,
+        // but there is no working ERP behind it yet - that only
+        // happens once they deploy their own Ardoise instance and it
+        // reports itself back (see the comment above). Sending them
+        // to /portal here used to silently fail (AuthContext.jsx
+        // catches the dead lookup and swallows it), leaving a founder
+        // logged in with no visible next step.
+        alert(
+          "Compte créé ! Votre école n'est pas encore connectée : installez votre propre instance " +
+          'Ardoise (voir le guide ci-dessous), puis reliez-la depuis votre tableau de bord une fois ' +
+          'connecté.'
+        )
+        navigate('/install')
       } else if (role === 'teacher') {
+        alert('Inscription réussie ! Un email de vérification vous a été envoyé (facultatif pour les tests).')
         navigate('/teacher-dashboard')
       } else {
+        alert('Inscription réussie ! Un email de vérification vous a été envoyé (facultatif pour les tests).')
         navigate('/portal')
       }
     } catch (err) {
@@ -101,27 +127,38 @@ export default function RegisterPage() {
             <img src="/images/ardoise_lockup_horizontal.png" alt="Ardoise Logo" className="h-12 w-auto mix-blend-multiply" />
           </Link>
           <h2 className="text-3xl font-bold tracking-tight text-ink">
-            Inscription
+            {isSaas ? 'Inscrivez votre école' : 'Inscription'}
           </h2>
           <p className="mt-2 text-sm text-ink-muted">
-            Rejoignez la plateforme éducative
+            {isSaas
+              ? "Créez le compte fondateur de votre établissement pour installer Ardoise."
+              : 'Rejoignez la plateforme éducative'}
           </p>
         </div>
         <form className="mt-8 space-y-6" onSubmit={handleRegister}>
           <div className="space-y-4 rounded-card shadow-card">
 
-            <div>
-              <label className="block text-sm font-medium text-ink mb-1">Je suis un(e)...</label>
-              <select
-                value={role}
-                onChange={(e) => setRole(e.target.value)}
-                className={INPUT_CLASS}
-              >
-                <option value="parent">Parent (Pour trouver un tuteur)</option>
-                <option value="teacher">Professeur (Pour donner des cours)</option>
-                <option value="founder">Fondateur d'école (Pour installer Ardoise)</option>
-              </select>
-            </div>
+            {/* Only schools register here (saas.ardoise.soyames.com) -
+                only parents/teachers register on the marketplace - see
+                domainRedirect.js. No point offering a choice that
+                isn't valid on the domain the user is actually on. */}
+            {isSaas ? (
+              <div className="rounded-control bg-primary-50 px-3 py-2.5 text-sm font-medium text-primary-700 ring-1 ring-inset ring-primary-200">
+                Compte fondateur d'école
+              </div>
+            ) : (
+              <div>
+                <label className="block text-sm font-medium text-ink mb-1">Je suis un(e)...</label>
+                <select
+                  value={role}
+                  onChange={(e) => setRole(e.target.value)}
+                  className={INPUT_CLASS}
+                >
+                  <option value="parent">Parent (Pour trouver un tuteur)</option>
+                  <option value="teacher">Professeur (Pour donner des cours)</option>
+                </select>
+              </div>
+            )}
 
             <div>
               <label htmlFor="name" className="sr-only">Nom complet</label>

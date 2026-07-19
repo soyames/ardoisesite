@@ -77,6 +77,7 @@ export function AuthProvider({ children }) {
 
           // 3. Establish Django session using the Firebase ID token and role (ONLY if user belongs to a school)
           const token = await firebaseUser.getIdToken()
+          let needsEmailVerification = false
           if (schoolId) {
             try {
               await primeCsrf()
@@ -98,16 +99,29 @@ export function AuthProvider({ children }) {
                 userData.staff_id = res.staff_id || null
               }
             } catch (authErr) {
-              // Re-throw real Django errors (500, etc) so they aren't silently swallowed
-              console.warn('Django backend unreachable or failed to authenticate:', authErr)
+              // FirebaseLoginView refuses to establish an ERP session
+              // (403, error="email_not_verified") until the user clicks
+              // the link from sendEmailVerification() at signup - this
+              // used to be swallowed into the same generic "backend
+              // unreachable" console.warn as a real outage, so nothing
+              // ever told the user WHY they had no real access. Surfaced
+              // here as a distinct flag the UI can show a clear banner
+              // for (see EmailVerificationBanner.jsx), not just a log line.
+              if (authErr?.data?.error === 'email_not_verified') {
+                needsEmailVerification = true
+              } else {
+                // Re-throw real Django errors (500, etc) so they aren't silently swallowed
+                console.warn('Django backend unreachable or failed to authenticate:', authErr)
                 // Do not throw, so the user can still use Firebase-only features (e.g. Marketplace)
+              }
             }
           }
-          
+
           setUser({
             uid: firebaseUser.uid,
             email: firebaseUser.email,
             emailVerified: firebaseUser.emailVerified,
+            needsEmailVerification,
             role,
             schoolId,
             ...(userData || {})

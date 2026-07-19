@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { Link, Outlet } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext.jsx'
+import { isSaasHost } from '../auth/domainRedirect.js'
+import EmailVerificationBanner from '../auth/EmailVerificationBanner.jsx'
 import { usePwaInstall } from '../hooks/usePwaInstall.js'
 import Icon from '../ui/Icon.jsx'
 
@@ -23,7 +25,7 @@ export default function PublicLayout() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [showIosInstructions, setShowIosInstructions] = useState(false)
 
-  const isSaas = window.location.hostname.includes('saas') || (window.location.hostname === 'localhost' && window.location.search.includes('saas=1'))
+  const isSaas = isSaasHost()
 
   const handleInstallClick = () => {
     if (isIOS) {
@@ -141,6 +143,8 @@ export default function PublicLayout() {
           </button>
         </div>
       </header>
+
+      <EmailVerificationBanner />
 
       {/* Mobile Menu Dropdown */}
       {mobileMenuOpen && (
