@@ -55,7 +55,7 @@ export default function LoginPage() {
           className="rounded-card border border-border bg-surface-raised p-6 shadow-card"
         >
           <Link to="/" className="mx-auto mb-6 flex justify-center">
-            <img src="/images/ardoise_lockup_horizontal.png" alt="Ardoise Logo" className="h-12 w-auto" />
+            <img src="/images/ardoise_lockup_horizontal_white.png" alt="Ardoise Logo" className="h-12 w-auto" />
           </Link>
 
           <div className="mb-4">
