@@ -66,11 +66,29 @@ async function processCountry(iso3) {
   const combinedFeatures = [...adm1.features, ...adm2.features];
   const combinedCollection = { type: 'FeatureCollection', features: combinedFeatures };
 
-  // 1. Create a projection
-  // We fit the entire country into an 800x800 bounding box
+  // 1. Compute planar bounding box to avoid spherical winding issues (Right-Hand vs Left-Hand Rule)
+  // that cause d3.geoBounds to return the entire globe for inverted polygons.
+  let minLon = 180, maxLon = -180, minLat = 90, maxLat = -90;
+  const scan = (arr) => {
+    if (typeof arr[0] === 'number') {
+      minLon = Math.min(minLon, arr[0]);
+      maxLon = Math.max(maxLon, arr[0]);
+      minLat = Math.min(minLat, arr[1]);
+      maxLat = Math.max(maxLat, arr[1]);
+    } else {
+      arr.forEach(scan);
+    }
+  };
+  scan(combinedFeatures.map(f => f.geometry?.coordinates || []));
+
+  const dummyGeo = {
+    type: 'MultiPoint',
+    coordinates: [[minLon, minLat], [maxLon, maxLat]]
+  };
+
   const width = 800;
   const height = 800;
-  const projection = d3Geo.geoMercator().fitSize([width, height], combinedCollection);
+  const projection = d3Geo.geoMercator().fitSize([width, height], dummyGeo);
   const pathGenerator = d3Geo.geoPath().projection(projection);
 
   // 2. Process ADM1 (Departments/Regions)
