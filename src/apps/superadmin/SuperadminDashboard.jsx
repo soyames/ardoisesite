@@ -568,6 +568,26 @@ function SchoolDetailView({ school, onBack }) {
               <span className="block text-xs font-semibold text-ink-muted uppercase mb-1">Statut de la connexion</span>
               <HealthPing backendUrl={school.backendUrl} />
             </div>
+            
+            <div className="pt-2 border-t border-border">
+              <span className="block text-xs font-semibold text-ink-muted uppercase mb-2">Télémétrie</span>
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div>
+                  <span className="text-ink-muted block text-xs">Dernière vérification URL:</span>
+                  <span className="text-ink">{school.backendUrlVerifiedAt ? new Date(school.backendUrlVerifiedAt).toLocaleString() : 'Jamais'}</span>
+                </div>
+                <div>
+                  <span className="text-ink-muted block text-xs">Dernière synchronisation:</span>
+                  <span className="text-ink">{school.fetched_at ? new Date(school.fetched_at).toLocaleString() : 'Jamais'}</span>
+                </div>
+                {school.last_error && (
+                  <div className="col-span-2 mt-1">
+                    <span className="text-danger-600 block text-xs">Dernière erreur:</span>
+                    <span className="text-ink font-mono text-xs bg-danger-50 p-1 rounded break-all">{school.last_error}</span>
+                  </div>
+                )}
+              </div>
+            </div>
           </CardBody>
         </Card>
       </div>

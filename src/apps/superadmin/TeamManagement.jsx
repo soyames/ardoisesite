@@ -28,7 +28,13 @@ export function TeamManagement() {
     const q = query(collection(db, 'users'), where('role', 'in', Object.keys(ROLE_LABELS)))
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const m = []
-      snapshot.forEach((doc) => m.push({ id: doc.id, ...doc.data() }))
+      snapshot.forEach((doc) => {
+        // Only show users who have a role or were recently revoked
+        const data = doc.data()
+        if (data.role || data.revokedAt) {
+          m.push({ id: doc.id, ...data })
+        }
+      })
       setMembers(m)
       setMembersLoading(false)
     }, (err) => {
@@ -123,10 +129,39 @@ export function TeamManagement() {
             <ul className="divide-y divide-border">
               {members.map((m) => (
                 <li key={m.id} className="p-5 flex items-center justify-between">
-                  <span className="text-sm font-medium text-ink">{m.email}</span>
-                  <Badge tone={m.role === 'superadmin' ? 'warning' : 'info'}>
-                    {ROLE_LABELS[m.role] || m.role}
-                  </Badge>
+                  <div>
+                    <span className="text-sm font-medium text-ink block">{m.email}</span>
+                    <span className="text-xs text-ink-muted">
+                      {m.revokedAt ? `Révoqué le ${new Date(m.revokedAt).toLocaleDateString()}` : 'Actif'}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <Badge tone={m.role === 'superadmin' ? 'warning' : (m.revokedAt ? 'neutral' : 'info')}>
+                      {m.role ? (ROLE_LABELS[m.role] || m.role) : 'Accès Révoqué'}
+                    </Badge>
+                    {m.role && m.role !== 'superadmin' && (
+                      <Button 
+                        variant="secondary" 
+                        className="text-xs text-danger-600 hover:text-danger-700 h-8"
+                        onClick={async () => {
+                          if (confirm(`Voulez-vous vraiment révoquer l'accès de ${m.email} ? Cela désactivera son compte et le déconnectera immédiatement.`)) {
+                            try {
+                              const idToken = await auth.currentUser.getIdToken()
+                              const res = await fetch(`${getPlatformApiBaseUrl()}/api/team/member/${m.id}`, {
+                                method: 'DELETE',
+                                headers: { Authorization: `Bearer ${idToken}` }
+                              })
+                              if (!res.ok) throw new Error("Erreur lors de la révocation")
+                            } catch (e) {
+                              alert("Une erreur s'est produite lors de la révocation.")
+                            }
+                          }
+                        }}
+                      >
+                        Révoquer
+                      </Button>
+                    )}
+                  </div>
                 </li>
               ))}
             </ul>

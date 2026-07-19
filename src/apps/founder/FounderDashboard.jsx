@@ -7,6 +7,7 @@ import ApiIntegrations from './ApiIntegrations.jsx'
 import SubscriptionPanel from './SubscriptionPanel.jsx'
 import DepartmentsHub from './DepartmentsHub.jsx'
 import AnalyticsDashboard from './AnalyticsDashboard.jsx'
+import SupportPage from './SupportPage.jsx'
 import PortalTabs from '../../shared/ui/PortalTabs.jsx'
 
 export default function FounderDashboard() {
@@ -24,7 +25,8 @@ export default function FounderDashboard() {
     { key: 'recruitment', label: 'Recrutement' },
     { key: 'settings', label: "Paramètres de l'école" },
     { key: 'integrations', label: 'Intégrations API' },
-    { key: 'subscription', label: 'Facturation & Abonnement' }
+    { key: 'subscription', label: 'Facturation & Abonnement' },
+    { key: 'support', label: 'Support & Aide' }
   ]
 
   return (
@@ -44,8 +46,9 @@ export default function FounderDashboard() {
         {activeTab === 'overview' && <EnrollmentPanel />}
         {activeTab === 'recruitment' && <RecruitmentPanel />}
         {activeTab === 'settings' && <SchoolSettings />}
-        {activeTab === 'integrations' && <ApiIntegrations schoolId={user.schoolId} />}
-        {activeTab === 'subscription' && <SubscriptionPanel schoolId={user.schoolId} />}
+        { activeTab === 'integrations' && <ApiIntegrations schoolId={user.schoolId} /> }
+        { activeTab === 'subscription' && <SubscriptionPanel schoolId={user.schoolId} /> }
+        { activeTab === 'support' && <SupportPage /> }
       </div>
     </div>
   )

@@ -79,7 +79,8 @@ export default function DeveloperPortal() {
   }
 
   const generateApiKey = async (type) => {
-    const newKey = "sk_" + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15)
+    const prefix = type === 'test' ? 'sk_test_' : 'sk_live_'
+    const newKey = prefix + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15)
     
     await addDoc(collection(db, 'api_keys'), {
       developerId: user.uid,
@@ -179,9 +180,30 @@ export default function DeveloperPortal() {
                         <span className="font-mono text-sm text-ink truncate">{hook.url}</span>
                         <div className="text-xs text-ink-muted mt-1">Événements: {hook.events.join(', ')}</div>
                       </div>
-                      <button onClick={() => deleteWebhook(hook.id)} className="text-danger-600 hover:text-danger-700 p-2">
-                        <Icon name="delete" />
-                      </button>
+                      <div className="flex gap-2">
+                        <button 
+                          onClick={async () => {
+                            try {
+                              const idToken = await auth.currentUser.getIdToken()
+                              const res = await fetch(`https://api.ardoise.soyames.com/api/developer/webhook/test`, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${idToken}` },
+                                body: JSON.stringify({ webhookId: hook.id })
+                              })
+                              if (!res.ok) throw new Error("Erreur")
+                              alert("Webhook test envoyé avec succès !")
+                            } catch (e) {
+                              alert("Le serveur n'a pas pu joindre cette URL ou une erreur s'est produite.")
+                            }
+                          }}
+                          className="text-primary-600 hover:text-primary-700 p-2 text-xs font-medium"
+                        >
+                          Tester
+                        </button>
+                        <button onClick={() => deleteWebhook(hook.id)} className="text-danger-600 hover:text-danger-700 p-2">
+                          <Icon name="delete" />
+                        </button>
+                      </div>
                     </li>
                   ))}
                 </ul>

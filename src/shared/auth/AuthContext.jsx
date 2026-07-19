@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState, useCallback } from 'react'
 import { signInWithEmailAndPassword, signOut as firebaseSignOut, onAuthStateChanged, sendPasswordResetEmail } from 'firebase/auth'
-import { doc, getDoc } from 'firebase/firestore'
+import { doc, getDoc, onSnapshot } from 'firebase/firestore'
 import { auth, db } from '../api/firebase.js'
 import { api, primeCsrf } from '../api/client.js'
 import { setApiBaseUrl } from '../../config/env.js'
@@ -41,21 +41,44 @@ export function AuthProvider({ children }) {
           let schoolId = null
           let userData = null
           
+          let firestoreUnsubscribe = null
+          
           try {
-            const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid))
-            if (userDoc.exists()) {
-              userData = userDoc.data()
+            // Using onSnapshot instead of getDoc so we can react instantly
+            // if a superadmin revokes this user's role (forcing them out).
+            firestoreUnsubscribe = onSnapshot(doc(db, 'users', firebaseUser.uid), async (userDoc) => {
+              if (userDoc.exists()) {
+                const newUserData = userDoc.data()
+                
+                // If a user gets revoked while active, instantly log them out
+                if (newUserData.revokedAt) {
+                  console.warn("User access has been revoked. Logging out instantly.")
+                  await firebaseSignOut(auth)
+                  return // Will trigger another onAuthStateChanged with null
+                }
+                
+                const newRole = newUserData.role || 'parent'
+                const newSchoolId = newUserData.schoolId != null ? String(newUserData.schoolId) : null
+                
+                // Only update state if this is not the first load, as the first load
+                // needs to await Django authentication below before setting the 'user' state.
+                setUser(prev => prev ? { ...prev, ...newUserData, role: newRole, schoolId: newSchoolId } : prev)
+              }
+            }, (err) => {
+              console.error("Error listening to user profile:", err)
+            })
+
+            // For the initial boot, we still need to fetch once to get the role before Django login
+            const initialDoc = await getDoc(doc(db, 'users', firebaseUser.uid))
+            if (initialDoc.exists()) {
+              userData = initialDoc.data()
               role = userData.role || 'parent'
-              // Firestore document IDs are always strings - if this
-              // field was ever typed as a Number in the console (an
-              // easy mistake, "1" vs 1), every downstream
-              // doc(db, 'schools', schoolId) call throws
-              // "n.indexOf is not a function" deep in the Firestore
-              // SDK, since it expects a string path segment. Normalize
-              // once here so every consumer (FounderDashboard.jsx,
-              // resolveSchoolBackendUrl above, query filters) gets a
-              // consistent type without each having to re-guard it.
               schoolId = userData.schoolId != null ? String(userData.schoolId) : null
+              
+              if (userData.revokedAt) {
+                 await firebaseSignOut(auth)
+                 return
+              }
             } else {
               role = 'pending'
             }
@@ -69,6 +92,7 @@ export function AuthProvider({ children }) {
           }
 
           // 2. Point the API client at THIS school's own backend before
+
           // calling it -- must happen before primeCsrf/firebase-login,
           // not after, since those calls themselves need to land on
           // the right school's Django instance (only it has the
@@ -139,6 +163,9 @@ export function AuthProvider({ children }) {
           setUser(null)
           setStatus('anonymous')
         }
+
+        // Store the unsubscribe function so we can clean it up when the user logs out
+        firebaseUser._firestoreUnsubscribe = firestoreUnsubscribe
       } else {
         setUser(null)
         setStatus('anonymous')
@@ -162,6 +189,9 @@ export function AuthProvider({ children }) {
   const logout = useCallback(async () => {
     setStatus('loading')
     try {
+      if (auth.currentUser && auth.currentUser._firestoreUnsubscribe) {
+        auth.currentUser._firestoreUnsubscribe()
+      }
       await firebaseSignOut(auth)
     } catch(err) {
       setStatus('anonymous')

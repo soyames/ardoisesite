@@ -53,6 +53,9 @@ export default function RegisterPage() {
       // account look immediately usable when it wasn't - see
       // handleRegister's post-registration messaging below.
       let schoolId = null;
+      const searchParams = new URLSearchParams(window.location.search);
+      const referrerId = searchParams.get('ref') || null;
+
       if (role === 'founder') {
         const schoolName = formData.get('schoolName') || 'Mon École';
         const schoolDocRef = await addDoc(collection(db, 'schools'), {
@@ -60,6 +63,7 @@ export default function RegisterPage() {
           city,
           country,
           isFull: false,
+          referrerId, // Store who referred this school for commissions
           createdAt: new Date().toISOString()
         });
         schoolId = schoolDocRef.id;
@@ -73,6 +77,7 @@ export default function RegisterPage() {
         role,
         country,
         city,
+        referrerId, // Keep it on the user doc as well
         ...(schoolId ? { schoolId } : {}),
         createdAt: new Date().toISOString()
       })
@@ -259,6 +264,27 @@ export default function RegisterPage() {
               {error}
             </p>
           )}
+
+          <div className="flex items-start gap-2">
+            <input
+              id="terms-accepted"
+              name="termsAccepted"
+              type="checkbox"
+              required
+              className="mt-0.5 h-4 w-4 rounded border-border text-primary-600 focus:ring-primary-500"
+            />
+            <label htmlFor="terms-accepted" className="text-sm text-ink-muted">
+              J'accepte les{' '}
+              <Link to="/terms" target="_blank" className="font-semibold text-primary-600 hover:text-primary-500">
+                Conditions Générales d'Utilisation
+              </Link>{' '}
+              et la{' '}
+              <Link to="/privacy" target="_blank" className="font-semibold text-primary-600 hover:text-primary-500">
+                Politique de Confidentialité
+              </Link>
+              .
+            </label>
+          </div>
 
           <div>
             <button

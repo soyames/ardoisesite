@@ -63,9 +63,9 @@ export default function CookiesPolicy() {
           Pour en savoir plus sur la gestion des cookies selon votre navigateur :
         </p>
         <ul className="list-disc pl-6 space-y-2">
-          <li><strong>Chrome :</strong> <a href="http://support.google.com/chrome/bin/answer.py?hl=fr&answer=95647" className="text-primary-600 hover:underline" target="_blank" rel="noopener noreferrer">Gérer les cookies sur Chrome</a></li>
-          <li><strong>Firefox :</strong> <a href="http://support.mozilla.org/fr/kb/activer-desactiver-cookies" className="text-primary-600 hover:underline" target="_blank" rel="noopener noreferrer">Gérer les cookies sur Firefox</a></li>
-          <li><strong>Safari :</strong> <a href="http://support.apple.com/kb/HT1677?viewlocale=fr_FR" className="text-primary-600 hover:underline" target="_blank" rel="noopener noreferrer">Gérer les cookies sur Safari</a></li>
+          <li><strong>Chrome :</strong> <a href="https://support.google.com/chrome/bin/answer.py?hl=fr&answer=95647" className="text-primary-600 hover:underline" target="_blank" rel="noopener noreferrer">Gérer les cookies sur Chrome</a></li>
+          <li><strong>Firefox :</strong> <a href="https://support.mozilla.org/fr/kb/activer-desactiver-cookies" className="text-primary-600 hover:underline" target="_blank" rel="noopener noreferrer">Gérer les cookies sur Firefox</a></li>
+          <li><strong>Safari :</strong> <a href="https://support.apple.com/kb/HT1677?viewlocale=fr_FR" className="text-primary-600 hover:underline" target="_blank" rel="noopener noreferrer">Gérer les cookies sur Safari</a></li>
         </ul>
 
         <div className="mt-8 pt-8 border-t border-border">

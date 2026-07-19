@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { collection, query, orderBy, onSnapshot, doc, updateDoc, where } from 'firebase/firestore'
+import { collection, query, orderBy, onSnapshot, doc, updateDoc, where, addDoc } from 'firebase/firestore'
 import { db } from '../../shared/api/firebase.js'
 import { useAuth } from '../../shared/auth/AuthContext.jsx'
 import { Card, CardHeader, CardBody } from '../../shared/ui/Card.jsx'
@@ -209,11 +209,43 @@ export default function SupportTickets() {
 function TicketDetail({ ticket, onBack, onUpdate, teamMembers, currentUser }) {
   const [internalNotes, setInternalNotes] = useState(ticket.internal_notes || '')
   const [savingNotes, setSavingNotes] = useState(false)
+  const [replies, setReplies] = useState([])
+  const [replyText, setReplyText] = useState('')
+  const [sendingReply, setSendingReply] = useState(false)
+
+  useEffect(() => {
+    const q = query(collection(db, `support_tickets/${ticket.id}/replies`), orderBy('createdAt', 'asc'))
+    const unsub = onSnapshot(q, (snap) => {
+      setReplies(snap.docs.map(d => ({ id: d.id, ...d.data() })))
+    })
+    return () => unsub()
+  }, [ticket.id])
 
   const handleSaveNotes = async () => {
     setSavingNotes(true)
     await onUpdate(ticket.id, 'internal_notes', internalNotes)
     setSavingNotes(false)
+  }
+
+  const handleSendReply = async () => {
+    if (!replyText.trim()) return
+    setSendingReply(true)
+    try {
+      await addDoc(collection(db, `support_tickets/${ticket.id}/replies`), {
+        message: replyText,
+        authorId: currentUser.id || currentUser.uid,
+        authorName: currentUser.name || currentUser.email,
+        authorRole: 'agent', // To distinguish from customer replies
+        createdAt: new Date().toISOString()
+      })
+      // Update the ticket status to 'in_progress' or 'resolved' if needed, or update the main doc's updatedAt
+      await onUpdate(ticket.id, 'updatedAt', new Date().toISOString())
+      setReplyText('')
+    } catch (err) {
+      console.error(err)
+      alert("Erreur lors de l'envoi de la réponse")
+    }
+    setSendingReply(false)
   }
 
   return (
@@ -230,8 +262,37 @@ function TicketDetail({ ticket, onBack, onUpdate, teamMembers, currentUser }) {
               subtitle={`Demande de ${ticket.name} (${ticket.email}) le ${new Date(ticket.createdAt).toLocaleString()}`} 
             />
             <CardBody>
-              <div className="bg-surface-raised p-4 rounded-card text-sm text-ink whitespace-pre-wrap border border-border">
-                {ticket.message}
+              <div className="space-y-6">
+                {/* Initial Message */}
+                <div className="bg-surface-raised p-4 rounded-card text-sm text-ink whitespace-pre-wrap border border-border">
+                  <div className="font-semibold mb-2">{ticket.name}</div>
+                  {ticket.message}
+                </div>
+                
+                {/* Replies Thread */}
+                {replies.map(reply => (
+                  <div key={reply.id} className={`p-4 rounded-card text-sm whitespace-pre-wrap border ${reply.authorRole === 'agent' ? 'bg-primary-50 border-primary-100 ml-8' : 'bg-surface-raised border-border mr-8'}`}>
+                    <div className="flex justify-between items-center mb-2">
+                      <div className="font-semibold text-ink">{reply.authorName} {reply.authorRole === 'agent' && <Badge tone="info">Support</Badge>}</div>
+                      <div className="text-xs text-ink-muted">{new Date(reply.createdAt).toLocaleString()}</div>
+                    </div>
+                    <div className="text-ink">{reply.message}</div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Reply Form */}
+              <div className="mt-6 border-t border-border pt-4">
+                <label className="block text-sm font-semibold text-ink mb-2">Répondre au client</label>
+                <textarea
+                  value={replyText}
+                  onChange={e => setReplyText(e.target.value)}
+                  placeholder="Écrivez votre réponse ici..."
+                  className="w-full rounded-card border border-border p-3 text-sm min-h-[120px] mb-3 focus:ring-primary-500 focus:border-primary-500"
+                />
+                <Button variant="primary" onClick={handleSendReply} disabled={sendingReply}>
+                  {sendingReply ? 'Envoi...' : 'Envoyer la réponse'}
+                </Button>
               </div>
             </CardBody>
           </Card>
