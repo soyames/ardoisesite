@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
-import { collection, query, where, orderBy, onSnapshot, doc, updateDoc } from 'firebase/firestore'
+import { collection, query, where, orderBy, onSnapshot, doc, updateDoc, deleteDoc } from 'firebase/firestore'
 import { db, auth } from '../../shared/api/firebase.js'
+import { getApiBaseUrl } from '../../config/env.js'
 import { useAuth } from '../../shared/auth/AuthContext.jsx'
 import { Card, CardHeader, CardBody } from '../../shared/ui/Card.jsx'
 import Button from '../../shared/ui/Button.jsx'
@@ -12,7 +13,7 @@ import MarketplaceAccountSettings from '../../shared/settings/MarketplaceAccount
 
 export default function SuperadminDashboard() {
   const { user } = useAuth()
-  const [activeTab, setActiveTab] = useState('tickets') // 'tickets', 'schools', 'payments', 'developers', 'team', 'settings'
+  const [activeTab, setActiveTab] = useState('tickets') // 'tickets', 'schools', 'payments', 'users', 'team', 'settings'
 
   return (
     <div className="space-y-6">
@@ -46,11 +47,11 @@ export default function SuperadminDashboard() {
           Paiements & Abonnements
         </Button>
         <Button
-          variant={activeTab === 'developers' ? 'primary' : 'ghost'}
-          onClick={() => setActiveTab('developers')}
-          className={activeTab === 'developers' ? '' : 'text-ink-muted hover:text-ink'}
+          variant={activeTab === 'users' ? 'primary' : 'ghost'}
+          onClick={() => setActiveTab('users')}
+          className={activeTab === 'users' ? '' : 'text-ink-muted hover:text-ink'}
         >
-          Développeurs
+          Utilisateurs
         </Button>
         {user?.role === 'superadmin' && (
           <Button
@@ -74,7 +75,7 @@ export default function SuperadminDashboard() {
         {activeTab === 'tickets' && <SupportTickets />}
         {activeTab === 'schools' && <SchoolsRegistry />}
         {activeTab === 'payments' && <PaymentsAndSubscriptions />}
-        {activeTab === 'developers' && <DevelopersRegistry />}
+        {activeTab === 'users' && <UsersRegistry />}
         {activeTab === 'team' && user?.role === 'superadmin' && <TeamManagement />}
         {activeTab === 'settings' && <MarketplaceAccountSettings />}
       </div>
@@ -250,48 +251,96 @@ function SchoolsRegistry() {
   )
 }
 
-function DevelopersRegistry() {
-  const [developers, setDevelopers] = useState([])
+function UsersRegistry() {
+  const [users, setUsers] = useState([])
   const [loading, setLoading] = useState(true)
+  const [filterRole, setFilterRole] = useState('all')
 
   useEffect(() => {
-    const q = query(collection(db, 'users'), where('role', '==', 'developer'))
+    const q = query(collection(db, 'users'))
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      const devs = []
-      snapshot.forEach((doc) => devs.push({ id: doc.id, ...doc.data() }))
-      // Sort by creation date if available, otherwise just use the array order
-      devs.sort((a, b) => {
+      const u = []
+      snapshot.forEach((doc) => u.push({ id: doc.id, ...doc.data() }))
+      u.sort((a, b) => {
         if (a.createdAt && b.createdAt) return new Date(b.createdAt) - new Date(a.createdAt)
         return 0
       })
-      setDevelopers(devs)
+      setUsers(u)
       setLoading(false)
     })
     return unsubscribe
   }, [])
 
-  if (loading) return <div className="text-sm text-ink-muted">Chargement des développeurs...</div>
+  const handleDeleteUser = async (userId) => {
+    if (!window.confirm("Êtes-vous sûr de vouloir supprimer cet utilisateur ? Cette action supprimera ses données de la base de données. Pour la suppression de l'authentification (login), assurez-vous que la Cloud Function est configurée.")) return
+    try {
+      // 1. Delete from Firestore
+      await deleteDoc(doc(db, 'users', userId))
+      
+      // 2. Call Django Backend to delete the Auth record
+      const idToken = await auth.currentUser.getIdToken()
+      const res = await fetch(`${getApiBaseUrl()}/api/auth/firebase-delete-user/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ token: idToken, uid_to_delete: userId })
+      })
+
+      if (!res.ok) {
+        throw new Error('Erreur API backend lors de la suppression Auth')
+      }
+      
+      alert("Utilisateur supprimé avec succès de la base de données et de l'authentification.")
+    } catch (error) {
+      console.error("Erreur lors de la suppression:", error)
+      alert("Erreur lors de la suppression.")
+    }
+  }
+
+  if (loading) return <div className="text-sm text-ink-muted">Chargement des utilisateurs...</div>
+
+  const filteredUsers = filterRole === 'all' ? users : users.filter(u => u.role === filterRole)
 
   return (
     <Card>
-      <CardHeader title="Développeurs Inscrits" subtitle="Suivi des développeurs et accès à l'API Ardoise." />
+      <CardHeader title="Utilisateurs Inscrits" subtitle="Gestion des parents, professeurs, développeurs et superadmins." />
       <CardBody className="p-0">
-        {developers.length === 0 ? (
+        <div className="p-4 border-b border-border bg-surface-raised flex gap-2 overflow-x-auto">
+          <Button size="sm" variant={filterRole === 'all' ? 'primary' : 'secondary'} onClick={() => setFilterRole('all')}>Tous</Button>
+          <Button size="sm" variant={filterRole === 'parent' ? 'primary' : 'secondary'} onClick={() => setFilterRole('parent')}>Parents</Button>
+          <Button size="sm" variant={filterRole === 'teacher' ? 'primary' : 'secondary'} onClick={() => setFilterRole('teacher')}>Professeurs</Button>
+          <Button size="sm" variant={filterRole === 'developer' ? 'primary' : 'secondary'} onClick={() => setFilterRole('developer')}>Développeurs</Button>
+          <Button size="sm" variant={filterRole === 'superadmin' ? 'primary' : 'secondary'} onClick={() => setFilterRole('superadmin')}>Superadmins</Button>
+        </div>
+        
+        {filteredUsers.length === 0 ? (
           <div className="p-6">
-            <EmptyState title="Aucun développeur" description="Aucun développeur ne s'est inscrit pour le moment." />
+            <EmptyState title="Aucun utilisateur" description="Aucun utilisateur trouvé pour ce filtre." />
           </div>
         ) : (
           <ul className="divide-y divide-border">
-            {developers.map(dev => (
-              <li key={dev.id} className="p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            {filteredUsers.map(u => (
+              <li key={u.id} className="p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 group">
                 <div>
-                  <p className="text-sm font-bold text-ink">{dev.name}</p>
-                  <p className="text-xs text-ink-muted mt-1">{dev.email}</p>
-                  <p className="text-xs text-ink-muted mt-1">Inscrit le {dev.createdAt ? new Date(dev.createdAt).toLocaleDateString() : 'N/A'}</p>
+                  <p className="text-sm font-bold text-ink">{u.name || 'Sans Nom'}</p>
+                  <p className="text-xs text-ink-muted mt-1">{u.email}</p>
+                  <p className="text-xs text-ink-muted mt-1">
+                    Inscrit le {u.createdAt ? new Date(u.createdAt).toLocaleDateString() : 'N/A'}
+                  </p>
                 </div>
-                <div className="text-right">
-                  <Badge tone="neutral" className="mb-2">API: En attente</Badge>
-                  <p className="text-xs text-ink-muted">Clés générées: 0</p>
+                <div className="text-right flex flex-col items-end gap-2">
+                  <Badge tone={u.role === 'superadmin' ? 'danger' : u.role === 'teacher' ? 'success' : 'neutral'}>
+                    {u.role}
+                  </Badge>
+                  <Button 
+                    size="sm" 
+                    variant="danger" 
+                    className="opacity-0 group-hover:opacity-100 transition-opacity"
+                    onClick={() => handleDeleteUser(u.id)}
+                  >
+                    Supprimer
+                  </Button>
                 </div>
               </li>
             ))}

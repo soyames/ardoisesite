@@ -65,6 +65,21 @@ export default function InstallGuide() {
         </a>
       </div>
 
+      <div className="mb-8 p-6 bg-surface-raised rounded-2xl border border-border flex flex-col md:flex-row items-center justify-between gap-4">
+        <div>
+          <h2 className="text-lg font-bold text-ink mb-1">Vous êtes développeur ? 💻</h2>
+          <p className="text-ink-muted text-sm">
+            Rejoignez notre Programme Développeur pour créer des intégrations personnalisées avec l'API Ardoise SaaS, gérer vos Webhooks, ou gagner des commissions en parrainant des écoles.
+          </p>
+        </div>
+        <a 
+          href="/register" 
+          className="whitespace-nowrap px-6 py-3 bg-white text-ink border border-border font-bold rounded-full hover:bg-surface-raised transition shadow-sm"
+        >
+          S'inscrire comme développeur
+        </a>
+      </div>
+
       <p className="text-lg text-ink-muted mb-8">
         Ardoise utilise une architecture décentralisée : votre école héberge et possède ses
         propres données, sur son propre matériel. Il n'existe aucune base de données centrale -
