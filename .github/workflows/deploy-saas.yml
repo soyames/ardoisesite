@@ -1,0 +1,54 @@
+name: Deploy to Cloudflare Pages (SaaS)
+
+# Publishes the same frontend build to the ardoise-saas Cloudflare Pages
+# project (saas.ardoise.soyames.com) on every push to main. That project
+# has no native Git integration - it was deployed once by hand via
+# `wrangler pages deploy` before this workflow existed, so without this,
+# saas.* silently drifts from the GitHub Pages marketplace build (see
+# the 2026-07-19 stale-colors incident: the SaaS install page was still
+# on the pre-rebrand blue palette while the marketplace had long since
+# moved to the current one).
+#
+# Required one-time setup (GitHub UI, never in this file): Settings >
+# Secrets and variables > Actions > add:
+#   CLOUDFLARE_API_TOKEN - a token scoped to "Cloudflare Pages: Edit"
+#     for the soyames account (create at dash.cloudflare.com -> My
+#     Profile -> API Tokens -> Create Token -> Edit Cloudflare Workers
+#     template, or a custom token with Account.Cloudflare Pages: Edit).
+#   CLOUDFLARE_ACCOUNT_ID - bbdb90c7c2aeeaa8b4c8f8331ab5bef7 (soyames)
+#
+# Same VITE_API_BASE_URL variable as deploy.yml (see that file's own
+# comment) - both workflows build the identical bundle, just publish it
+# to two different hosts, so they stay in sync by construction.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: {}
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      deployments: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm install
+
+      - run: npm run build
+        env:
+          VITE_API_BASE_URL: ${{ vars.VITE_API_BASE_URL || 'https://api.laliberte.soyames.com' }}
+
+      - name: Deploy to Cloudflare Pages
+        uses: cloudflare/wrangler-action@v4
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy ./dist --project-name=ardoise-saas --branch=main
+          gitHubToken: ${{ secrets.GITHUB_TOKEN }}
