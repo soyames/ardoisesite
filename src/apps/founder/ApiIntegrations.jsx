@@ -13,12 +13,15 @@ export default function ApiIntegrations({ schoolId }) {
   const [msg, setMsg] = useState('')
 
   const [config, setConfig] = useState({
-    backendUrl: '',
     fedaPayPublicKey: '',
     fedaPaySecretKey: '',
     whatsappToken: '',
     whatsappPhoneNumberId: ''
   })
+  // Read-only: reported by the school's own Django instance via its
+  // activation code (POST /api/marketplace/backend-url on ardoise-api),
+  // never typed into a form here - see the warning box below for why.
+  const [backendStatus, setBackendStatus] = useState({ url: '', verifiedAt: null })
 
   useEffect(() => {
     if (!schoolId) return
@@ -27,10 +30,12 @@ export default function ApiIntegrations({ schoolId }) {
         // Fetch public data
         const schoolDoc = await getDoc(doc(db, 'schools', String(schoolId)))
         let pubKey = ''
-        let backendUrl = ''
         if (schoolDoc.exists()) {
           pubKey = schoolDoc.data().fedaPayPublicKey || ''
-          backendUrl = schoolDoc.data().backendUrl || ''
+          setBackendStatus({
+            url: schoolDoc.data().backendUrl || '',
+            verifiedAt: schoolDoc.data().backendUrlVerifiedAt || null,
+          })
         }
 
         // Fetch private data
@@ -41,7 +46,6 @@ export default function ApiIntegrations({ schoolId }) {
         }
 
         setConfig({
-          backendUrl,
           fedaPayPublicKey: pubKey,
           fedaPaySecretKey: privConfig.fedaPaySecretKey || '',
           whatsappToken: privConfig.whatsappToken || '',
@@ -61,12 +65,9 @@ export default function ApiIntegrations({ schoolId }) {
     setSaving(true)
     setMsg('')
     try {
-      // 1. Sauvegarder l'URL du backend + la clé publique dans le document principal (public) --
-      // backendUrl n'est pas un secret, c'est ce qui permet a n'importe quel
-      // utilisateur de cette ecole d'etre route vers le bon serveur apres connexion
-      // (voir AuthContext.jsx: resolveSchoolBackendUrl).
+      // Clé publique FedaPay uniquement - backendUrl n'est plus
+      // modifiable ici (voir le bloc en lecture seule ci-dessous).
       await setDoc(doc(db, 'schools', String(schoolId)), {
-        backendUrl: config.backendUrl.trim().replace(/\/+$/, ''), // pas de slash final
         fedaPayPublicKey: config.fedaPayPublicKey
       }, { merge: true })
 
@@ -97,31 +98,35 @@ export default function ApiIntegrations({ schoolId }) {
       <CardHeader title="Intégrations API (Paiements & WhatsApp)" subtitle="Configurez vos propres clés pour recevoir directement l'argent et envoyer des messages WhatsApp." />
       <CardBody>
         <form onSubmit={handleSave} className="space-y-6">
-          <div className="bg-warning-50 p-4 rounded-card ring-1 ring-warning-500/30">
-            <h3 className="font-bold text-ink mb-2">Adresse de votre serveur (obligatoire)</h3>
-            <p className="text-sm text-ink-muted mb-4">
-              L'adresse a laquelle votre instance Ardoise est joignable depuis internet.
-              Sans elle, personne de votre école (caissier, enseignant, parent) ne peut
-              se connecter à votre portail - voir le guide d'installation pour les 3 façons
-              d'obtenir cette adresse selon votre situation (ordinateur seul, serveur local,
-              serveur avec nom de domaine).
-            </p>
-            <div>
-              <label className="block text-sm font-medium text-ink">URL du backend</label>
-              <input
-                type="url"
-                name="backendUrl"
-                value={config.backendUrl}
-                onChange={handleChange}
-                placeholder="https://laliberte.exemple.com  ou  https://12.34.56.78:8000"
-                className={INPUT_CLASS}
-              />
-              <p className="text-xs text-ink-muted mt-1">
-                Doit être accessible en HTTPS pour un serveur avec nom de domaine (voir le guide).
-                Pour un ordinateur unique sans domaine, utilisez l'adresse IP locale de l'école
-                (ex. http://192.168.1.50:8000) - seuls les appareils du même réseau Wi-Fi y auront accès.
+          <div className={`p-4 rounded-card ring-1 ${backendStatus.url ? 'bg-success-50 ring-success-500/30' : 'bg-warning-50 ring-warning-500/30'}`}>
+            <h3 className="font-bold text-ink mb-2">Adresse de votre serveur</h3>
+            {backendStatus.url ? (
+              <>
+                <p className="text-sm text-ink-muted mb-2">
+                  Votre instance Ardoise a confirmé être joignable à cette adresse :
+                </p>
+                <p className="font-mono text-sm text-ink bg-surface-raised px-3 py-2 rounded-control ring-1 ring-border break-all">
+                  {backendStatus.url}
+                </p>
+                {backendStatus.verifiedAt && (
+                  <p className="text-xs text-ink-muted mt-2">
+                    Dernière confirmation : {new Date(backendStatus.verifiedAt).toLocaleString('fr-FR')}
+                  </p>
+                )}
+              </>
+            ) : (
+              <p className="text-sm text-ink-muted">
+                Aucune instance connectée pour le moment. Installez Ardoise sur votre propre
+                ordinateur ou serveur (voir le guide d'installation), puis démarrez le conteneur -
+                il se connecte automatiquement dès qu'une URL de backend est configurée côté serveur.
               </p>
-            </div>
+            )}
+            <p className="text-xs text-ink-muted mt-3">
+              Cette adresse n'est plus modifiable depuis cette page : elle est confirmée directement
+              par votre propre serveur (via son code d'activation), pas saisie ici, pour que personne
+              d'autre ne puisse prétendre être votre backend. Pour la changer, mettez à jour
+              « URL du backend » depuis les paramètres de votre propre installation Ardoise.
+            </p>
           </div>
 
           <div className="bg-surface p-4 rounded-card ring-1 ring-border">

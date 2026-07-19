@@ -3,6 +3,7 @@ import { AuthProvider, useAuth } from './shared/auth/AuthContext.jsx'
 import RequireRole from './shared/auth/RequireRole.jsx'
 import LoginPage from './shared/auth/LoginPage.jsx'
 import RegisterPage from './shared/auth/RegisterPage.jsx'
+import { isSaasHost } from './shared/auth/domainRedirect.js'
 import AppShell from './shared/layout/AppShell.jsx'
 import EmptyState from './shared/ui/EmptyState.jsx'
 import FounderDashboard from './apps/founder/FounderDashboard.jsx'
@@ -118,8 +119,7 @@ function Shell({ children }) {
 }
 
 function DomainRouter() {
-  const isSaas = window.location.hostname.includes('saas') || (window.location.hostname === 'localhost' && window.location.search.includes('saas=1'))
-  return isSaas ? <SaasLanding /> : <Home />
+  return isSaasHost() ? <SaasLanding /> : <Home />
 }
 
 export default function App() {

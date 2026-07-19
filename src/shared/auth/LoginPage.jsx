@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Navigate, Link } from 'react-router-dom'
 import { useAuth } from './AuthContext.jsx'
+import { roleMatchesCurrentDomain, redirectToCorrectDomain } from './domainRedirect.js'
 
 export default function LoginPage() {
   const { login, status, user, resetPassword } = useAuth()
@@ -11,8 +12,16 @@ export default function LoginPage() {
   const [resetMessage, setResetMessage] = useState('')
 
   if (status === 'authenticated') {
-    if (user?.role === 'teacher') return <Navigate to="/teacher-dashboard" replace />
-    return <Navigate to="/portal" replace />
+    const path = user?.role === 'teacher' ? '/teacher-dashboard' : '/portal'
+    // Redirect cross-origin immediately rather than routing to /portal
+    // first and letting RequireRole catch it a render later - avoids
+    // flashing the wrong domain's portal shell (and firing its own API
+    // calls against a school that isn't this user's) before bouncing.
+    if (!roleMatchesCurrentDomain(user.role)) {
+      redirectToCorrectDomain(user.role, path)
+      return null
+    }
+    return <Navigate to={path} replace />
   }
 
   async function handleResetPassword() {

@@ -1,5 +1,6 @@
 import { Navigate } from 'react-router-dom'
 import { useAuth } from './AuthContext.jsx'
+import { roleMatchesCurrentDomain, redirectToCorrectDomain } from './domainRedirect.js'
 
 /**
  * Route guard. `roles` is optional -- omit it to require "any logged
@@ -25,6 +26,16 @@ export default function RequireRole({ roles, children }) {
 
   if (roles && !roles.includes(user.role)) {
     return <Navigate to="/" replace />
+  }
+
+  // Enforced here, not just at login: a bookmark, a stale tab, or a
+  // direct link can land any authenticated role straight on /portal
+  // without ever going through LoginPage's own redirect, so this is
+  // the one place that actually guarantees a parent/teacher never sees
+  // the school ERP domain and vice versa (see domainRedirect.js).
+  if (!roleMatchesCurrentDomain(user.role)) {
+    redirectToCorrectDomain(user.role, window.location.pathname)
+    return null
   }
 
   return children
