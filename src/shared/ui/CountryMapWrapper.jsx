@@ -155,7 +155,7 @@ function GenericCountryMap({
   )
 }
 
-export default function CountryMapWrapper({ countryCode = 'BEN', ...props }) {
+export default function CountryMapWrapper({ countryCode = 'BEN', onMapDataLoaded, ...props }) {
   const [geoData, setGeoData] = useState(null)
   
   useEffect(() => {
@@ -173,17 +173,22 @@ export default function CountryMapWrapper({ countryCode = 'BEN', ...props }) {
         ])
         
         if (mounted) {
-          setGeoData({
+          const data = {
             viewBox: base[`${exportPrefix}_VIEWBOX`],
             departmentPaths: base[`${exportPrefix}_DEPARTMENT_PATHS`],
             communePaths: communes[`${exportPrefix}_COMMUNE_PATHS`],
             communeDepartmentMap: communes[`${exportPrefix}_COMMUNE_DEPARTMENT`],
             departmentBounds: communes[`${exportPrefix}_DEPARTMENT_BOUNDS`]
-          })
+          }
+          setGeoData(data)
+          if (onMapDataLoaded) onMapDataLoaded(data)
         }
       } catch (e) {
         console.error("Failed to load map data for", countryCode, e)
-        if (mounted) setGeoData(null)
+        if (mounted) {
+          setGeoData(null)
+          if (onMapDataLoaded) onMapDataLoaded(null)
+        }
       }
     }
     load()
