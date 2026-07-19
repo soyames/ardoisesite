@@ -7,7 +7,7 @@ export default function Privacy() {
       <h1 className="text-3xl font-extrabold text-ink mb-8">Politique de Confidentialité</h1>
       <div className="space-y-6 text-ink-muted">
         <p>
-          Chez Ardoise, la protection de vos données personnelles est une priorité absolue. Cette politique explique comment nous traitons vos informations. Dernière mise à jour : juillet 2026.
+          Chez Ardoise, la protection de vos données personnelles est une priorité absolue. Cette politique explique comment nous traitons vos informations. Notre service est exclusivement destiné aux utilisateurs situés dans les 17 pays membres de l'espace OHADA. Dernière mise à jour : juillet 2026.
         </p>
 
         <h2 className="text-xl font-bold text-ink mt-8">1. L'architecture décentralisée d'Ardoise et Rôles Légaux</h2>

@@ -195,7 +195,7 @@ export default function PublicLayout() {
                 <img src="/images/ardoise_lockup_horizontal.png" alt="Ardoise" className="h-9 w-auto mix-blend-multiply" />
               </Link>
               <p className="mt-4 max-w-xs text-sm text-ink-muted">
-                La plateforme qui connecte les familles beninoises aux meilleures ecoles et aux tuteurs qualifies, avec des classements transparents et un annuaire par region.
+                La plateforme qui connecte les familles aux meilleures écoles et aux tuteurs qualifiés, avec des classements transparents et un annuaire par région. Nous couvrons exclusivement les 17 pays de l'espace OHADA.
               </p>
             </div>
 
