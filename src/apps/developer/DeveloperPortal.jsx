@@ -14,7 +14,7 @@ export default function DeveloperPortal() {
   const [loading, setLoading] = useState(true)
   
   const [payoutMethod, setPayoutMethod] = useState('bank_transfer')
-  const [payoutBankIban, setPayoutBankIban] = useState('')
+  const [payoutCountry, setPayoutCountry] = useState('BJ')
   const [payoutBankName, setPayoutBankName] = useState('')
   const [payoutPaypalEmail, setPayoutPaypalEmail] = useState('')
   const [savingSettings, setSavingSettings] = useState(false)
@@ -44,8 +44,9 @@ export default function DeveloperPortal() {
     const settingsUnsub = onSnapshot(doc(db, 'developer_settings', user.uid), (docSnap) => {
       if (docSnap.exists()) {
         const data = docSnap.data()
-        setPayoutMethod(data.payoutMethod || 'bank_transfer')
+        setPayoutMethod(data.payoutMethod || 'fedapay')
         setPayoutBankIban(data.payoutBankIban || '')
+        setPayoutCountry(data.payoutCountry || 'BJ')
         setPayoutBankName(data.payoutBankName || '')
         setPayoutPaypalEmail(data.payoutPaypalEmail || '')
       }
@@ -66,6 +67,7 @@ export default function DeveloperPortal() {
       await setDoc(doc(db, 'developer_settings', user.uid), {
         payoutMethod,
         payoutBankIban,
+        payoutCountry,
         payoutBankName,
         payoutPaypalEmail,
         updatedAt: new Date().toISOString()
@@ -265,26 +267,47 @@ export default function DeveloperPortal() {
                       onChange={e => setPayoutMethod(e.target.value)}
                       className="w-full rounded-card border-border bg-surface px-3 py-2 text-sm focus:ring-primary-500 focus:border-primary-500"
                     >
-                      <option value="bank_transfer">Virement Bancaire / Mobile Money</option>
+                      <option value="fedapay">FedaPay (Mobile Money / Transfert)</option>
                       <option value="paypal">PayPal</option>
                     </select>
                   </div>
 
-                  {payoutMethod === 'bank_transfer' && (
+                  {payoutMethod === 'fedapay' && (
                     <div className="space-y-3 p-4 bg-surface-raised rounded-card border border-border">
+                      <p className="text-xs text-ink-muted mb-2">
+                        FedaPay permet de vous payer directement sur votre numéro Mobile Money ou compte dans l'un des pays pris en charge.
+                      </p>
                       <div>
-                        <label className="block text-xs font-medium text-ink-muted mb-1">Nom de la Banque ou Opérateur</label>
+                        <label className="block text-xs font-medium text-ink-muted mb-1">Pays de réception</label>
+                        <select
+                          value={payoutCountry}
+                          onChange={e => setPayoutCountry(e.target.value)}
+                          className="w-full rounded border-border px-2 py-1 text-sm bg-white"
+                          required
+                        >
+                          <option value="BJ">Bénin (BJ)</option>
+                          <option value="TG">Togo (TG)</option>
+                          <option value="SN">Sénégal (SN)</option>
+                          <option value="CI">Côte d'Ivoire (CI)</option>
+                          <option value="NE">Niger (NE)</option>
+                          <option value="ML">Mali (ML)</option>
+                          <option value="BF">Burkina Faso (BF)</option>
+                          <option value="GW">Guinée-Bissau (GW)</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-ink-muted mb-1">Nom du réseau (ex: MTN, Moov, Orange...)</label>
                         <input 
                           type="text" 
                           value={payoutBankName} 
                           onChange={e => setPayoutBankName(e.target.value)} 
                           className="w-full rounded border-border px-2 py-1 text-sm" 
-                          placeholder="Ex: Ecobank, MTN Mobile Money..."
+                          placeholder="Ex: MTN Mobile Money"
                           required
                         />
                       </div>
                       <div>
-                        <label className="block text-xs font-medium text-ink-muted mb-1">Numéro de Compte (RIB / IBAN / Numéro)</label>
+                        <label className="block text-xs font-medium text-ink-muted mb-1">Numéro Mobile Money</label>
                         <input 
                           type="text" 
                           value={payoutBankIban} 
@@ -298,18 +321,17 @@ export default function DeveloperPortal() {
 
                   {payoutMethod === 'paypal' && (
                     <div className="p-4 bg-surface-raised rounded-card border border-border">
-                      <label className="block text-xs font-medium text-ink-muted mb-1">Adresse Email PayPal</label>
-                      <input 
-                        type="email" 
-                        value={payoutPaypalEmail} 
-                        onChange={e => setPayoutPaypalEmail(e.target.value)} 
-                        className="w-full rounded border-border px-2 py-1 text-sm" 
-                        required
-                      />
+                      <p className="text-sm font-medium text-warning-600 mb-2">
+                        <Icon name="warning" className="inline mr-1 align-text-bottom text-base" />
+                        L'intégration PayPal n'est pas encore disponible pour Ardoise.
+                      </p>
+                      <p className="text-xs text-ink-muted">
+                        Veuillez sélectionner FedaPay pour recevoir vos commissions en attendant.
+                      </p>
                     </div>
                   )}
 
-                  <Button type="submit" variant="primary" disabled={savingSettings}>
+                  <Button type="submit" variant="primary" disabled={savingSettings || payoutMethod === 'paypal'}>
                     {savingSettings ? 'Enregistrement...' : 'Enregistrer mes paramètres'}
                   </Button>
                 </form>

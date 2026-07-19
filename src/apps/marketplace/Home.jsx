@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { collection, onSnapshot } from 'firebase/firestore'
 import { db } from '../../shared/api/firebase.js'
 import Badge from '../../shared/ui/Badge.jsx'
-import BeninMap from '../../shared/ui/BeninMap.jsx'
+import CountryMapWrapper from '../../shared/ui/CountryMapWrapper.jsx'
 import { BENIN_COMMUNE_DEPARTMENT } from '../../shared/constants/beninGeoCommunes.js'
 import { TEACHERS_DATA } from './TeacherList.jsx'
 
@@ -96,7 +96,8 @@ export default function Home() {
               </p>
             </div>
             <div className="flex justify-center">
-              <BeninMap
+              <CountryMapWrapper
+                countryCode="BEN"
                 schoolCounts={cityCounts}
                 selectedDepartment={selectedDepartment}
                 onSelectDepartment={(dept) => { setSelectedDepartment(dept); setSelectedCommune(null) }}

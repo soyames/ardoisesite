@@ -4,7 +4,7 @@ import { collection, onSnapshot } from 'firebase/firestore'
 import { db } from '../../shared/api/firebase.js'
 import EmptyState from '../../shared/ui/EmptyState.jsx'
 import Spinner from '../../shared/ui/Spinner.jsx'
-import BeninMap from '../../shared/ui/BeninMap.jsx'
+import CountryMapWrapper from '../../shared/ui/CountryMapWrapper.jsx'
 import { FRANCOPHONE_AFRICA_DATA } from '../../shared/constants/locations.js'
 import { BENIN_COMMUNE_DEPARTMENT } from '../../shared/constants/beninGeoCommunes.js'
 
@@ -74,7 +74,8 @@ export default function SchoolList() {
             <h3 className="text-sm font-semibold text-ink">Parcourir par departement</h3>
             <p className="mt-1 text-xs text-ink-muted">Cliquez une region pour filtrer l'annuaire, ou passez aux communes.</p>
             <div className="mt-4">
-              <BeninMap
+              <CountryMapWrapper
+                countryCode="BEN"
                 schoolCounts={cityCounts}
                 selectedDepartment={department}
                 onSelectDepartment={(dept) => setSearchParams(dept ? { department: dept } : {})}
