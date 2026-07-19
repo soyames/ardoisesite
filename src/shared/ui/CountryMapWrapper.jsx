@@ -162,20 +162,23 @@ export default function CountryMapWrapper({ countryCode = 'BEN', ...props }) {
     let mounted = true
     async function load() {
       const iso = countryCode.toLowerCase()
+      const isBenin = iso === 'ben'
+      const filePrefix = isBenin ? 'benin' : iso
+      const exportPrefix = isBenin ? 'BENIN' : countryCode.toUpperCase()
+
       try {
         const [base, communes] = await Promise.all([
-          import(`../constants/${iso}Geo.js`),
-          import(`../constants/${iso}GeoCommunes.js`)
+          import(`../constants/${filePrefix}Geo.js`),
+          import(`../constants/${filePrefix}GeoCommunes.js`)
         ])
         
         if (mounted) {
-          const upperIso = countryCode.toUpperCase()
           setGeoData({
-            viewBox: base[`${upperIso}_VIEWBOX`],
-            departmentPaths: base[`${upperIso}_DEPARTMENT_PATHS`],
-            communePaths: communes[`${upperIso}_COMMUNE_PATHS`],
-            communeDepartmentMap: communes[`${upperIso}_COMMUNE_DEPARTMENT`],
-            departmentBounds: communes[`${upperIso}_DEPARTMENT_BOUNDS`]
+            viewBox: base[`${exportPrefix}_VIEWBOX`],
+            departmentPaths: base[`${exportPrefix}_DEPARTMENT_PATHS`],
+            communePaths: communes[`${exportPrefix}_COMMUNE_PATHS`],
+            communeDepartmentMap: communes[`${exportPrefix}_COMMUNE_DEPARTMENT`],
+            departmentBounds: communes[`${exportPrefix}_DEPARTMENT_BOUNDS`]
           })
         }
       } catch (e) {
