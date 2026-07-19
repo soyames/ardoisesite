@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { collection, onSnapshot } from 'firebase/firestore'
 import { db } from '../../shared/api/firebase.js'
 import Badge from '../../shared/ui/Badge.jsx'
@@ -21,7 +21,8 @@ export default function Home() {
   const [schools, setSchools] = useState([])
   const [selectedDepartment, setSelectedDepartment] = useState(null)
   const [selectedCommune, setSelectedCommune] = useState(null)
-  const [activeCountry, setActiveCountry] = useState('BEN')
+  const [searchParams, setSearchParams] = useSearchParams()
+  const activeCountry = searchParams.get('country') || 'BEN'
   const [communeDepartmentMap, setCommuneDepartmentMap] = useState({})
 
   // Clear selections when country changes
@@ -113,7 +114,7 @@ export default function Home() {
                 <select
                   id="country-select"
                   value={activeCountry}
-                  onChange={(e) => setActiveCountry(e.target.value)}
+                  onChange={(e) => setSearchParams({ country: e.target.value })}
                   className="rounded-control border border-white/20 bg-primary-900/50 py-2 pl-3 pr-10 text-sm font-semibold text-white shadow-sm focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500"
                 >
                   {OHADA_COUNTRIES.map((c) => (
