@@ -6,6 +6,7 @@ import EmptyState from '../../shared/ui/EmptyState.jsx'
 import Spinner from '../../shared/ui/Spinner.jsx'
 import CountryMapWrapper from '../../shared/ui/CountryMapWrapper.jsx'
 import { FRANCOPHONE_AFRICA_DATA, OHADA_COUNTRIES } from '../../shared/constants/locations.js'
+import { COUNTRY_CITIES } from '../../shared/constants/cities.js'
 
 // Marketplace is Benin-only for now - see FRANCOPHONE_AFRICA_DATA for the
 // full multi-country list this will expand into later.
@@ -60,14 +61,18 @@ export default function SchoolList() {
   })
 
   const availableCities = useMemo(() => {
+    const officialCities = COUNTRY_CITIES[country]
+    if (officialCities) {
+      return [...officialCities].sort()
+    }
     return Object.keys(communeDepartmentMap).sort()
-  }, [communeDepartmentMap])
+  }, [country, communeDepartmentMap])
 
   return (
     <div className="min-h-screen bg-surface py-12">
       <div className="mx-auto max-w-[1600px] px-6 lg:px-12">
         {/* Header */}
-        <div className="md:flex md:items-center md:justify-between">
+        <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
           <div className="min-w-0 flex-1">
             <h2 className="text-4xl font-extrabold tracking-tight text-ink sm:text-5xl">
               Annuaire des Écoles
@@ -75,6 +80,21 @@ export default function SchoolList() {
             <p className="mt-3 max-w-2xl text-xl text-ink-muted">
               Trouvez l'établissement idéal pour votre enfant, classé par performance et taux de réussite.
             </p>
+          </div>
+          <div className="w-full md:w-auto shrink-0 pt-2">
+            <label htmlFor="country-select" className="sr-only">Choisir un pays</label>
+            <select
+              id="country-select"
+              value={country}
+              onChange={(e) => setSearchParams({ country: e.target.value })}
+              className="w-full md:w-48 rounded-control border-0 bg-primary-50 px-4 py-2.5 text-sm font-semibold text-primary-900 shadow-sm ring-1 ring-inset ring-primary-200 focus:ring-2 focus:ring-primary-600"
+            >
+              {OHADA_COUNTRIES.map((c) => (
+                <option key={c.code} value={c.code}>
+                  {c.name}
+                </option>
+              ))}
+            </select>
           </div>
         </div>
 
@@ -106,17 +126,6 @@ export default function SchoolList() {
           <div>
             {/* Filters */}
             <div className="flex flex-col sm:flex-row gap-4">
-              <select
-                value={country}
-                onChange={(e) => setSearchParams({ country: e.target.value })}
-                className="w-full sm:max-w-[200px] rounded-control border-0 bg-surface px-4 py-3 text-ink shadow-sm ring-1 ring-inset ring-border focus:ring-2 focus:ring-inset focus:ring-primary-500 sm:text-sm sm:leading-6"
-              >
-                {OHADA_COUNTRIES.map((c) => (
-                  <option key={c.code} value={c.code}>
-                    {c.name}
-                  </option>
-                ))}
-              </select>
               <input
                 type="text"
                 placeholder="Rechercher une école..."

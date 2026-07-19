@@ -3,6 +3,8 @@ import { Link, useSearchParams } from 'react-router-dom'
 import EmptyState from '../../shared/ui/EmptyState.jsx'
 import CountryMapWrapper from '../../shared/ui/CountryMapWrapper.jsx'
 import { OHADA_COUNTRIES } from '../../shared/constants/locations.js'
+import { SUBJECTS } from '../../shared/constants/subjects.js'
+import { COUNTRY_CITIES } from '../../shared/constants/cities.js'
 
 export const TEACHERS_DATA = [
   { id: 1, name: 'Dr. Jean Dupont', subject: 'Mathématiques', country: 'Benin', city: 'Cotonou', rating: 4.9, price: '15 000 F / mois', image: 'https://images.unsplash.com/photo-1568602471122-7832951cc4c5?w=400&q=80', description: 'Docteur en mathématiques appliquées, 10 ans d\'expérience.' },
@@ -43,20 +45,39 @@ export default function TeacherList() {
   })
 
   const availableCities = useMemo(() => {
+    const officialCities = COUNTRY_CITIES[country]
+    if (officialCities) {
+      return [...officialCities].sort()
+    }
     return Object.keys(communeDepartmentMap).sort()
-  }, [communeDepartmentMap])
+  }, [country, communeDepartmentMap])
 
   return (
     <div className="min-h-screen bg-surface py-12">
       <div className="mx-auto max-w-[1600px] px-6 lg:px-12">
-        <div className="md:flex md:items-center md:justify-between">
+        <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
           <div className="min-w-0 flex-1">
             <h2 className="text-4xl font-extrabold tracking-tight text-ink sm:text-5xl">
-              Tuteurs à Domicile
+              Tuteurs à domicile
             </h2>
             <p className="mt-3 max-w-2xl text-xl text-ink-muted">
-              Des professeurs certifiés et évalués par les parents pour accompagner votre enfant vers la réussite.
+              Trouvez l'encadreur idéal pour accompagner votre enfant vers l'excellence.
             </p>
+          </div>
+          <div className="w-full md:w-auto shrink-0 pt-2">
+            <label htmlFor="country-select" className="sr-only">Choisir un pays</label>
+            <select
+              id="country-select"
+              value={country}
+              onChange={(e) => setSearchParams({ country: e.target.value })}
+              className="w-full md:w-48 rounded-control border-0 bg-primary-50 px-4 py-2.5 text-sm font-semibold text-primary-900 shadow-sm ring-1 ring-inset ring-primary-200 focus:ring-2 focus:ring-primary-600"
+            >
+              {OHADA_COUNTRIES.map((c) => (
+                <option key={c.code} value={c.code}>
+                  {c.name}
+                </option>
+              ))}
+            </select>
           </div>
         </div>
 
@@ -86,17 +107,6 @@ export default function TeacherList() {
 
           <div>
             <div className="flex flex-col sm:flex-row gap-4 flex-wrap">
-              <select
-                value={country}
-                onChange={(e) => setSearchParams({ country: e.target.value })}
-                className="w-full sm:max-w-[180px] rounded-control border-0 bg-surface-raised px-4 py-3 text-ink shadow-sm ring-1 ring-inset ring-border focus:ring-2 focus:ring-inset focus:ring-primary-500 sm:text-sm"
-              >
-                {OHADA_COUNTRIES.map((c) => (
-                  <option key={c.code} value={c.code}>
-                    {c.name}
-                  </option>
-                ))}
-              </select>
               <input
                 type="text"
                 placeholder="Rechercher par nom..."
@@ -119,11 +129,11 @@ export default function TeacherList() {
                 onChange={(e) => setSubjectFilter(e.target.value)}
                 className="w-full sm:max-w-[180px] rounded-control border-0 bg-surface-raised px-4 py-3 text-ink shadow-sm ring-1 ring-inset ring-border focus:ring-2 focus:ring-inset focus:ring-primary-500 sm:text-sm"
               >
-                <option value="Toutes">Toutes les matières</option>
-                <option value="Mathématiques">Mathématiques</option>
-                <option value="Physique-Chimie">Physique-Chimie</option>
-                <option value="SVT">SVT</option>
-                <option value="Philosophie">Philosophie</option>
+                {SUBJECTS.map((subject) => (
+                  <option key={subject} value={subject}>
+                    {subject === 'Toutes' ? 'Toutes les matières' : subject}
+                  </option>
+                ))}
               </select>
             </div>
             
