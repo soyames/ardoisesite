@@ -114,6 +114,24 @@ service cloud.firestore {
       allow read, write: if false;
     }
 
+    // Programme Développeur : Clés API
+    match /api_keys/{keyId} {
+      allow create: if isSignedIn() 
+                    && getUserData().role == 'developer'
+                    && request.resource.data.developerId == request.auth.uid;
+      allow read, update, delete: if isSignedIn() 
+                    && resource.data.developerId == request.auth.uid;
+    }
+
+    // Programme Développeur : Webhooks
+    match /webhooks/{webhookId} {
+      allow create: if isSignedIn() 
+                    && getUserData().role == 'developer'
+                    && request.resource.data.developerId == request.auth.uid;
+      allow read, update, delete: if isSignedIn() 
+                    && resource.data.developerId == request.auth.uid;
+    }
+
     // Collection historique, remplacée par users/{uid}.role +
     // POST /api/team/invite (voir SuperadminDashboard.jsx) -- plus rien
     // ne doit y écrire.
