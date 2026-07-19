@@ -6,12 +6,13 @@ import { Card, CardHeader, CardBody } from '../../shared/ui/Card.jsx'
 import Button from '../../shared/ui/Button.jsx'
 import Badge from '../../shared/ui/Badge.jsx'
 import EmptyState from '../../shared/ui/EmptyState.jsx'
+import Icon from '../../shared/ui/Icon.jsx'
 import { getPlatformApiBaseUrl } from '../../config/env.js'
 import MarketplaceAccountSettings from '../../shared/settings/MarketplaceAccountSettings.jsx'
 
 export default function SuperadminDashboard() {
   const { user } = useAuth()
-  const [activeTab, setActiveTab] = useState('tickets') // 'tickets', 'schools', 'team', 'settings'
+  const [activeTab, setActiveTab] = useState('tickets') // 'tickets', 'schools', 'payments', 'team', 'settings'
 
   return (
     <div className="space-y-6">
@@ -37,6 +38,13 @@ export default function SuperadminDashboard() {
         >
           Écoles
         </Button>
+        <Button
+          variant={activeTab === 'payments' ? 'primary' : 'ghost'}
+          onClick={() => setActiveTab('payments')}
+          className={activeTab === 'payments' ? '' : 'text-ink-muted hover:text-ink'}
+        >
+          Paiements & Abonnements
+        </Button>
         {user?.role === 'superadmin' && (
           <Button
             variant={activeTab === 'team' ? 'primary' : 'ghost'}
@@ -58,6 +66,7 @@ export default function SuperadminDashboard() {
       <div className="mt-6">
         {activeTab === 'tickets' && <SupportTickets />}
         {activeTab === 'schools' && <SchoolsRegistry />}
+        {activeTab === 'payments' && <PaymentsAndSubscriptions />}
         {activeTab === 'team' && user?.role === 'superadmin' && <TeamManagement />}
         {activeTab === 'settings' && <MarketplaceAccountSettings />}
       </div>
@@ -170,7 +179,7 @@ function SubscriptionManager({ school, onChanged }) {
 function SchoolsRegistry() {
   const [schools, setSchools] = useState([])
   const [loading, setLoading] = useState(true)
-  const [managingId, setManagingId] = useState(null)
+  const [detailedSchoolId, setDetailedSchoolId] = useState(null)
 
   useEffect(() => {
     const q = query(collection(db, 'schools'), orderBy('createdAt', 'desc'))
@@ -197,40 +206,271 @@ function SchoolsRegistry() {
     )
   }
 
+  const detailedSchool = detailedSchoolId ? schools.find(s => s.id === detailedSchoolId) : null
+
+  if (detailedSchool) {
+    return <SchoolDetailView school={detailedSchool} onBack={() => setDetailedSchoolId(null)} />
+  }
+
   return (
     <Card>
       <CardBody className="p-0">
         <ul className="divide-y divide-border">
           {schools.map((school) => (
-            <li key={school.id} className="p-5">
+            <li key={school.id} className="p-5 hover:bg-surface-hover cursor-pointer" onClick={() => setDetailedSchoolId(school.id)}>
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                 <div>
-                  <p className="text-sm font-medium text-ink">{school.name || 'Sans nom'}</p>
-                  <p className="text-xs text-ink-muted">
+                  <p className="text-sm font-medium text-ink flex items-center gap-2">
+                    {school.name || 'Sans nom'}
+                  </p>
+                  <p className="text-xs text-ink-muted mt-1">
                     {[school.city, school.country].filter(Boolean).join(', ') || 'Ville non renseignée'}
                     {school.backendUrl && <span className="ml-2 text-ink-muted">· {school.backendUrl}</span>}
                   </p>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-3">
                   {subscriptionBadge(school)}
                   <Badge tone="info">{school.planCode || 'free'}</Badge>
-                  <Button
-                    size="sm" variant="secondary"
-                    onClick={() => setManagingId(managingId === school.id ? null : school.id)}
-                  >
-                    {managingId === school.id ? 'Fermer' : "Gerer l'abonnement"}
-                  </Button>
+                  <Icon name="chevron_right" className="text-ink-muted" />
                 </div>
               </div>
-
-              {managingId === school.id && (
-                <SubscriptionManager school={school} onChanged={() => setManagingId(null)} />
-              )}
             </li>
           ))}
         </ul>
       </CardBody>
     </Card>
+  )
+}
+
+function PaymentsAndSubscriptions() {
+  const [schools, setSchools] = useState([])
+  const [contracts, setContracts] = useState([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    let active = true
+    const sQuery = query(collection(db, 'schools'), orderBy('createdAt', 'desc'))
+    const cQuery = query(collection(db, 'tutoring_contracts'), orderBy('createdAt', 'desc'))
+
+    const unsubscribeSchools = onSnapshot(sQuery, (snapshot) => {
+      if (!active) return
+      const s = []
+      snapshot.forEach((doc) => s.push({ id: doc.id, ...doc.data() }))
+      setSchools(s)
+      setLoading(false)
+    })
+
+    const unsubscribeContracts = onSnapshot(cQuery, (snapshot) => {
+      if (!active) return
+      const c = []
+      snapshot.forEach((doc) => c.push({ id: doc.id, ...doc.data() }))
+      setContracts(c)
+    })
+
+    return () => {
+      active = false
+      unsubscribeSchools()
+      unsubscribeContracts()
+    }
+  }, [])
+
+  if (loading) return <div className="text-sm text-ink-muted">Chargement des données...</div>
+
+  const premiumSchools = schools.filter(s => s.subscriptionActive)
+
+  return (
+    <div className="space-y-8">
+      <Card>
+        <CardHeader title="Abonnements SaaS (Écoles)" subtitle="Suivi des abonnements actifs au logiciel de gestion." />
+        <CardBody className="p-0">
+          {premiumSchools.length === 0 ? (
+            <div className="p-6">
+              <EmptyState title="Aucun abonnement" description="Aucune école n'a d'abonnement SaaS actif." />
+            </div>
+          ) : (
+            <ul className="divide-y divide-border">
+              {premiumSchools.map(school => (
+                <li key={school.id} className="p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div>
+                    <p className="text-sm font-bold text-ink">{school.name}</p>
+                    <p className="text-xs text-ink-muted mt-1">Plan: <span className="font-semibold uppercase">{school.planCode}</span></p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm text-ink">Expire le {school.subscriptionExpiresAt ? new Date(school.subscriptionExpiresAt).toLocaleDateString() : 'N/A'}</p>
+                    <p className="text-xs text-success-600 font-medium">Actif</p>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </CardBody>
+      </Card>
+
+      <Card>
+        <CardHeader title="Contrats de Tutorat (Marketplace)" subtitle="Suivi des réservations de tuteurs par les parents." />
+        <CardBody className="p-0">
+          {contracts.length === 0 ? (
+            <div className="p-6">
+              <EmptyState title="Aucun contrat" description="Aucun tuteur n'a encore été réservé via la plateforme." />
+            </div>
+          ) : (
+            <ul className="divide-y divide-border">
+              {contracts.map(c => (
+                <li key={c.id} className="p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div>
+                    <p className="text-sm font-bold text-ink">{c.parentName} &rarr; {c.teacherName}</p>
+                    <p className="text-xs text-ink-muted mt-1">{c.hoursPerWeek}h/semaine · Début: {c.startDate}</p>
+                    <p className="text-xs text-ink-muted">Contact Parent: {c.parentEmail}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm font-bold text-primary-600">{c.total?.toLocaleString() || 0} F / mois</p>
+                    <p className="text-xs text-ink-muted">Commission: {c.commission?.toLocaleString() || 0} F</p>
+                    <Badge tone="success" className="mt-1">Prélevé le {c.paymentDate}</Badge>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </CardBody>
+      </Card>
+    </div>
+  )
+}
+
+function HealthPing({ backendUrl }) {
+  const [status, setStatus] = useState('loading') // loading, up, down
+
+  useEffect(() => {
+    let active = true
+    if (!backendUrl) {
+      setStatus('down')
+      return
+    }
+
+    // Ping the backend API root or health endpoint
+    // We assume there's an /api/auth/ or something responding, we'll just try to fetch it.
+    fetch(`${backendUrl}/api/auth/firebase-login/`, { method: 'OPTIONS' })
+      .then(res => {
+        if (active) setStatus(res.ok || res.status === 405 || res.status === 403 ? 'up' : 'down')
+      })
+      .catch(() => {
+        if (active) setStatus('down')
+      })
+
+    return () => { active = false }
+  }, [backendUrl])
+
+  return (
+    <div className="flex items-center gap-2">
+      {status === 'loading' && <span className="text-sm text-ink-muted">Ping en cours...</span>}
+      {status === 'up' && <Badge tone="success">Connecté (Backend Actif)</Badge>}
+      {status === 'down' && <Badge tone="danger">Injoignable (Erreur de connexion)</Badge>}
+    </div>
+  )
+}
+
+function SchoolDetailView({ school, onBack }) {
+  const [managing, setManaging] = useState(false)
+
+  return (
+    <div className="space-y-6">
+      <button onClick={onBack} className="flex items-center gap-1 text-sm font-medium text-primary-600 hover:text-primary-700">
+        <Icon name="arrow_back" className="text-base" /> Retour aux écoles
+      </button>
+
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-2xl font-bold text-ink">{school.name || 'Sans nom'}</h2>
+          <p className="text-sm text-ink-muted">
+            ID: {school.id} · Ajouté le {school.createdAt ? new Date(school.createdAt).toLocaleDateString() : 'N/A'}
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          {subscriptionBadge(school)}
+          <Badge tone="info">{school.planCode || 'free'}</Badge>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <Card>
+          <CardHeader title="Informations de l'établissement" />
+          <CardBody className="space-y-3">
+            <div>
+              <span className="block text-xs font-semibold text-ink-muted uppercase">Adresse & Localisation</span>
+              <p className="text-sm text-ink">{school.address || 'Non renseignée'}</p>
+              <p className="text-sm text-ink">{[school.city, school.country].filter(Boolean).join(', ') || 'Non renseigné'}</p>
+            </div>
+            <div>
+              <span className="block text-xs font-semibold text-ink-muted uppercase">Contact</span>
+              <p className="text-sm text-ink">{school.email || 'Non renseigné'}</p>
+              <p className="text-sm text-ink">{school.phone || 'Non renseigné'}</p>
+            </div>
+          </CardBody>
+        </Card>
+
+        <Card>
+          <CardHeader title="Santé de l'intégration" />
+          <CardBody className="space-y-4">
+            <div>
+              <span className="block text-xs font-semibold text-ink-muted uppercase mb-1">URL du Serveur ERP (Backend)</span>
+              {school.backendUrl ? (
+                <a href={school.backendUrl} target="_blank" rel="noreferrer" className="text-sm text-primary-600 hover:underline break-all">
+                  {school.backendUrl}
+                </a>
+              ) : (
+                <p className="text-sm text-warning-600 font-medium">Aucune URL configurée. Le logiciel de l'école n'est pas encore lié.</p>
+              )}
+            </div>
+            
+            <div>
+              <span className="block text-xs font-semibold text-ink-muted uppercase mb-1">Statut de la connexion</span>
+              <HealthPing backendUrl={school.backendUrl} />
+            </div>
+          </CardBody>
+        </Card>
+      </div>
+
+      <Card>
+        <CardHeader 
+          title="Abonnement & Licences" 
+          action={
+            <Button size="sm" variant={managing ? 'ghost' : 'secondary'} onClick={() => setManaging(!managing)}>
+              {managing ? 'Fermer' : 'Gérer l\'abonnement'}
+            </Button>
+          } 
+        />
+        <CardBody>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <span className="block text-xs font-semibold text-ink-muted uppercase">Plan Actuel</span>
+              <p className="text-sm font-medium text-ink mt-1 capitalize">{school.planCode || 'Gratuit (Free)'}</p>
+            </div>
+            <div>
+              <span className="block text-xs font-semibold text-ink-muted uppercase">Expiration</span>
+              <p className="text-sm text-ink mt-1">
+                {school.subscriptionExpiresAt ? new Date(school.subscriptionExpiresAt).toLocaleDateString() : 'Jamais'}
+              </p>
+            </div>
+            <div>
+              <span className="block text-xs font-semibold text-ink-muted uppercase">Fonctionnalités</span>
+              <div className="flex flex-wrap gap-1 mt-1">
+                {school.features && school.features.length > 0 ? (
+                  school.features.map(f => <Badge key={f} tone="neutral">{f}</Badge>)
+                ) : (
+                  <span className="text-sm text-ink-muted">Aucune fonctionnalité Premium</span>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {managing && (
+            <div className="mt-6 pt-6 border-t border-border">
+              <SubscriptionManager school={school} onChanged={() => setManaging(false)} />
+            </div>
+          )}
+        </CardBody>
+      </Card>
+    </div>
   )
 }
 

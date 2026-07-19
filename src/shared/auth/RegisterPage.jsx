@@ -266,12 +266,17 @@ export default function RegisterPage() {
           </div>
         </form>
 
-        <p className="text-center text-sm text-ink-muted">
-          Vous avez déjà un compte ?{' '}
-          <Link to="/login" className="font-semibold text-primary-600 hover:text-primary-500">
-            Connectez-vous
+        <div className="flex flex-col items-center gap-3 mt-4">
+          <p className="text-center text-sm text-ink-muted">
+            Vous avez déjà un compte ?{' '}
+            <Link to="/login" className="font-semibold text-primary-600 hover:text-primary-500 transition">
+              Connectez-vous
+            </Link>
+          </p>
+          <Link to="/forgot-password" className="text-sm font-medium text-primary-600 hover:text-primary-500 transition">
+            Mot de passe oublié ?
           </Link>
-        </p>
+        </div>
       </div>
     </div>
   )

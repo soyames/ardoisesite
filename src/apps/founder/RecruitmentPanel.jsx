@@ -4,12 +4,14 @@ import { Card, CardHeader, CardBody } from '../../shared/ui/Card.jsx'
 import Button from '../../shared/ui/Button.jsx'
 import Spinner from '../../shared/ui/Spinner.jsx'
 import EmptyState from '../../shared/ui/EmptyState.jsx'
+import { useSchoolSubscription } from '../../shared/hooks/useSchoolSubscription.js'
 
 export default function RecruitmentPanel() {
   const [applications, setApplications] = useState([])
   const [loading, setLoading] = useState(true)
   const [posting, setPosting] = useState(false)
   const [jobForm, setJobForm] = useState({ title: '', type: 'Temps Plein', description: '' })
+  const { isPremium } = useSchoolSubscription()
 
   useEffect(() => {
     let active = true
@@ -93,7 +95,15 @@ export default function RecruitmentPanel() {
                     <div>
                       <p className="font-bold text-ink text-lg">{a.teacherName}</p>
                       <p className="text-sm text-ink-muted">Postule pour : <span className="font-semibold text-ink">{a.jobTitle}</span></p>
-                      <p className="text-sm text-ink-muted">Email : <a href={"mailto:" + a.email} className="text-primary-600 hover:underline">{a.email}</a></p>
+                      {isPremium ? (
+                        <p className="text-sm text-ink-muted">Email : <a href={"mailto:" + a.email} className="text-primary-600 hover:underline">{a.email}</a></p>
+                      ) : (
+                        <div className="mt-2 rounded-card bg-accent-50 p-3 border border-accent-200">
+                          <p className="text-sm text-accent-800">
+                            <strong>Mise a niveau requise :</strong> <a href="https://saas.ardoise.soyames.com/pricing" className="underline font-semibold" target="_blank" rel="noreferrer">Passez a la version Premium</a> pour voir les coordonnees et contacter ce candidat.
+                          </p>
+                        </div>
+                      )}
                     </div>
                     <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary-100 text-primary-800">
                       {new Date(a.createdAt).toLocaleDateString()}
