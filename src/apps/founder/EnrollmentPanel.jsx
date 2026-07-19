@@ -139,6 +139,22 @@ export default function EnrollmentPanel() {
                   <p className="text-ink"><span className="text-ink-muted">Email :</span> {selected.parentEmail}</p>
                 </div>
 
+                {selected.local_documents && selected.local_documents.length > 0 && (
+                  <div className="rounded-control bg-surface border border-border p-3 text-sm">
+                    <p className="font-semibold text-ink mb-2">Documents fournis :</p>
+                    <ul className="space-y-1">
+                      {selected.local_documents.map(doc => (
+                        <li key={doc.id}>
+                          <a href={doc.url} target="_blank" rel="noreferrer" className="text-primary-600 hover:text-primary-800 underline flex items-center gap-1">
+                            <Icon name="description" className="text-sm" />
+                            {doc.type}
+                          </a>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
                 {!isPremium && (
                   <div className="rounded-card bg-accent-50 p-4 border border-accent-200">
                     <p className="text-sm text-accent-800">

@@ -71,7 +71,7 @@ export default function AppShell({ navItems, children }) {
               {canOfferInstall && (
                 <button
                   onClick={handleInstallClick}
-                  className="hidden md:block rounded-control bg-primary-50 px-4 py-1.5 text-xs font-bold text-primary-700 ring-1 ring-inset ring-primary-200 transition hover:bg-primary-100"
+                  className="rounded-control bg-primary-50 px-3 py-1.5 text-[10px] md:text-xs font-bold text-primary-700 ring-1 ring-inset ring-primary-200 transition hover:bg-primary-100"
                 >
                   Installer l'App
                 </button>
