@@ -176,4 +176,4 @@ export const OFFICIAL_RESOURCES = {
       href: 'https://www.gouv.tg'
     }
   ]
-}
+};
