@@ -156,6 +156,7 @@ export default function RegisterPage() {
                 >
                   <option value="parent">Parent (Pour trouver un tuteur)</option>
                   <option value="teacher">Professeur (Pour donner des cours)</option>
+                  <option value="developer">Développeur (Pour intégrer l'API)</option>
                 </select>
               </div>
             )}
