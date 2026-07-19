@@ -138,13 +138,18 @@ export default function RegisterPage() {
               <img src="/images/ardoise_lockup_horizontal_white.png" alt="Ardoise Logo" className="h-12 w-auto" />
             </Link>
 
-            {/* Only schools register here (saas.ardoise.soyames.com) -
-                only parents/teachers register on the marketplace - see
-                domainRedirect.js. No point offering a choice that
-                isn't valid on the domain the user is actually on. */}
+            {/* SaaS is for founders (ERP) and developers (API/Partner) */}
             {isSaas ? (
-              <div className="rounded-control bg-primary-50 px-3 py-2.5 text-sm font-medium text-primary-700 ring-1 ring-inset ring-primary-200">
-                Compte fondateur d'école
+              <div>
+                <label className="block text-sm font-medium text-ink mb-1">Je souhaite créer un compte...</label>
+                <select
+                  value={role}
+                  onChange={(e) => setRole(e.target.value)}
+                  className={INPUT_CLASS}
+                >
+                  <option value="founder">Fondateur d'école (Lancer mon ERP)</option>
+                  <option value="developer">Développeur (Intégration API & Partenaire)</option>
+                </select>
               </div>
             ) : (
               <div>
@@ -156,7 +161,6 @@ export default function RegisterPage() {
                 >
                   <option value="parent">Parent (Pour trouver un tuteur)</option>
                   <option value="teacher">Professeur (Pour donner des cours)</option>
-                  <option value="developer">Développeur (Pour intégrer l'API)</option>
                 </select>
               </div>
             )}
