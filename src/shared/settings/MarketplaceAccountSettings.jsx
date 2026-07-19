@@ -33,7 +33,8 @@ function formatDate(iso) {
  */
 export default function MarketplaceAccountSettings() {
   const { user, refreshUser } = useAuth()
-  const [name, setName] = useState(user?.name || '')
+  const [firstName, setFirstName] = useState(user?.firstName || user?.first_name || '')
+  const [lastName, setLastName] = useState(user?.lastName || user?.last_name || '')
   const [phone, setPhone] = useState(user?.phone || '')
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
@@ -46,7 +47,7 @@ export default function MarketplaceAccountSettings() {
     setError(null)
     setSaved(false)
     try {
-      await updateDoc(doc(db, 'users', user.uid), { name, phone })
+      await updateDoc(doc(db, 'users', user.uid), { firstName, lastName, phone })
       await refreshUser()
       setSaved(true)
     } catch (err) {
@@ -68,8 +69,22 @@ export default function MarketplaceAccountSettings() {
           <form onSubmit={submit} className="space-y-3">
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <div>
-                <label className="text-xs font-medium text-ink-muted">Nom</label>
-                <input className={INPUT_CLASS} value={name} onChange={(e) => setName(e.target.value)} />
+                <label className="block text-sm font-semibold text-ink mb-1">Prénom</label>
+                <input
+                  className={INPUT_CLASS}
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
+                  placeholder="Votre prénom"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-ink mb-1">Nom</label>
+                <input
+                  className={INPUT_CLASS}
+                  value={lastName}
+                  onChange={(e) => setLastName(e.target.value)}
+                  placeholder="Votre nom"
+                />
               </div>
               <div>
                 <label className="text-xs font-medium text-ink-muted">Telephone</label>
