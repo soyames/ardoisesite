@@ -27,8 +27,7 @@ test.describe('Full Enrollment & School Management Flow', () => {
     await parentPage.goto('/register');
     
     // Parent registers
-    await parentPage.fill('input[name="firstName"]', 'Parent');
-    await parentPage.fill('input[name="lastName"]', 'QA E2E');
+    await parentPage.fill('input[name="name"]', 'Parent QA E2E');
     await parentPage.fill('input[name="email"]', email);
     await parentPage.fill('input[name="phone"]', '12345678');
     await parentPage.fill('input[name="password"]', 'TestQA2026!');
@@ -107,8 +106,7 @@ test.describe('Full Enrollment & School Management Flow', () => {
     // Teacher registers
     const teacherEmail = `teacher_${Date.now()}@qa.test`;
     await teacherPage.goto('/register');
-    await teacherPage.fill('input[name="firstName"]', 'Prof');
-    await teacherPage.fill('input[name="lastName"]', 'QA E2E');
+    await teacherPage.fill('input[name="name"]', 'Prof QA E2E');
     await teacherPage.fill('input[name="email"]', teacherEmail);
     await teacherPage.fill('input[name="phone"]', '87654321');
     await teacherPage.fill('input[name="password"]', 'TestQA2026!');
