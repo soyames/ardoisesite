@@ -67,6 +67,8 @@ export function AuthProvider({ children }) {
             }, (err) => {
               console.error("Error listening to user profile:", err)
             })
+            
+            firebaseUser._firestoreUnsubscribe = firestoreUnsubscribe
 
             // For the initial boot, we still need to fetch once to get the role before Django login
             const initialDoc = await getDoc(doc(db, 'users', firebaseUser.uid))
@@ -170,8 +172,6 @@ export function AuthProvider({ children }) {
         setStatus('anonymous')
       }
     })
-    
-    firebaseUser._firestoreUnsubscribe = firestoreUnsubscribe
 
     return () => unsubscribe()
   }, [])
