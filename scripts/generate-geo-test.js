@@ -2,13 +2,12 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import * as d3Geo from 'd3-geo';
-import rewind from '@turf/rewind';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const CONSTANTS_DIR = path.join(__dirname, '../src/shared/constants');
 
-const OHADA_COUNTRIES = [
+const OHADA_COUNTRIES = ['BFA']; // 
   'BFA', // Burkina Faso
   'CMR', // Cameroon
   'CAF', // Central African Republic
@@ -51,7 +50,7 @@ function cleanName(name) {
 
 async function processCountry(iso3) {
   console.log(`Processing ${iso3}...`);
-  let adm1 = await fetchGeoJson(iso3, 'ADM1');
+  const adm1 = await fetchGeoJson(iso3, 'ADM1');
   let adm2 = await fetchGeoJson(iso3, 'ADM2');
   
   if (!adm1) {
@@ -64,13 +63,8 @@ async function processCountry(iso3) {
   }
 
   // Combine to calculate a single projection that fits both
-  let combinedFeatures = [...adm1.features, ...adm2.features];
-  
-  // Rewind to RFC 7946 compliance (exterior rings counter-clockwise). 
-  // This solves d3-geo spherical winding issues!
-  const combinedCollection = rewind({ type: 'FeatureCollection', features: combinedFeatures }, { reverse: true });
-  adm1 = rewind(adm1, { reverse: true });
-  adm2 = rewind(adm2, { reverse: true });
+  const combinedFeatures = [...adm1.features, ...adm2.features];
+  const combinedCollection = { type: 'FeatureCollection', features: combinedFeatures };
 
   // 1. Compute planar bounding box to avoid spherical winding issues (Right-Hand vs Left-Hand Rule)
   // that cause d3.geoBounds to return the entire globe for inverted polygons.
@@ -95,6 +89,9 @@ async function processCountry(iso3) {
   const width = 800;
   const height = 800;
   const projection = d3Geo.geoMercator().fitSize([width, height], dummyGeo);
+  console.log(`[DEBUG ${iso3}] dummyGeo:`, JSON.stringify(dummyGeo));
+  console.log(`[DEBUG ${iso3}] scale:`, projection.scale());
+  console.log(`[DEBUG ${iso3}] translate:`, projection.translate());
   const pathGenerator = d3Geo.geoPath().projection(projection);
 
   // 2. Process ADM1 (Departments/Regions)

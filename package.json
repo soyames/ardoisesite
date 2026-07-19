@@ -14,6 +14,7 @@
     "@jridgewell/trace-mapping": "^0.3.31",
     "@tiptap/react": "^3.28.0",
     "@tiptap/starter-kit": "^3.28.0",
+    "@turf/rewind": "^7.3.5",
     "@univerjs/preset-sheets-core": "^0.25.1",
     "@univerjs/presets": "^0.25.1",
     "firebase": "^12.16.0",
