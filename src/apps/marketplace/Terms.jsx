@@ -61,7 +61,7 @@ export default function Terms() {
               specific answer, not a guess. Placeholder below names the
               country the product is built around (Benin, OHADA member
               state) as a starting point only. */}
-          Les présentes conditions sont régies par le droit béninois et le droit uniforme OHADA applicable. Tout litige qui n'aurait pu être résolu à l'amiable relève de la compétence exclusive des juridictions de Cotonou, Bénin.
+          Les présentes conditions sont régies par le droit béninois et le droit uniforme OHADA applicable. Notre plateforme couvre exclusivement les 17 pays membres de l'espace OHADA. Tout litige qui n'aurait pu être résolu à l'amiable relève de la compétence exclusive des juridictions de Cotonou, Bénin.
         </p>
       </div>
     </div>
