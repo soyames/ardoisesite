@@ -244,6 +244,7 @@ export default function PublicLayout() {
               <ul className="mt-4 space-y-3">
                 <li><Link to="/contact" className="text-sm text-ink-muted hover:text-ink">Contact / Support</Link></li>
                 <li><Link to="/privacy" className="text-sm text-ink-muted hover:text-ink">Confidentialité</Link></li>
+                <li><Link to="/cookies" className="text-sm text-ink-muted hover:text-ink">Cookies</Link></li>
                 <li><Link to="/terms" className="text-sm text-ink-muted hover:text-ink">Conditions d'Utilisation</Link></li>
               </ul>
             </div>
