@@ -3,6 +3,8 @@ import { useParams, useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../../shared/auth/AuthContext.jsx'
 import { TEACHER_DB } from './TeacherDetail.jsx'
 import { FedaPayButton } from '../../shared/components/FedaPayButton.jsx'
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore'
+import { db } from '../../shared/api/firebase.js'
 
 export default function TutoringBookingFlow() {
   const { id } = useParams()
@@ -201,8 +203,29 @@ export default function TutoringBookingFlow() {
                         parentId: user?.id || 'unknown',
                         duration: 6
                       }}
-                      onComplete={(tx) => {
+                      onComplete={async (tx) => {
                         console.log("Paiement FedaPay complété !", tx)
+                        
+                        try {
+                          await addDoc(collection(db, 'tutoring_contracts'), {
+                            teacherId: teacher.id,
+                            teacherName: teacher.name,
+                            parentId: user.id,
+                            parentEmail: user.email,
+                            parentName: user.name,
+                            startDate,
+                            hoursPerWeek: Number(hoursPerWeek),
+                            proposedPrice: Number(proposedPrice),
+                            commission,
+                            total,
+                            paymentDate: Number(paymentDate),
+                            status: 'active',
+                            createdAt: serverTimestamp()
+                          })
+                        } catch (err) {
+                          console.error("Erreur lors de la sauvegarde du contrat", err)
+                        }
+
                         setStep(3)
                       }}
                       className={`w-2/3 rounded-control px-4 py-3 text-sm font-bold shadow-card ${agreedToTerms ? 'bg-accent-500 text-primary-950 hover:bg-accent-400' : 'bg-primary-400 text-white cursor-not-allowed'}`}

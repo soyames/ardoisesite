@@ -8,6 +8,7 @@ import EmptyState from '../../shared/ui/EmptyState.jsx'
 import StatCard from '../../shared/ui/StatCard.jsx'
 import Icon from '../../shared/ui/Icon.jsx'
 import AppointmentSlotsPanel from '../../shared/components/AppointmentSlotsPanel.jsx'
+import { useSchoolSubscription } from '../../shared/hooks/useSchoolSubscription.js'
 
 // Helper just for updating UI status in Firestore directly for the Marketplace
 import { doc, updateDoc } from 'firebase/firestore'
@@ -36,6 +37,7 @@ export default function EnrollmentPanel() {
   const [loading, setLoading] = useState(true)
   const [selectedId, setSelectedId] = useState(null)
   const [search, setSearch] = useState('')
+  const { isPremium } = useSchoolSubscription()
 
   useEffect(() => {
     let active = true
@@ -137,6 +139,14 @@ export default function EnrollmentPanel() {
                   <p className="text-ink"><span className="text-ink-muted">Email :</span> {selected.parentEmail}</p>
                 </div>
 
+                {!isPremium && (
+                  <div className="rounded-card bg-accent-50 p-4 border border-accent-200">
+                    <p className="text-sm text-accent-800">
+                      <strong>Mise a niveau requise :</strong> Votre plan actuel ne permet pas de traiter les demandes d'inscription. <a href="https://saas.ardoise.soyames.com/pricing" className="underline" target="_blank" rel="noreferrer">Passez a la version Premium</a> pour continuer.
+                    </p>
+                  </div>
+                )}
+
                 <div>
                   <label className="mb-1 block text-xs font-medium text-ink-muted">Statut actuel</label>
                   <select
@@ -149,10 +159,10 @@ export default function EnrollmentPanel() {
                 </div>
 
                 <div className="flex gap-2 border-t border-border pt-3">
-                  <Button size="sm" variant="secondary" onClick={() => handleStatusUpdate(selected.id, 'rejected')}>
+                  <Button size="sm" variant="secondary" onClick={() => handleStatusUpdate(selected.id, 'rejected')} disabled={!isPremium}>
                     Refuser
                   </Button>
-                  <Button size="sm" onClick={() => handleStatusUpdate(selected.id, 'accepted')}>
+                  <Button size="sm" onClick={() => handleStatusUpdate(selected.id, 'accepted')} disabled={!isPremium}>
                     Accepter et inscrire
                   </Button>
                 </div>

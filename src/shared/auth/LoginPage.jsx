@@ -4,12 +4,11 @@ import { useAuth } from './AuthContext.jsx'
 import { roleMatchesCurrentDomain, redirectToCorrectDomain } from './domainRedirect.js'
 
 export default function LoginPage() {
-  const { login, status, user, resetPassword } = useAuth()
+  const { login, status, user } = useAuth()
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [submitting, setSubmitting] = useState(false)
-  const [resetMessage, setResetMessage] = useState('')
 
   if (status === 'authenticated') {
     const path = user?.role === 'teacher' ? '/teacher-dashboard' : '/portal'
@@ -24,24 +23,9 @@ export default function LoginPage() {
     return <Navigate to={path} replace />
   }
 
-  async function handleResetPassword() {
-    if (!username) {
-      setError('Veuillez entrer votre adresse email ci-dessus pour réinitialiser le mot de passe.')
-      return
-    }
-    try {
-      await resetPassword(username)
-      setResetMessage('Un email de réinitialisation vous a été envoyé.')
-      setError('')
-    } catch (err) {
-      setError(err.message || 'Erreur lors de l\'envoi de l\'email de réinitialisation.')
-    }
-  }
-
   async function handleSubmit(e) {
     e.preventDefault()
     setError('')
-    setResetMessage('')
     setSubmitting(true)
 
     try {
@@ -109,20 +93,13 @@ export default function LoginPage() {
             </p>
           )}
 
-          {resetMessage && (
-            <p className="mb-4 rounded-card bg-success-50 px-4 py-3 text-sm text-success-700 ring-1 ring-success-500/20">
-              {resetMessage}
-            </p>
-          )}
-
           <div className="mb-4 flex justify-end">
-            <button
-              type="button"
-              onClick={handleResetPassword}
+            <Link
+              to="/forgot-password"
               className="text-sm font-medium text-primary-600 hover:text-primary-500"
             >
               Mot de passe oublié ?
-            </button>
+            </Link>
           </div>
 
           <button

@@ -3,6 +3,7 @@ import { AuthProvider, useAuth } from './shared/auth/AuthContext.jsx'
 import RequireRole from './shared/auth/RequireRole.jsx'
 import LoginPage from './shared/auth/LoginPage.jsx'
 import RegisterPage from './shared/auth/RegisterPage.jsx'
+import ForgotPasswordPage from './shared/auth/ForgotPasswordPage.jsx'
 import { isSaasHost } from './shared/auth/domainRedirect.js'
 import AppShell from './shared/layout/AppShell.jsx'
 import EmptyState from './shared/ui/EmptyState.jsx'
@@ -20,6 +21,7 @@ import LibrarianPortal from './apps/librarian/LibrarianPortal.jsx'
 import StudentPortal from './apps/student/StudentPortal.jsx'
 import AuditorPortal from './apps/auditor/AuditorPortal.jsx'
 import SuperadminDashboard from './apps/superadmin/SuperadminDashboard.jsx'
+import DeveloperPortal from './apps/developer/DeveloperPortal.jsx'
 import CollabHub from './shared/collab/CollabHub.jsx'
 import SettingsPage from './shared/settings/SettingsPage.jsx'
 
@@ -73,6 +75,7 @@ const NAV_BY_ROLE = {
   auditor: [{ to: '/portal', label: 'Audit', end: true, icon: 'fact_check' }, SETTINGS_NAV_ITEM],
   superadmin: [{ to: '/portal', label: 'Administration', end: true, icon: 'admin_panel_settings' }, collabItem('forum')],
   support_agent: [{ to: '/portal', label: 'Support Tickets', end: true, icon: 'support_agent' }, collabItem('forum')],
+  developer: [{ to: '/portal', label: 'Espace Developpeur', end: true, icon: 'code' }, SETTINGS_NAV_ITEM],
 }
 
 const PORTAL_BY_ROLE = {
@@ -92,6 +95,7 @@ const PORTAL_BY_ROLE = {
   auditor: AuditorPortal,
   superadmin: SuperadminDashboard,
   support_agent: SuperadminDashboard,
+  developer: DeveloperPortal,
 }
 
 function PortalHome() {
@@ -128,6 +132,7 @@ export default function App() {
       <Routes>
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
+        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         
         {/* Public Marketplace Routes */}
         <Route element={<PublicLayout />}>
