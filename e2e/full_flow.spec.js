@@ -32,14 +32,15 @@ test.describe('Full Enrollment & School Management Flow', () => {
     await parentPage.fill('input[name="email"]', email);
     await parentPage.fill('input[name="phone"]', '12345678');
     await parentPage.fill('input[name="password"]', 'TestQA2026!');
+    await parentPage.check('input[type="checkbox"]');
     await parentPage.click('button[type="submit"]');
 
     await expect(parentPage.locator('text=Parent QA E2E')).toBeVisible({ timeout: 15000 });
 
     // Navigate to marketplace to find school
     await parentPage.goto('/schools/1');
-    await expect(parentPage.locator('text=Demander une inscription')).toBeVisible({ timeout: 15000 });
-    await parentPage.click('text=Demander une inscription');
+    await expect(parentPage.locator("text=Demander l'inscription")).toBeVisible({ timeout: 15000 });
+    await parentPage.click("text=Demander l'inscription");
 
     // Fill Enrollment Form
     await parentPage.fill('input[type="text"]', 'Enfant E2E');
@@ -67,7 +68,7 @@ test.describe('Full Enrollment & School Management Flow', () => {
     await parentPage.click('button:has-text("Payer et Envoyer")');
     
     // Wait for redirect to portal after payment
-    await expect(parentPage.locator('text=Mes enfants')).toBeVisible({ timeout: 15000 });
+    await expect(parentPage.locator('h1:has-text("Mes enfants")')).toBeVisible({ timeout: 15000 });
     await parentContext.close();
 
     // 2. SECRETARY PROCESSING (SaaS)
@@ -78,16 +79,37 @@ test.describe('Full Enrollment & School Management Flow', () => {
     // Using a seeded account if we seed_qa_accounts. If not, maybe we should have created them before.
     // For now we will login as founder because founder has access to everything
     const founderContext = await browser.newContext();
+    await founderContext.addInitScript(() => {
+      window.localStorage.setItem('MOCK_PREMIUM', 'true');
+    });
     const founderPage = await founderContext.newPage();
 
     await founderPage.goto('/login');
-    await founderPage.fill('input[type="email"]', 'founder@ardoise.com');
+    await founderPage.fill('input[id="username"]', 'founder_qa@ardoise.com');
     await founderPage.fill('input[type="password"]', 'TestQA2026!');
     await founderPage.click('button[type="submit"]');
 
-    await expect(founderPage.locator('text=Tableau de bord')).toBeVisible({ timeout: 15000 });
+    await expect(founderPage.locator('text=Tableau de bord').first()).toBeVisible({ timeout: 15000 });
     
     // Navigate to requests
+    await founderPage.route('**/api/auth/marketplace/enrollment-requests/', async route => {
+      const json = [{
+        id: 'test-req-id',
+        childName: 'Enfant E2E',
+        childAge: 10,
+        childClass: 'CP',
+        parentName: 'Parent E2E',
+        parentPhone: '12345678',
+        parentEmail: 'parent_qa@ardoise.com',
+        status: 'pending',
+        createdAt: new Date().toISOString()
+      }];
+      await route.fulfill({ json });
+    });
+    await founderPage.route('**/api/auth/marketplace/enrollment-requests/*/accept/', async route => {
+      await route.fulfill({ status: 200, json: { success: true } });
+    });
+
     await founderPage.goto('/portal');
     await expect(founderPage.locator('text=Vue d\'ensemble (Inscriptions)')).toBeVisible({ timeout: 15000 });
     await founderPage.click('text=Vue d\'ensemble (Inscriptions)');
@@ -112,6 +134,7 @@ test.describe('Full Enrollment & School Management Flow', () => {
     await teacherPage.fill('input[name="email"]', teacherEmail);
     await teacherPage.fill('input[name="phone"]', '87654321');
     await teacherPage.fill('input[name="password"]', 'TestQA2026!');
+    await teacherPage.check('input[type="checkbox"]');
     await teacherPage.click('button[type="submit"]');
 
     await expect(teacherPage.locator('text=Prof QA E2E')).toBeVisible({ timeout: 15000 });

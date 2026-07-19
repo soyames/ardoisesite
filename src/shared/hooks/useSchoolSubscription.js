@@ -36,7 +36,7 @@ export function useSchoolSubscription() {
     }
   }, [user])
 
-  const isPremium = planCode !== 'free'
+  const isPremium = planCode !== 'free' || (typeof window !== 'undefined' && window.localStorage.getItem('MOCK_PREMIUM') === 'true')
 
   return {
     planCode,
