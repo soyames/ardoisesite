@@ -65,7 +65,7 @@ export default function ParentPortal() {
                 size="md"
                 className="rounded-full shadow-sm"
               >
-                {child.first_name} {child.last_name}
+                {child.firstName} {child.lastName}
               </Button>
             ))}
           </div>
@@ -194,7 +194,7 @@ function ChildDetail({ child, parentId }) {
         <CardBody className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <p className="text-sm font-semibold text-ink">
-              {child.first_name} {child.last_name}
+              {child.firstName} {child.lastName}
             </p>
             <p className="text-xs text-ink-muted">
               {child.current_enrollment?.classroom_name} · {child.current_enrollment?.academic_year_label} · Matricule {child.matricule}
@@ -433,7 +433,7 @@ function SchoolPaymentButton({ schoolId, invoice, parent }) {
       publicKey={pubKey}
       amount={Number(invoice.amount_due) - Number(invoice.amount_paid || 0)}
       description={`Scolarité: ${invoice.tranche_label || 'Facture'}`}
-      customerName={`${parent.first_name} ${parent.last_name}`}
+      customerName={`${parent.firstName} ${parent.lastName}`}
       customMetadata={{
         type: 'tuition_payment',
         invoiceId: invoice.id,

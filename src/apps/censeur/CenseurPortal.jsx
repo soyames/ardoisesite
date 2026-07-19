@@ -411,7 +411,7 @@ function CalendrierTab() {
           <label className="block text-xs font-medium text-ink-muted mb-1">Enseignant</label>
           <select className={INPUT_CLASS} value={teacherId} onChange={(e) => setTeacherId(e.target.value)}>
             <option value="">Tous les enseignants</option>
-            {staff.data?.map((s) => <option key={s.id} value={s.id}>{s.last_name} {s.first_name}</option>)}
+            {staff.data?.map((s) => <option key={s.id} value={s.id}>{s.lastName} {s.firstName}</option>)}
           </select>
         </div>
         <div className="ml-auto">

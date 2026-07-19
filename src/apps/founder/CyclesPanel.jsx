@@ -233,7 +233,7 @@ function CycleRow({ label, person }) {
 }
 
 function CreateAccountForm({ onCancel, onCreated }) {
-  const [form, setForm] = useState({ first_name: '', last_name: '', email: '', role: 'censeur' })
+  const [form, setForm] = useState({ firstName: '', lastName: '', email: '', role: 'censeur' })
   const [submitting, setSubmitting] = useState(false)
   const [formError, setFormError] = useState(null)
 
@@ -258,11 +258,11 @@ function CreateAccountForm({ onCancel, onCreated }) {
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <div>
           <label className="block text-xs font-semibold text-ink-muted">Prenom</label>
-          <input required className={INPUT_CLASS} value={form.first_name} onChange={update('first_name')} />
+          <input required className={INPUT_CLASS} value={form.firstName} onChange={update('firstName')} />
         </div>
         <div>
           <label className="block text-xs font-semibold text-ink-muted">Nom</label>
-          <input required className={INPUT_CLASS} value={form.last_name} onChange={update('last_name')} />
+          <input required className={INPUT_CLASS} value={form.lastName} onChange={update('lastName')} />
         </div>
         <div>
           <label className="block text-xs font-semibold text-ink-muted">Email</label>

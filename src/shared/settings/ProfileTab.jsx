@@ -9,8 +9,8 @@ const INPUT_CLASS =
   'block w-full rounded-control border-0 py-2 px-3 bg-surface-raised text-ink ring-1 ring-inset ring-border focus:ring-2 focus:ring-primary-500 sm:text-sm'
 
 function ProfileForm({ me, onSaved }) {
-  const [firstName, setFirstName] = useState(me.first_name || '')
-  const [lastName, setLastName] = useState(me.last_name || '')
+  const [firstName, setFirstName] = useState(me.firstName || '')
+  const [lastName, setLastName] = useState(me.lastName || '')
   const [phone, setPhone] = useState(me.phone || '')
   const [preferredLanguage, setPreferredLanguage] = useState(me.preferred_language || 'fr')
   const [saving, setSaving] = useState(false)
@@ -24,7 +24,7 @@ function ProfileForm({ me, onSaved }) {
     setSaved(false)
     try {
       await api.patch('/api/auth/me/profile/', {
-        first_name: firstName, last_name: lastName, phone, preferred_language: preferredLanguage,
+        firstName: firstName, lastName: lastName, phone, preferred_language: preferredLanguage,
       })
       setSaved(true)
       onSaved()
