@@ -9,10 +9,10 @@ const INPUT_CLASS =
   'block w-full rounded-control border-0 py-2 px-3 bg-surface-raised text-ink ring-1 ring-inset ring-border focus:ring-2 focus:ring-primary-500 sm:text-sm'
 
 function ProfileForm({ me, onSaved }) {
-  const [firstName, setFirstName] = useState(me.firstName || '')
-  const [lastName, setLastName] = useState(me.lastName || '')
+  const [firstName, setFirstName] = useState(me.first_name || '')
+  const [lastName, setLastName] = useState(me.last_name || '')
   const [phone, setPhone] = useState(me.phone || '')
-  const [preferredLanguage, setPreferredLanguage] = useState(me.preferredLanguage || 'fr')
+  const [preferredLanguage, setPreferredLanguage] = useState(me.preferred_language || 'fr')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState(null)
   const [saved, setSaved] = useState(false)
@@ -24,7 +24,7 @@ function ProfileForm({ me, onSaved }) {
     setSaved(false)
     try {
       await api.patch('/api/auth/me/profile/', {
-        firstName: firstName, lastName: lastName, phone, preferredLanguage: preferredLanguage,
+        first_name: firstName, last_name: lastName, phone, preferred_language: preferredLanguage,
       })
       setSaved(true)
       onSaved()
@@ -65,7 +65,7 @@ function ProfileForm({ me, onSaved }) {
         </div>
         <div>
           <label className="text-xs font-medium text-ink-muted">Role</label>
-          <input className={INPUT_CLASS} value={me.roleDisplay || '-'} disabled />
+          <input className={INPUT_CLASS} value={me.role_display || '-'} disabled />
         </div>
       </div>
       {error && <p className="text-sm text-danger-600">{error}</p>}
@@ -124,6 +124,7 @@ export default function ProfileTab() {
   const me = useApiGet('/api/auth/me/')
 
   if (me.loading) return <div className="flex justify-center py-10"><Spinner /></div>
+  if (me.error) return <div className="text-danger-600">Erreur de chargement du profil : {me.error.message || String(me.error)}</div>
   if (!me.data) return null
 
   return (
@@ -135,7 +136,7 @@ export default function ProfileTab() {
         </CardBody>
       </Card>
 
-      {me.data.hasUsablePassword ? (
+      {me.data.has_usable_password ? (
         <Card>
           <CardHeader title="Mot de passe" />
           <CardBody>
