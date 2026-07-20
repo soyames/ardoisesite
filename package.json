@@ -12,7 +12,9 @@
   },
   "dependencies": {
     "@jridgewell/trace-mapping": "^0.3.31",
+    "@livekit/components-react": "^2.9.23",
     "@sentry/react": "^10.66.0",
+    "@tiptap/extension-image": "^3.28.0",
     "@tiptap/extension-text-align": "^3.28.0",
     "@tiptap/pm": "^3.28.0",
     "@tiptap/react": "^3.28.0",
@@ -21,6 +23,7 @@
     "@univerjs/preset-sheets-core": "^0.25.1",
     "@univerjs/presets": "^0.25.1",
     "firebase": "^12.16.0",
+    "livekit-client": "^2.20.2",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
     "react-router-dom": "^7.18.1",

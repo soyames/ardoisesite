@@ -506,8 +506,12 @@ function CalendrierTab() {
 function PlanificationTab() {
   const submissions = useApiGet('/api/hr/teacher-availability/')
   const conflicts = useApiGet('/api/hr/timetable-conflicts/')
+  const academicYears = useApiGet('/api/auth/academic-years/')
   const [busy, setBusy] = useState(null)
   const [error, setError] = useState(null)
+  const [generating, setGenerating] = useState(false)
+
+  const currentYear = academicYears.data?.find((y) => y.isCurrent) || academicYears.data?.[0]
 
   const review = async (id, newStatus) => {
     setBusy(id)
@@ -522,8 +526,32 @@ function PlanificationTab() {
     }
   }
 
+  const generateTimetable = async () => {
+    if (!currentYear) return
+    setGenerating(true)
+    setError(null)
+    try {
+      const res = await api.post('/api/academics/timetable/generate/', { academic_year_id: currentYear.id })
+      alert(res.message || 'Emploi du temps genere avec succes!')
+      conflicts.refetch()
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'Erreur lors de la generation.')
+    } finally {
+      setGenerating(false)
+    }
+  }
+
   return (
     <div className="space-y-4">
+      <div className="flex justify-between items-center">
+        <div>
+          <h2 className="text-lg font-medium text-ink">Planification Automatique (IA)</h2>
+          <p className="text-sm text-ink-muted">Génère automatiquement un emploi du temps optimal avec Google OR-Tools.</p>
+        </div>
+        <Button onClick={generateTimetable} disabled={generating || !currentYear}>
+          {generating ? 'Génération en cours...' : 'Générer Emploi du Temps'}
+        </Button>
+      </div>
       <Card>
         <CardHeader
           title="Conflits d'emploi du temps"
