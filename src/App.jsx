@@ -9,6 +9,7 @@ import AppShell from './shared/layout/AppShell.jsx'
 import EmptyState from './shared/ui/EmptyState.jsx'
 import FounderDashboard from './apps/founder/FounderDashboard.jsx'
 import ParentPortal from './apps/parent/ParentPortal.jsx'
+import StudentPortal from './apps/student/StudentPortal.jsx'
 import CashierPortal from './apps/cashier/CashierPortal.jsx'
 import TeacherPortal from './apps/teacher/TeacherPortal.jsx'
 import SecretaryPortal from './apps/secretary/SecretaryPortal.jsx'
@@ -63,6 +64,7 @@ const NAV_BY_ROLE = {
   founder: [{ to: '/portal', label: 'Tableau de bord', end: true, icon: 'dashboard' }, collabItem('forum'), SETTINGS_NAV_ITEM],
   director: [{ to: '/portal', label: 'Tableau de bord', end: true, icon: 'dashboard' }, collabItem('forum'), SETTINGS_NAV_ITEM],
   parent: [{ to: '/portal', label: 'Mes enfants', end: true, icon: 'family_restroom' }, SETTINGS_NAV_ITEM],
+  student: [{ to: '/portal', label: 'Mon Espace', end: true, icon: 'school' }, SETTINGS_NAV_ITEM],
   cashier: [{ to: '/portal', label: 'Encaissement', end: true, icon: 'point_of_sale' }, collabItem('forum'), SETTINGS_NAV_ITEM],
   teacher: [{ to: '/portal', label: 'Mes classes', end: true, icon: 'school' }, collabItem('forum'), SETTINGS_NAV_ITEM],
   secretary: [{ to: '/portal', label: 'Secretariat', end: true, icon: 'contact_page' }, collabItem('forum'), SETTINGS_NAV_ITEM],
@@ -87,6 +89,7 @@ const PORTAL_BY_ROLE = {
   founder: FounderDashboard,
   director: FounderDashboard,
   parent: ParentPortal,
+  student: StudentPortal,
   cashier: CashierPortal,
   teacher: TeacherPortal,
   secretary: SecretaryPortal,

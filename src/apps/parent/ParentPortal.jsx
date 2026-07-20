@@ -79,6 +79,9 @@ export default function ParentPortal() {
       {/* Enrollment Requests Section */}
       <EnrollmentRequests parentId={user?.uid} />
 
+      {/* Tutoring Contracts Section */}
+      <TutoringContracts parentId={user?.id} />
+
       {/* Explore Marketplace Section */}
       <div className="mt-12 pt-8 border-t border-border">
         <h2 className="text-lg font-bold text-ink mb-6">Explorer les services Ardoise</h2>
@@ -162,6 +165,54 @@ function EnrollmentRequests({ parentId }) {
                   Le paiement a échoué ou n'a pas été terminé. Veuillez contacter le support.
                 </div>
               )}
+            </CardBody>
+          </Card>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function TutoringContracts({ parentId }) {
+  const [contracts, setContracts] = useState([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    if (!parentId) return
+    const q = query(collection(db, 'tutoring_contracts'), where('parentId', '==', parentId))
+    const unsub = onSnapshot(q, (snap) => {
+      const data = []
+      snap.forEach(doc => data.push({ id: doc.id, ...doc.data() }))
+      data.sort((a, b) => (b.createdAt?.toMillis() || 0) - (a.createdAt?.toMillis() || 0))
+      setContracts(data)
+      setLoading(false)
+    })
+    return () => unsub()
+  }, [parentId])
+
+  if (loading) return null
+  if (contracts.length === 0) return null
+
+  return (
+    <div className="mt-8">
+      <h2 className="text-lg font-bold text-ink mb-4">Mes Cours de Soutien (Tutorat)</h2>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {contracts.map(contract => (
+          <Card key={contract.id} className="border border-border">
+            <CardBody>
+              <div className="flex justify-between items-start mb-2">
+                <div>
+                  <h3 className="font-bold text-ink">Tuteur : {contract.teacherName}</h3>
+                  <p className="text-sm text-ink-muted">Commence le : {contract.startDate} &bull; {contract.hoursPerWeek}h/semaine</p>
+                </div>
+                <Badge tone={contract.status === 'active' ? 'success' : 'neutral'}>
+                  {contract.status === 'active' ? 'Actif' : contract.status}
+                </Badge>
+              </div>
+              <div className="mt-4 pt-4 border-t border-border text-sm flex justify-between">
+                <span className="text-ink-muted">Derniere seance : -</span>
+                <span className="font-semibold text-primary-600 cursor-pointer hover:underline">Voir les seances</span>
+              </div>
             </CardBody>
           </Card>
         ))}

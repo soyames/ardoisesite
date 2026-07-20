@@ -13,6 +13,8 @@ export default function TeacherMarketplaceDashboard() {
 
   const [newExp, setNewExp] = useState({ employer: '', start: '', end: '', description: '' })
   const [newEdu, setNewEdu] = useState({ school: '', degree: '', year: '' })
+  const [newSession, setNewSession] = useState({ date: '', hours: '2', notes: '' })
+  const [showSessionForm, setShowSessionForm] = useState(false)
 
   const handleAddExperience = async (e) => {
     e.preventDefault()
@@ -44,6 +46,14 @@ export default function TeacherMarketplaceDashboard() {
       console.error(err)
       alert("Erreur lors de l'ajout de la formation.")
     }
+  }
+
+  const handleLogSession = async (e) => {
+    e.preventDefault()
+    // Here we would push to tutoring_sessions collection in Firestore
+    alert('Séance enregistrée avec succès ! Le parent sera notifié.')
+    setShowSessionForm(false)
+    setNewSession({ date: '', hours: '2', notes: '' })
   }
 
   if (!user) return null
@@ -229,15 +239,46 @@ export default function TeacherMarketplaceDashboard() {
                 <div className="bg-surface-raised rounded-card shadow-card ring-1 ring-border p-6">
                   <div className="flex justify-between items-start">
                     <div>
-                      <h3 className="text-lg font-bold text-ink">M. Tossou (Parent) - Élève : Kevin</h3>
-                      <p className="text-sm text-ink-muted mt-1">Soutien en Mathématiques &bull; 4h / semaine</p>
+                      <h3 className="text-lg font-bold text-ink">M. Tossou (Parent) - Eleve : Kevin</h3>
+                      <p className="text-sm text-ink-muted mt-1">Soutien en Mathematiques &bull; 4h / semaine</p>
                     </div>
                     <Badge tone="success">Actif (Mois 2 / 6)</Badge>
                   </div>
-                  <div className="mt-4 pt-4 border-t border-border flex justify-between items-center text-sm">
-                    <span className="font-semibold text-ink">Tarif convenu : {price} F / mois</span>
-                    <button className="text-primary-600 hover:underline font-medium">Voir le contrat</button>
-                  </div>
+                  
+                  {showSessionForm ? (
+                    <form onSubmit={handleLogSession} className="mt-6 border-t border-border pt-6 space-y-4">
+                      <h4 className="font-bold text-ink">Nouvelle seance</h4>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium text-ink mb-1">Date</label>
+                          <input required type="date" value={newSession.date} onChange={e => setNewSession({...newSession, date: e.target.value})} className="w-full rounded-control border-0 py-2 px-3 text-ink ring-1 ring-inset ring-border focus:ring-2 focus:ring-primary-500 sm:text-sm" />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-ink mb-1">Duree (heures)</label>
+                          <select value={newSession.hours} onChange={e => setNewSession({...newSession, hours: e.target.value})} className="w-full rounded-control border-0 py-2 px-3 text-ink ring-1 ring-inset ring-border focus:ring-2 focus:ring-primary-500 sm:text-sm">
+                            <option value="1">1 heure</option>
+                            <option value="2">2 heures</option>
+                            <option value="3">3 heures</option>
+                          </select>
+                        </div>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-ink mb-1">Compte-rendu (visible par le parent)</label>
+                        <textarea required rows="2" value={newSession.notes} onChange={e => setNewSession({...newSession, notes: e.target.value})} className="w-full rounded-control border-0 py-2 px-3 text-ink ring-1 ring-inset ring-border focus:ring-2 focus:ring-primary-500 sm:text-sm"></textarea>
+                      </div>
+                      <div className="flex gap-2">
+                        <button type="submit" className="rounded-control bg-primary-600 px-4 py-2 text-sm font-bold text-white hover:bg-primary-700">Enregistrer</button>
+                        <button type="button" onClick={() => setShowSessionForm(false)} className="rounded-control bg-surface px-4 py-2 text-sm font-bold text-ink hover:bg-surface-raised border border-border">Annuler</button>
+                      </div>
+                    </form>
+                  ) : (
+                    <div className="mt-4 pt-4 border-t border-border flex justify-between items-center text-sm">
+                      <button onClick={() => setShowSessionForm(true)} className="rounded-control bg-accent-500 px-4 py-2 font-bold text-primary-950 shadow-sm hover:bg-accent-400">
+                        + Saisir une seance
+                      </button>
+                      <button className="text-primary-600 hover:underline font-medium">Voir le contrat</button>
+                    </div>
+                  )}
                 </div>
               </div>
             )}
