@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { createUserWithEmailAndPassword, sendEmailVerification } from 'firebase/auth'
+import { createUserWithEmailAndPassword, sendEmailVerification, deleteUser } from 'firebase/auth'
 import { doc, setDoc, addDoc, collection } from 'firebase/firestore'
 import { auth, db } from '../api/firebase.js'
 import { useAuth } from './AuthContext.jsx'
@@ -38,10 +38,12 @@ export default function RegisterPage() {
     const lastName = formData.get('lastName')
     const phone = formData.get('phone')
 
+    let createdUser = null
     try {
       // 1. Create auth user
       const userCredential = await createUserWithEmailAndPassword(auth, email, password)
       const user = userCredential.user
+      createdUser = user
 
       // 2. Setup School if founder
       // No backendUrl here - there is nothing real to put yet.
@@ -124,6 +126,16 @@ export default function RegisterPage() {
         navigate('/portal')
       }
     } catch (err) {
+      // If auth account creation succeeded but a later step (school/profile
+      // Firestore writes) failed, roll the auth account back - otherwise
+      // the account is stuck half-created forever: the email is taken so
+      // re-registering fails with auth/email-already-in-use, but there's
+      // no users/{uid} profile for anything else to work either.
+      if (createdUser && err.code !== 'auth/email-already-in-use') {
+        await deleteUser(createdUser).catch(rollbackErr => {
+          console.error('Failed to roll back partially-created account:', rollbackErr)
+        })
+      }
       if (err.code === 'auth/email-already-in-use') {
         setError('Cet email est déjà utilisé.')
       } else if (err.code === 'auth/weak-password') {
