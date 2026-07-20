@@ -104,17 +104,17 @@ function DashboardTab({ onNavigate }) {
             <StatCard icon="schedule" label="Heures a confirmer" value={pendingTimeLogs.data?.length || 0} tone={pendingTimeLogs.data?.length > 0 ? 'warning' : 'success'} />
           </div>
 
-          {summary.data?.overall_average != null && (
+          {summary.data?.overallAverage != null && (
             <Card>
               <CardHeader title="Performance moyenne" subtitle="Derniere periode d'examen avec bulletins" />
               <CardBody>
                 <div className="flex items-baseline justify-between">
-                  <p className="text-3xl font-bold text-ink">{summary.data.overall_average}<span className="text-base font-normal text-ink-muted">/20</span></p>
+                  <p className="text-3xl font-bold text-ink">{summary.data.overallAverage}<span className="text-base font-normal text-ink-muted">/20</span></p>
                 </div>
                 <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-surface">
                   <div
                     className="h-full rounded-full bg-primary-600"
-                    style={{ width: `${Math.min(100, (summary.data.overall_average / 20) * 100)}%` }}
+                    style={{ width: `${Math.min(100, (summary.data.overallAverage / 20) * 100)}%` }}
                   />
                 </div>
               </CardBody>
@@ -136,7 +136,7 @@ function DashboardTab({ onNavigate }) {
                   <tbody className="divide-y divide-border">
                     {summary.data.levels.map((row) => (
                       <tr key={row.level}>
-                        <td className="p-3 text-ink">{row.level_label}</td>
+                        <td className="p-3 text-ink">{row.levelLabel}</td>
                         <td className="p-3 tabular-nums text-ink">{row.average}/20</td>
                         <td className="p-3">
                           <Badge tone={row.status === 'on_track' ? 'success' : 'warning'}>

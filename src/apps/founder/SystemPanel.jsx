@@ -123,14 +123,14 @@ export default function SystemPanel() {
           <Card>
             <CardHeader title="Sauvegarde Cloud (Google Drive)" subtitle="Sauvegarde automatique de la base de donnees et des documents" />
             <CardBody>
-              {!backupStatus.data?.is_configured ? (
+              {!backupStatus.data?.isConfigured ? (
                 <div className="flex flex-col items-start gap-4">
                   <p className="text-sm text-ink-muted">Connectez votre compte Google Drive pour activer la sauvegarde automatique de cette instance Ardoise. Vos donnees restent ainsi entierement sous votre controle.</p>
                   <button onClick={() => {
                     fetch('/api/backup/oauth/init/')
                       .then(res => res.json())
                       .then(data => {
-                        if (data.auth_url) window.location.href = data.auth_url;
+                        if (data.authUrl) window.location.href = data.authUrl;
                         else alert('Erreur: ' + data.error);
                       });
                   }} className="rounded-control bg-primary-600 px-4 py-2 text-sm font-semibold text-white hover:bg-primary-700">
@@ -141,12 +141,12 @@ export default function SystemPanel() {
                 <div className="space-y-4">
                   <div className="flex items-center gap-2 text-sm text-green-700">
                     <Icon name="check_circle" className="text-green-500" />
-                    Connecte. Les sauvegardes sont {backupStatus.data.is_enabled ? 'activees' : 'desactivees'}.
+                    Connecte. Les sauvegardes sont {backupStatus.data.isEnabled ? 'activees' : 'desactivees'}.
                   </div>
-                  {backupStatus.data.last_backup ? (
+                  {backupStatus.data.lastBackup ? (
                     <div className="text-sm text-ink-muted">
-                      Derniere sauvegarde : {new Date(backupStatus.data.last_backup.date).toLocaleString('fr-FR')} 
-                      ({backupStatus.data.last_backup.status})
+                      Derniere sauvegarde : {new Date(backupStatus.data.lastBackup.date).toLocaleString('fr-FR')}
+                      ({backupStatus.data.lastBackup.status})
                     </div>
                   ) : (
                     <div className="text-sm text-ink-muted">Aucune sauvegarde effectuee pour le moment.</div>

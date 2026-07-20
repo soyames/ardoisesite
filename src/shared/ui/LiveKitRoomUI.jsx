@@ -40,7 +40,7 @@ export default function LiveKitRoomUI() {
 
         const data = await response.json()
         setToken(data.token)
-        setLivekitUrl(data.livekit_url || 'wss://livekit.ardoise.soyames.com') // Ensure it connects to proper endpoint
+        setLivekitUrl(data.livekitUrl || 'wss://livekit.ardoise.soyames.com') // Ensure it connects to proper endpoint
       } catch (err) {
         setError(err.message)
       }

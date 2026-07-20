@@ -51,12 +51,12 @@ export default function AnalyticsDashboard({ onNavigate }) {
   }))
 
   // Transform analytics data for Recharts
-  const enrollmentTrends = Object.entries(analytics.data?.metrics?.enrollment_trends || {}).map(([year, count]) => ({
+  const enrollmentTrends = Object.entries(analytics.data?.metrics?.enrollmentTrends || {}).map(([year, count]) => ({
     name: year,
     Eleves: count
   }))
-  
-  const subjectPerformance = Object.entries(analytics.data?.metrics?.subject_performance || {}).map(([subject, score]) => ({
+
+  const subjectPerformance = Object.entries(analytics.data?.metrics?.subjectPerformance || {}).map(([subject, score]) => ({
     name: subject,
     Moyenne: score
   }))
@@ -84,13 +84,13 @@ export default function AnalyticsDashboard({ onNavigate }) {
             <StatCard
               icon="payments"
               label="Revenu du mois"
-              value={`${Number(income.data?.total_revenue || 0).toLocaleString()} FCFA`}
+              value={`${Number(income.data?.totalRevenue || 0).toLocaleString()} FCFA`}
             />
             <StatCard
               icon="account_balance"
               label="Resultat net du mois"
-              value={`${Number(income.data?.net_income || 0).toLocaleString()} FCFA`}
-              tone={Number(income.data?.net_income || 0) >= 0 ? 'success' : 'danger'}
+              value={`${Number(income.data?.netIncome || 0).toLocaleString()} FCFA`}
+              tone={Number(income.data?.netIncome || 0) >= 0 ? 'success' : 'danger'}
             />
             <StatCard
               icon="pending_actions"

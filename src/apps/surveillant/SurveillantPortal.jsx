@@ -107,7 +107,7 @@ function DashboardTab({ onNavigate }) {
             <StatCard
               icon="how_to_reg"
               label="Taux de presence aujourd'hui"
-              value={attendanceSummary.data?.rate_pct != null ? `${attendanceSummary.data.rate_pct}%` : 'Pas encore fait'}
+              value={attendanceSummary.data?.ratePct != null ? `${attendanceSummary.data.ratePct}%` : 'Pas encore fait'}
               hint={attendanceSummary.data?.total ? `${attendanceSummary.data.present}/${attendanceSummary.data.total} presents` : undefined}
             />
             <StatCard icon="emergency" label="Incidents ouverts" value={openIncidents.data?.length || 0} tone={openIncidents.data?.length > 0 ? 'warning' : 'success'} />

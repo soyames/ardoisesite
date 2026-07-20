@@ -105,9 +105,9 @@ export default function CyclesPanel() {
           <p className="text-sm font-medium text-success-700">
             Compte cree pour {createdAccount.fullName} ({createdAccount.email}).
           </p>
-          {createdAccount.temporary_password ? (
+          {createdAccount.temporaryPassword ? (
             <p className="mt-1 text-sm text-success-700">
-              Mot de passe temporaire : <span className="font-mono font-semibold">{createdAccount.temporary_password}</span>
+              Mot de passe temporaire : <span className="font-mono font-semibold">{createdAccount.temporaryPassword}</span>
               {' '}- a transmettre a la personne concernee ; elle pourra le changer depuis son profil.
             </p>
           ) : (

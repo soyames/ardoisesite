@@ -428,7 +428,7 @@ function InvoiceDetailModal({ invoiceId, onClose }) {
                   <li key={p.id} className="flex items-center gap-3 rounded-control border border-border p-2.5">
                     <Icon name={PAYMENT_METHOD_ICON[p.method] || 'receipt'} className="text-accent-700" />
                     <div className="min-w-0 flex-1">
-                      <p className="text-sm text-ink">{p.method_label} - {p.amount} FCFA</p>
+                      <p className="text-sm text-ink">{p.methodLabel} - {p.amount} FCFA</p>
                       <p className="text-xs text-ink-muted">
                         Recu {p.receiptNumber} - {new Date(p.receivedOn).toLocaleDateString('fr-FR')}
                       </p>
