@@ -187,7 +187,7 @@ export default function DeveloperPortal() {
                           onClick={async () => {
                             try {
                               const idToken = await auth.currentUser.getIdToken()
-                              const res = await fetch(`https://api.ardoise.soyames.com/api/developer/webhook/test`, {
+                              const res = await fetch(`https://ardoise-api.soyames.workers.dev/api/developer/webhook/test`, {
                                 method: 'POST',
                                 headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${idToken}` },
                                 body: JSON.stringify({ webhookId: hook.id })

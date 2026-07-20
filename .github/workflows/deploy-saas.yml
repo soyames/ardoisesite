@@ -44,7 +44,7 @@ jobs:
 
       - run: npm run build
         env:
-          VITE_API_BASE_URL: ${{ vars.VITE_API_BASE_URL || 'https://api.ardoise.soyames.com' }}
+          VITE_API_BASE_URL: ${{ vars.VITE_API_BASE_URL || 'https://ardoise-api.soyames.workers.dev' }}
           VITE_FEDAPAY_PUBLIC_KEY: ${{ vars.VITE_FEDAPAY_PUBLIC_KEY || 'pk_sandbox_OmhNPRnROc1ZNiJAM5Yq0sQ4' }}
           VITE_FEDAPAY_ENVIRONMENT: ${{ vars.VITE_FEDAPAY_ENVIRONMENT || 'sandbox' }}
 
