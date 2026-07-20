@@ -12,6 +12,8 @@
   },
   "dependencies": {
     "@jridgewell/trace-mapping": "^0.3.31",
+    "@tiptap/extension-text-align": "^3.28.0",
+    "@tiptap/pm": "^3.28.0",
     "@tiptap/react": "^3.28.0",
     "@tiptap/starter-kit": "^3.28.0",
     "@turf/rewind": "^7.3.5",
