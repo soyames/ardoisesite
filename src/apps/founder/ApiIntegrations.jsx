@@ -13,9 +13,7 @@ export default function ApiIntegrations() {
     fedaPayPublicKey: '',
     fedaPaySecretKey: '',
     whatsappToken: '',
-    whatsappPhoneNumberId: '',
-    googleOAuthClientId: '',
-    googleOAuthClientSecret: ''
+    whatsappPhoneNumberId: ''
   })
 
   useEffect(() => {
@@ -30,9 +28,7 @@ export default function ApiIntegrations() {
             fedaPayPublicKey: data.fedapay_public_key || '',
             fedaPaySecretKey: data.fedapay_secret_key || '',
             whatsappToken: data.whatsapp_token || '',
-            whatsappPhoneNumberId: data.whatsapp_phone_number_id || '',
-            googleOAuthClientId: data.google_oauth_client_id || '',
-            googleOAuthClientSecret: data.google_oauth_client_secret || ''
+            whatsappPhoneNumberId: data.whatsapp_phone_number_id || ''
           })
         }
       } catch (err) {
@@ -59,9 +55,7 @@ export default function ApiIntegrations() {
           fedapay_public_key: config.fedaPayPublicKey,
           fedapay_secret_key: config.fedaPaySecretKey,
           whatsapp_token: config.whatsappToken,
-          whatsapp_phone_number_id: config.whatsappPhoneNumberId,
-          google_oauth_client_id: config.googleOAuthClientId,
-          google_oauth_client_secret: config.googleOAuthClientSecret
+          whatsapp_phone_number_id: config.whatsappPhoneNumberId
         })
       })
 
@@ -87,38 +81,9 @@ export default function ApiIntegrations() {
 
   return (
     <Card>
-      <CardHeader title="Paramètres Système & APIs" subtitle="Configurez vos clés WhatsApp, FedaPay et Google Drive pour votre école." />
+      <CardHeader title="Paramètres Système & APIs" subtitle="Configurez vos clés WhatsApp et FedaPay pour votre école." />
       <CardBody>
         <form onSubmit={handleSave} className="space-y-6">
-
-          <div className="bg-surface p-4 rounded-card ring-1 ring-border">
-            <h3 className="font-bold text-ink mb-4">Configuration Google Drive (Sauvegarde Cloud)</h3>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-ink">Client ID OAuth</label>
-                <input
-                  type="text"
-                  name="googleOAuthClientId"
-                  value={config.googleOAuthClientId}
-                  onChange={handleChange}
-                  className={INPUT_CLASS}
-                  placeholder="....apps.googleusercontent.com"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-ink">Client Secret OAuth</label>
-                <input
-                  type="password"
-                  name="googleOAuthClientSecret"
-                  value={config.googleOAuthClientSecret}
-                  onChange={handleChange}
-                  className={INPUT_CLASS}
-                  placeholder="GOCSPX-..."
-                />
-                <p className="text-xs text-ink-muted mt-1">Obtenez ces clés depuis la console Google Cloud > APIs & Services > Credentials.</p>
-              </div>
-            </div>
-          </div>
 
           <div className="bg-surface p-4 rounded-card ring-1 ring-border">
             <h3 className="font-bold text-ink mb-4">Configuration FedaPay</h3>
