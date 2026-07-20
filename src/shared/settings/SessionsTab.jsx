@@ -46,6 +46,7 @@ export default function SessionsTab() {
   }
 
   if (sessions.loading) return <div className="flex justify-center py-10"><Spinner /></div>
+  if (sessions.error) return <div className="text-danger-600">Erreur de chargement des sessions : {sessions.error.message || String(sessions.error)}</div>
 
   return (
     <div className="space-y-3">
@@ -66,17 +67,17 @@ export default function SessionsTab() {
               <div className="min-w-0">
                 <div className="flex items-center gap-2">
                   <p className="text-sm font-medium text-ink">
-                    {DEVICE_LABEL[s.deviceType] || 'Appareil'}
+                    {DEVICE_LABEL[s.device_type] || 'Appareil'}
                     {s.browser && ` - ${s.browser}`}
-                    {s.operatingSystem && ` (${s.operatingSystem})`}
+                    {s.operating_system && ` (${s.operating_system})`}
                   </p>
-                  {s.isCurrent && <Badge tone="success">Session actuelle</Badge>}
+                  {s.is_current && <Badge tone="success">Session actuelle</Badge>}
                 </div>
                 <p className="mt-0.5 text-xs text-ink-muted">
-                  {s.ipAddress || 'IP inconnue'} - active {timeAgo(s.lastSeenAt)}
+                  {s.ip_address || 'IP inconnue'} - active {timeAgo(s.last_seen_at)}
                 </p>
               </div>
-              {!s.isCurrent && (
+              {!s.is_current && (
                 <Button
                   size="sm" variant="danger"
                   onClick={() => revoke(s.id)}
