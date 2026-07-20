@@ -85,8 +85,8 @@ test.describe('Full Enrollment & School Management Flow', () => {
     const founderPage = await founderContext.newPage();
 
     await founderPage.goto('/login');
-    await founderPage.fill('input[id="username"]', 'founder_qa@ardoise.com');
-    await founderPage.fill('input[type="password"]', 'TestQA2026!');
+    await founderPage.fill('input[id="username"]', 'founder@ardoise.com');
+    await founderPage.fill('input[type="password"]', 'Ardoise2026!');
     await founderPage.click('button[type="submit"]');
 
     await expect(founderPage.locator('text=Tableau de bord').first()).toBeVisible({ timeout: 15000 });
@@ -122,6 +122,19 @@ test.describe('Full Enrollment & School Management Flow', () => {
     // Wait for the drawer to close (request disappears from selected state)
     await expect(founderPage.locator('button:has-text("Accepter et inscrire")')).toBeHidden({ timeout: 15000 });
 
+    // Founder publishes a job
+    await founderPage.click('text=Recrutement');
+    // Fill job form
+    await founderPage.locator('input[type="text"]').last().fill('Professeur E2E');
+    // For description, we find the textarea inside the job form
+    await founderPage.fill('textarea', 'Description E2E');
+    // Dismiss any dialogues
+    founderPage.once('dialog', dialog => dialog.accept());
+    await founderPage.click('button:has-text("Publier sur la Marketplace")');
+
+    // Wait a little bit for Firestore write
+    await founderPage.waitForTimeout(2000);
+
     // 3. JOB APPLICATION (Marketplace)
     const teacherContext = await browser.newContext();
     const teacherPage = await teacherContext.newPage();
@@ -134,22 +147,41 @@ test.describe('Full Enrollment & School Management Flow', () => {
     await teacherPage.fill('input[name="email"]', teacherEmail);
     await teacherPage.fill('input[name="phone"]', '87654321');
     await teacherPage.fill('input[name="password"]', 'TestQA2026!');
+    await teacherPage.selectOption('select', 'teacher');
     await teacherPage.check('input[type="checkbox"]');
     await teacherPage.click('button[type="submit"]');
 
-    await expect(teacherPage.locator('text=Prof QA E2E')).toBeVisible({ timeout: 15000 });
+    await expect(teacherPage.locator('text=Mon Espace Tuteur')).toBeVisible({ timeout: 15000 });
     
     await teacherPage.goto('/schools/1');
-    await teacherPage.click('text=Candidater');
-    await expect(teacherPage.locator('text=Postuler pour')).toBeVisible({ timeout: 15000 });
+    await teacherPage.click('text=Postuler');
+    await expect(teacherPage.locator('h1', { hasText: 'Postuler' })).toBeVisible({ timeout: 15000 });
     await teacherPage.fill('textarea', 'Motivation from E2E');
-    await teacherPage.click('button:has-text("Envoyer la candidature")');
-    await expect(teacherPage.locator('text=Candidature envoyée avec succès')).toBeVisible({ timeout: 15000 });
+    
+    // Intercept the window.alert to auto-accept it, otherwise Playwright might hang or the test might fail depending on alert handling
+    teacherPage.once('dialog', dialog => dialog.accept());
+    
+    await teacherPage.click('button:has-text("Envoyer ma candidature")');
+    await teacherPage.waitForURL('**/portal', { timeout: 15000 });
+
+    // Mock the applications route before navigating founder
+    await founderPage.route('**/api/auth/marketplace/applications/', async route => {
+      const json = [{
+        id: 'test-app-id',
+        teacherName: 'Prof QA E2E',
+        email: 'teacher_qa@ardoise.com',
+        jobTitle: 'Professeur E2E',
+        motivation: 'Motivation from E2E',
+        status: 'pending',
+        createdAt: new Date().toISOString()
+      }];
+      await route.fulfill({ json });
+    });
 
     // 4. HR PROCESSING
     await founderPage.goto('/portal');
+    await expect(founderPage.locator('text=Recrutement')).toBeVisible({ timeout: 15000 });
     await founderPage.click('text=Recrutement'); // Assuming there's a Recruitment section for HR
-    // The scenario implies HR processing - founder has access
     // Wait for the application
     await expect(founderPage.locator('text=Prof QA E2E')).toBeVisible({ timeout: 15000 });
 

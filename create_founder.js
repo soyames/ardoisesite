@@ -17,7 +17,7 @@ const db = getFirestore(app);
 
 async function createFounder() {
   try {
-    const cred = await createUserWithEmailAndPassword(auth, 'founder_qa@ardoise.com', 'TestQA2026!');
+    const cred = await createUserWithEmailAndPassword(auth, 'founder@ardoise.com', 'TestQA2026!');
     console.log("Created user in Firebase Auth:", cred.user.uid);
     
     await setDoc(doc(db, 'users', cred.user.uid), {
@@ -25,7 +25,7 @@ async function createFounder() {
       schoolId: '1',
       firstName: 'Founder',
       lastName: 'QA',
-      email: 'founder_qa@ardoise.com',
+      email: 'founder@ardoise.com',
       createdAt: new Date()
     });
     console.log("Created user in Firestore");
@@ -37,14 +37,14 @@ async function createFounder() {
       // Actually we just need to update Firestore, but we need the UID
       // We can't get UID if we don't sign in
       import('firebase/auth').then(({ signInWithEmailAndPassword }) => {
-          signInWithEmailAndPassword(auth, 'founder_qa@ardoise.com', 'TestQA2026!')
+          signInWithEmailAndPassword(auth, 'founder@ardoise.com', 'TestQA2026!')
             .then(c => {
                 setDoc(doc(db, 'users', c.user.uid), {
                     role: 'founder',
                     schoolId: '1',
                     firstName: 'Founder',
                     lastName: 'QA',
-                    email: 'founder_qa@ardoise.com'
+                    email: 'founder@ardoise.com'
                 }, { merge: true }).then(() => {
                     console.log("Updated existing founder in Firestore");
                     process.exit(0);

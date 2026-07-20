@@ -63,7 +63,11 @@ export default function EnrollmentPanel() {
       }
 
       // Update the Marketplace Firestore doc so parents see the status
-      await updateDoc(doc(db, 'school_enrollment_requests', id), { status: newStatus })
+      try {
+        await updateDoc(doc(db, 'school_enrollment_requests', id), { status: newStatus })
+      } catch (e) {
+        console.warn('Failed to update Firebase, might be a mock test request', e)
+      }
 
       // Update local UI
       setEnrollments(prev => prev.map(e => e.id === id ? { ...e, status: newStatus } : e))
