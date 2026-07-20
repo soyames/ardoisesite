@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { useApiGet } from '../../shared/hooks/useApi.js'
 import { Card, CardHeader, CardBody } from '../../shared/ui/Card.jsx'
 import StatCard from '../../shared/ui/StatCard.jsx'
@@ -42,8 +43,9 @@ export default function SystemPanel() {
   const staff = useApiGet('/api/collab/staff-directory/')
   const documents = useApiGet('/api/collab/documents/')
   const auditLogs = useApiGet('/api/audit/logs/')
+  const backupStatus = useApiGet('/api/backup/status/')
 
-  const loading = school.loading || academicYears.loading || staff.loading || documents.loading || auditLogs.loading
+  const loading = school.loading || academicYears.loading || staff.loading || documents.loading || auditLogs.loading || backupStatus.loading
 
   const currentYear = academicYears.data?.find((y) => y.isCurrent) || academicYears.data?.[0]
 
@@ -115,6 +117,56 @@ export default function SystemPanel() {
                   <span className="rounded-full bg-primary-50 px-2 py-0.5 text-xs font-semibold text-primary-700">{count}</span>
                 </div>
               ))}
+            </CardBody>
+          </Card>
+
+          <Card>
+            <CardHeader title="Sauvegarde Cloud (Google Drive)" subtitle="Sauvegarde automatique de la base de donnees et des documents" />
+            <CardBody>
+              {!backupStatus.data?.is_configured ? (
+                <div className="flex flex-col items-start gap-4">
+                  <p className="text-sm text-ink-muted">Connectez votre compte Google Drive pour activer la sauvegarde automatique de cette instance Ardoise. Vos donnees restent ainsi entierement sous votre controle.</p>
+                  <button onClick={() => {
+                    fetch('/api/backup/oauth/init/')
+                      .then(res => res.json())
+                      .then(data => {
+                        if (data.auth_url) window.location.href = data.auth_url;
+                        else alert('Erreur: ' + data.error);
+                      });
+                  }} className="rounded-control bg-primary-600 px-4 py-2 text-sm font-semibold text-white hover:bg-primary-700">
+                    Connecter Google Drive
+                  </button>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <div className="flex items-center gap-2 text-sm text-green-700">
+                    <Icon name="check_circle" className="text-green-500" />
+                    Connecte. Les sauvegardes sont {backupStatus.data.is_enabled ? 'activees' : 'desactivees'}.
+                  </div>
+                  {backupStatus.data.last_backup ? (
+                    <div className="text-sm text-ink-muted">
+                      Derniere sauvegarde : {new Date(backupStatus.data.last_backup.date).toLocaleString('fr-FR')} 
+                      ({backupStatus.data.last_backup.status})
+                    </div>
+                  ) : (
+                    <div className="text-sm text-ink-muted">Aucune sauvegarde effectuee pour le moment.</div>
+                  )}
+                  <button onClick={() => {
+                    fetch('/api/backup/trigger/', { method: 'POST', headers: { 'X-CSRFToken': document.cookie.split('csrftoken=')[1]?.split(';')[0] } })
+                      .then(res => res.json())
+                      .then(data => {
+                        if (data.success) {
+                          alert('Sauvegarde terminee avec succes.')
+                          window.location.reload()
+                        } else {
+                          alert('Erreur: ' + data.error)
+                        }
+                      })
+                  }} className="rounded-control border border-border bg-surface px-4 py-2 text-sm font-medium text-ink hover:bg-surface-hover">
+                    Sauvegarder Maintenant
+                  </button>
+                </div>
+              )}
             </CardBody>
           </Card>
 
