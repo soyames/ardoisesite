@@ -1,5 +1,6 @@
 import { useApiGet } from '../../shared/hooks/useApi.js'
 import { useAuth } from '../../shared/auth/AuthContext.jsx'
+import { toLocalDateString } from '../../shared/utils/date.js'
 import { Card, CardHeader } from '../../shared/ui/Card.jsx'
 import StatCard from '../../shared/ui/StatCard.jsx'
 import ActivityList from '../../shared/ui/ActivityList.jsx'
@@ -27,8 +28,8 @@ const AUDIT_ICON_BY_ACTION = {
 export default function AnalyticsDashboard({ onNavigate }) {
   const { user } = useAuth()
   const today = new Date()
-  const monthStart = new Date(today.getFullYear(), today.getMonth(), 1).toISOString().slice(0, 10)
-  const todayStr = today.toISOString().slice(0, 10)
+  const monthStart = toLocalDateString(new Date(today.getFullYear(), today.getMonth(), 1))
+  const todayStr = toLocalDateString(today)
 
   const enrollments = useApiGet('/api/students/enrollments/')
   const income = useApiGet(`/api/finance/reports/income-statement/?start=${monthStart}&end=${todayStr}`)

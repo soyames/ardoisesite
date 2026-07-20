@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { api, ApiError } from '../../shared/api/client.js'
 import { useApiGet } from '../../shared/hooks/useApi.js'
+import { toLocalDateString } from '../../shared/utils/date.js'
 import { Card, CardHeader, CardBody } from '../../shared/ui/Card.jsx'
 import Button from '../../shared/ui/Button.jsx'
 import Badge from '../../shared/ui/Badge.jsx'
@@ -53,7 +54,7 @@ export default function ComptablePortal() {
 }
 
 function DashboardTab({ onNavigate }) {
-  const today = new Date().toISOString().slice(0, 10)
+  const today = toLocalDateString()
   const monthStart = today.slice(0, 8) + '01'
   const incomeStatement = useApiGet(`/api/finance/reports/income-statement/?start=${monthStart}&end=${today}`)
   const pendingExpenses = useApiGet('/api/finance/expense-requests/?status=pending')
@@ -347,7 +348,7 @@ function ExpensesTab() {
 }
 
 function ReportsTab() {
-  const today = new Date().toISOString().slice(0, 10)
+  const today = toLocalDateString()
   const monthStart = today.slice(0, 8) + '01'
   const trialBalance = useApiGet(`/api/finance/reports/trial-balance/?as_of=${today}`)
   const incomeStatement = useApiGet(`/api/finance/reports/income-statement/?start=${monthStart}&end=${today}`)

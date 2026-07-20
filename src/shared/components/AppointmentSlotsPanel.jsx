@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { api, ApiError } from '../api/client.js'
 import { useApiGet } from '../hooks/useApi.js'
+import { toLocalDateString } from '../utils/date.js'
 import { Card, CardHeader, CardBody } from '../ui/Card.jsx'
 import Button from '../ui/Button.jsx'
 import Spinner from '../ui/Spinner.jsx'
@@ -17,7 +18,7 @@ const INPUT_CLASS =
  * own separately-scoped build).
  */
 export default function AppointmentSlotsPanel() {
-  const [date, setDate] = useState(() => new Date().toISOString().slice(0, 10))
+  const [date, setDate] = useState(() => toLocalDateString())
   const appointments = useApiGet(`/api/students/appointments/?date=${date}`)
   const [showForm, setShowForm] = useState(false)
   const [form, setForm] = useState({ start_time: '09:00', end_time: '09:30', is_blocked: false })

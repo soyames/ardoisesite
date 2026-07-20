@@ -5,7 +5,10 @@ const WEEKDAY_LABELS = ['DIM', 'LUN', 'MAR', 'MER', 'JEU', 'VEN', 'SAM']
 const MONTH_LABEL_OPTS = { month: 'long', year: 'numeric' }
 
 function toDateKey(d) {
-  return d.toISOString().slice(0, 10)
+  const year = d.getFullYear()
+  const month = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
 }
 
 function buildMonthCells(monthDate) {
@@ -38,8 +41,10 @@ export default function CalendarGrid({ events = [], selectedDate, onSelectDate }
 
   const eventsByDate = {}
   for (const ev of events) {
-    if (!eventsByDate[ev.date]) eventsByDate[ev.date] = []
-    eventsByDate[ev.date].push(ev)
+    const key = ev.start_date || ev.date
+    if (!key) continue
+    if (!eventsByDate[key]) eventsByDate[key] = []
+    eventsByDate[key].push(ev)
   }
 
   const cells = buildMonthCells(month)

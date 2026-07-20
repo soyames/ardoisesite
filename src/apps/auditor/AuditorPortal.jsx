@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useApiGet } from '../../shared/hooks/useApi.js'
+import { toLocalDateString } from '../../shared/utils/date.js'
 import { Card, CardHeader, CardBody } from '../../shared/ui/Card.jsx'
 import Badge from '../../shared/ui/Badge.jsx'
 import Spinner from '../../shared/ui/Spinner.jsx'
@@ -117,7 +118,7 @@ function AuditLogTab() {
 }
 
 function FinanceTab() {
-  const today = new Date().toISOString().slice(0, 10)
+  const today = toLocalDateString()
   const monthStart = today.slice(0, 8) + '01'
   const trialBalance = useApiGet(`/api/finance/reports/trial-balance/?as_of=${today}`)
   const incomeStatement = useApiGet(`/api/finance/reports/income-statement/?start=${monthStart}&end=${today}`)

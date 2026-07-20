@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { api, ApiError } from '../../shared/api/client.js'
 import { useApiGet } from '../../shared/hooks/useApi.js'
+import { toLocalDateString } from '../../shared/utils/date.js'
 import { Card, CardHeader, CardBody } from '../../shared/ui/Card.jsx'
 import Button from '../../shared/ui/Button.jsx'
 import Badge from '../../shared/ui/Badge.jsx'
@@ -367,7 +368,7 @@ const ATTENDANCE_STATES = [
 
 function AttendancePanel({ classSubject }) {
   const roster = useRoster(classSubject.classroom_id)
-  const [date, setDate] = useState(() => new Date().toISOString().slice(0, 10))
+  const [date, setDate] = useState(() => toLocalDateString())
   const [states, setStates] = useState({})
   const [saving, setSaving] = useState(false)
   const [result, setResult] = useState(null)
@@ -532,7 +533,7 @@ function ExamPaperPanel({ classSubject, examPeriods }) {
 
 function DisciplinePanel({ classSubject }) {
   const roster = useRoster(classSubject.classroom_id)
-  const [form, setForm] = useState({ enrollment: '', date: new Date().toISOString().slice(0, 10), measure: 'warning', reason: '', hours: '', points_deducted: '' })
+  const [form, setForm] = useState({ enrollment: '', date: toLocalDateString(), measure: 'warning', reason: '', hours: '', points_deducted: '' })
   const [error, setError] = useState(null)
   const [submitting, setSubmitting] = useState(false)
   const [success, setSuccess] = useState(false)
@@ -553,7 +554,7 @@ function DisciplinePanel({ classSubject }) {
         hours: form.measure === 'detention' && form.hours ? Number(form.hours) : null,
         points_deducted: form.points_deducted ? Number(form.points_deducted) : 0,
       })
-      setForm({ enrollment: '', date: new Date().toISOString().slice(0, 10), measure: 'warning', reason: '', hours: '', points_deducted: '' })
+      setForm({ enrollment: '', date: toLocalDateString(), measure: 'warning', reason: '', hours: '', points_deducted: '' })
       setSuccess(true)
       roster.refetch()
     } catch (err) {
