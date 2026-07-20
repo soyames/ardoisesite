@@ -81,7 +81,7 @@ function DashboardTab({ onNavigate }) {
     icon: 'emergency',
     iconTone: 'warning',
     title: inc.description,
-    subtitle: `${inc.location} - ${new Date(inc.occurred_at).toLocaleString('fr-FR')}`,
+    subtitle: `${inc.location} - ${new Date(inc.occurredAt).toLocaleString('fr-FR')}`,
     badge: INCIDENT_KINDS.find((k) => k.value === inc.kind)?.label || inc.kind,
     badgeTone: 'warning',
   }))
@@ -144,7 +144,7 @@ function IncidentsTab() {
     try {
       await api.post('/api/academics/incidents/', {
         kind: form.kind, description: form.description, location: form.location,
-        occurred_at: new Date().toISOString(),
+        occurredAt: new Date().toISOString(),
       })
       setForm({ kind: 'behavior', description: '', location: '' })
       setShowForm(false)
@@ -205,7 +205,7 @@ function IncidentsTab() {
                   <div>
                     <p className="text-sm font-medium text-ink">{inc.description}</p>
                     <p className="text-xs text-ink-muted">
-                      {INCIDENT_KINDS.find((k) => k.value === inc.kind)?.label} - {inc.location} - {new Date(inc.occurred_at).toLocaleString('fr-FR')}
+                      {INCIDENT_KINDS.find((k) => k.value === inc.kind)?.label} - {inc.location} - {new Date(inc.occurredAt).toLocaleString('fr-FR')}
                     </p>
                   </div>
                   <Badge tone={STATUS_TONE[inc.status]}>{inc.status}</Badge>
@@ -239,7 +239,7 @@ function AttendanceTab() {
 
   const markPresentByScan = (idCardCode) => {
     setScanError(null)
-    const match = (roster.data || []).find((r) => r.id_card_code && r.id_card_code === idCardCode)
+    const match = (roster.data || []).find((r) => r.idCardCode && r.idCardCode === idCardCode)
     if (!match) {
       setScanError("Cette carte ne correspond a aucun eleve de la classe selectionnee.")
       return
@@ -255,11 +255,11 @@ function AttendanceTab() {
       const records = (roster.data || [])
         .filter((r) => states[r.id])
         .map((r) => ({
-          local_uuid: crypto.randomUUID(),
+          localUuid: crypto.randomUUID(),
           enrollment: r.id,
           date,
           state: states[r.id],
-          created_offline: false,
+          createdOffline: false,
         }))
       if (records.length === 0) {
         setError('Marquez au moins un eleve avant de valider.')
@@ -300,7 +300,7 @@ function AttendanceTab() {
             <div className="space-y-2">
               {roster.data.map((r) => (
                 <div key={r.id} className="flex items-center justify-between rounded-control border border-border p-2">
-                  <p className="text-sm text-ink">{r.student_name} <span className="text-ink-muted">({r.matricule})</span></p>
+                  <p className="text-sm text-ink">{r.studentName} <span className="text-ink-muted">({r.matricule})</span></p>
                   <div className="flex flex-wrap gap-1">
                     {ATTENDANCE_STATES.map((s) => (
                       <button
@@ -329,7 +329,7 @@ function DisciplineTab() {
   const classrooms = useApiGet('/api/students/classrooms/')
   const [classroomId, setClassroomId] = useState('')
   const roster = useApiGet(`/api/students/roster/?classroom=${classroomId}`, { skip: !classroomId })
-  const [form, setForm] = useState({ enrollment: '', date: toLocalDateString(), measure: 'warning', reason: '', hours: '', points_deducted: '' })
+  const [form, setForm] = useState({ enrollment: '', date: toLocalDateString(), measure: 'warning', reason: '', hours: '', pointsDeducted: '' })
   const [error, setError] = useState(null)
   const [submitting, setSubmitting] = useState(false)
   const [success, setSuccess] = useState(false)
@@ -348,9 +348,9 @@ function DisciplineTab() {
         measure: form.measure,
         reason: form.reason,
         hours: form.measure === 'detention' && form.hours ? Number(form.hours) : null,
-        points_deducted: form.points_deducted ? Number(form.points_deducted) : 0,
+        pointsDeducted: form.pointsDeducted ? Number(form.pointsDeducted) : 0,
       })
-      setForm({ enrollment: '', date: toLocalDateString(), measure: 'warning', reason: '', hours: '', points_deducted: '' })
+      setForm({ enrollment: '', date: toLocalDateString(), measure: 'warning', reason: '', hours: '', pointsDeducted: '' })
       setSuccess(true)
       roster.refetch()
     } catch (err) {
@@ -371,11 +371,11 @@ function DisciplineTab() {
           </select>
           <select required className={INPUT_CLASS} value={form.enrollment} onChange={(e) => setForm({ ...form, enrollment: e.target.value })} disabled={!classroomId}>
             <option value="">Choisir l'eleve...</option>
-            {roster.data?.map((r) => <option key={r.id} value={r.id}>{r.student_name}</option>)}
+            {roster.data?.map((r) => <option key={r.id} value={r.id}>{r.studentName}</option>)}
           </select>
           {selectedStudent && (
             <p className="text-xs text-ink-muted sm:col-span-2">
-              Points de discipline actuels : <span className="font-semibold text-ink">{selectedStudent.discipline_score}</span>
+              Points de discipline actuels : <span className="font-semibold text-ink">{selectedStudent.disciplineScore}</span>
             </p>
           )}
           <input required type="date" className={INPUT_CLASS} value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} />
@@ -387,7 +387,7 @@ function DisciplineTab() {
           )}
           <div>
             <label className="mb-1 block text-xs font-medium text-ink-muted">Points a deduire (selon la gravite)</label>
-            <input type="number" min="0" className={INPUT_CLASS} placeholder="ex: 2" value={form.points_deducted} onChange={(e) => setForm({ ...form, points_deducted: e.target.value })} />
+            <input type="number" min="0" className={INPUT_CLASS} placeholder="ex: 2" value={form.pointsDeducted} onChange={(e) => setForm({ ...form, pointsDeducted: e.target.value })} />
           </div>
           <textarea required className={`sm:col-span-2 ${INPUT_CLASS}`} placeholder="Motif" value={form.reason} onChange={(e) => setForm({ ...form, reason: e.target.value })} />
           {error && <p className="text-sm text-danger-600 sm:col-span-2">{error}</p>}
@@ -400,7 +400,7 @@ function DisciplineTab() {
 }
 
 function TimeLogsTab() {
-  const pending = useApiGet('/api/hr/time-logs/?is_confirmed=false')
+  const pending = useApiGet('/api/hr/time-logs/?isConfirmed=false')
   const [busy, setBusy] = useState(null)
   const [error, setError] = useState(null)
 
@@ -427,7 +427,7 @@ function TimeLogsTab() {
         <Card key={t.id}>
           <CardBody className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-ink">{t.staff_name} - {t.class_subject_label}</p>
+              <p className="text-sm font-medium text-ink">{t.staffName} - {t.classSubjectLabel}</p>
               <p className="text-xs text-ink-muted">{t.date} - {t.hours} h</p>
             </div>
             <Button size="sm" onClick={() => confirm(t.id)} disabled={busy === t.id}>

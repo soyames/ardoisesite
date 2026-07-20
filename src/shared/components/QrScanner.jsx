@@ -2,8 +2,8 @@ import { useEffect, useRef, useState } from 'react'
 import Button from '../ui/Button.jsx'
 
 /**
- * Camera-based QR/barcode scanner - reads a student's id_card_code off
- * their printed ID card (see Student.id_card_code's own docstring). Uses
+ * Camera-based QR/barcode scanner - reads a student's idCardCode off
+ * their printed ID card (see Student.idCardCode's own docstring). Uses
  * the browser-native BarcodeDetector API (no new dependency) rather than
  * a JS decoding library - covers the Chromium-based Android devices this
  * product's schools actually use for cantine/surveillance tablets.

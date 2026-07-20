@@ -45,11 +45,11 @@ function NewTaskForm({ staff, onCreated, onCancel }) {
       const task = await api.post('/api/collab/tasks/', {
         title: title.trim(),
         description: description.trim(),
-        assigned_to: Number(assignedTo),
+        assignedTo: Number(assignedTo),
         priority,
-        due_date: dueDate || null,
+        dueDate: dueDate || null,
         recurrence,
-        checklist_items: checklist.map((c) => c.trim()).filter(Boolean),
+        checklistItems: checklist.map((c) => c.trim()).filter(Boolean),
       })
       onCreated(task)
     } catch (err) {
@@ -76,7 +76,7 @@ function NewTaskForm({ staff, onCreated, onCancel }) {
           <select className={INPUT_CLASS} value={assignedTo} onChange={(e) => setAssignedTo(e.target.value)}>
             <option value="">Assigner a...</option>
             {staff.map((p) => (
-              <option key={p.id} value={p.id}>{p.full_name} ({p.role})</option>
+              <option key={p.id} value={p.id}>{p.fullName} ({p.role})</option>
             ))}
           </select>
           <select className={INPUT_CLASS} value={priority} onChange={(e) => setPriority(e.target.value)}>
@@ -139,7 +139,7 @@ function TaskDetail({ task, onClose, onChanged }) {
   }
 
   const toggleChecklistItem = async (item) => {
-    await api.patch(`/api/collab/tasks/${task.id}/checklist/${item.id}/`, { is_done: !item.is_done })
+    await api.patch(`/api/collab/tasks/${task.id}/checklist/${item.id}/`, { isDone: !item.isDone })
     onChanged()
   }
 
@@ -163,7 +163,7 @@ function TaskDetail({ task, onClose, onChanged }) {
             <p className="text-sm font-semibold text-ink">{task.title}</p>
             {task.description && <p className="mt-1 text-sm text-ink-muted">{task.description}</p>}
             <p className="mt-1 text-xs text-ink-muted">
-              Assignee a {task.assigned_to?.full_name} par {task.assigned_by?.full_name}
+              Assignee a {task.assignedTo?.fullName} par {task.assignedBy?.fullName}
             </p>
           </div>
           <button onClick={onClose} className="text-xs text-ink-muted hover:text-ink">Fermer</button>
@@ -183,15 +183,15 @@ function TaskDetail({ task, onClose, onChanged }) {
           ))}
         </div>
 
-        {task.checklist_items?.length > 0 && (
+        {task.checklistItems?.length > 0 && (
           <div className="space-y-1">
             <p className="text-xs font-medium text-ink-muted">
-              Liste de verification ({task.checklist_progress?.done}/{task.checklist_progress?.total})
+              Liste de verification ({task.checklistProgress?.done}/{task.checklistProgress?.total})
             </p>
-            {task.checklist_items.map((item) => (
+            {task.checklistItems.map((item) => (
               <label key={item.id} className="flex items-center gap-2 text-sm">
-                <input type="checkbox" checked={item.is_done} onChange={() => toggleChecklistItem(item)} />
-                <span className={item.is_done ? 'text-ink-muted line-through' : 'text-ink'}>{item.label}</span>
+                <input type="checkbox" checked={item.isDone} onChange={() => toggleChecklistItem(item)} />
+                <span className={item.isDone ? 'text-ink-muted line-through' : 'text-ink'}>{item.label}</span>
               </label>
             ))}
           </div>
@@ -206,7 +206,7 @@ function TaskDetail({ task, onClose, onChanged }) {
                 id: u.id,
                 icon: u.kind === 'status_change' ? 'sync_alt' : 'chat_bubble',
                 iconTone: u.kind === 'status_change' ? 'accent' : 'primary',
-                title: u.author?.full_name,
+                title: u.author?.fullName,
                 subtitle: u.body,
               }))}
             />
@@ -293,7 +293,7 @@ export default function TasksPanel() {
                 </div>
                 <div className="space-y-2">
                   {group.map((task) => {
-                    const progress = task.checklist_progress
+                    const progress = task.checklistProgress
                     const pct = progress?.total > 0 ? Math.round((progress.done / progress.total) * 100) : null
                     return (
                       <button
@@ -305,8 +305,8 @@ export default function TasksPanel() {
                           <div className="min-w-0">
                             <p className="truncate text-sm font-medium text-ink">{task.title}</p>
                             <p className="truncate text-xs text-ink-muted">
-                              {task.assigned_to?.full_name}
-                              {task.due_date && ` - Echeance ${task.due_date}`}
+                              {task.assignedTo?.fullName}
+                              {task.dueDate && ` - Echeance ${task.dueDate}`}
                             </p>
                           </div>
                           <div className="flex shrink-0 gap-2">

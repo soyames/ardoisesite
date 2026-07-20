@@ -27,7 +27,7 @@ const METHODS = [
 export default function Encaissement() {
   const [matricule, setMatricule] = useState('')
   const [searched, setSearched] = useState('')
-  const invoices = useApiGet(searched ? `/api/finance/invoices/?student_matricule=${searched}` : null, {
+  const invoices = useApiGet(searched ? `/api/finance/invoices/?studentMatricule=${searched}` : null, {
     skip: !searched,
   })
 
@@ -80,15 +80,15 @@ export default function Encaissement() {
 
 function InvoiceRow({ invoice, onPaid }) {
   const [open, setOpen] = useState(false)
-  const balance = (Number(invoice.amount_due) - Number(invoice.amount_paid)).toFixed(2)
+  const balance = (Number(invoice.amountDue) - Number(invoice.amountPaid)).toFixed(2)
 
   return (
     <li className="rounded-control border border-border p-3">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
-          <p className="text-sm font-medium text-ink">{invoice.tranche_label || `Facture #${invoice.id}`}</p>
+          <p className="text-sm font-medium text-ink">{invoice.trancheLabel || `Facture #${invoice.id}`}</p>
           <p className="text-xs text-ink-muted">
-            {invoice.student_name} · Du: {invoice.amount_due} FCFA · Reste: {balance} FCFA
+            {invoice.studentName} · Du: {invoice.amountDue} FCFA · Reste: {balance} FCFA
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -106,7 +106,7 @@ function InvoiceRow({ invoice, onPaid }) {
 }
 
 function PaymentForm({ invoice, onPaid }) {
-  const balance = (Number(invoice.amount_due) - Number(invoice.amount_paid)).toFixed(2)
+  const balance = (Number(invoice.amountDue) - Number(invoice.amountPaid)).toFixed(2)
   const [parentId, setParentId] = useState('')
   const [amount, setAmount] = useState(balance)
   const [method, setMethod] = useState('cash')
@@ -123,7 +123,7 @@ function PaymentForm({ invoice, onPaid }) {
         parent: Number(parentId),
         amount,
         method,
-        receipt_number: receiptNumber,
+        receiptNumber: receiptNumber,
         allocations: [{ invoice: invoice.id, amount }],
       })
       onPaid()

@@ -21,7 +21,7 @@ export default function AppointmentSlotsPanel() {
   const [date, setDate] = useState(() => toLocalDateString())
   const appointments = useApiGet(`/api/students/appointments/?date=${date}`)
   const [showForm, setShowForm] = useState(false)
-  const [form, setForm] = useState({ start_time: '09:00', end_time: '09:30', is_blocked: false })
+  const [form, setForm] = useState({ startTime: '09:00', endTime: '09:30', isBlocked: false })
   const [error, setError] = useState(null)
   const [submitting, setSubmitting] = useState(false)
   const [busyId, setBusyId] = useState(null)
@@ -32,7 +32,7 @@ export default function AppointmentSlotsPanel() {
     setError(null)
     try {
       await api.post('/api/students/appointments/', { ...form, date })
-      setForm({ start_time: '09:00', end_time: '09:30', is_blocked: false })
+      setForm({ startTime: '09:00', endTime: '09:30', isBlocked: false })
       setShowForm(false)
       appointments.refetch()
     } catch (err) {
@@ -47,7 +47,7 @@ export default function AppointmentSlotsPanel() {
     if (!name) return
     setBusyId(id)
     try {
-      await api.patch(`/api/students/appointments/${id}/`, { candidate_name: name })
+      await api.patch(`/api/students/appointments/${id}/`, { candidateName: name })
       appointments.refetch()
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Erreur inattendue.')
@@ -59,7 +59,7 @@ export default function AppointmentSlotsPanel() {
   const clearSlot = async (id) => {
     setBusyId(id)
     try {
-      await api.patch(`/api/students/appointments/${id}/`, { candidate_name: '', candidate_contact: '' })
+      await api.patch(`/api/students/appointments/${id}/`, { candidateName: '', candidateContact: '' })
       appointments.refetch()
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Erreur inattendue.')
@@ -82,10 +82,10 @@ export default function AppointmentSlotsPanel() {
       <CardBody className="space-y-3">
         {showForm && (
           <form onSubmit={createSlot} className="grid grid-cols-1 gap-2 rounded-control border border-border p-3 sm:grid-cols-3">
-            <input type="time" required className={INPUT_CLASS} value={form.start_time} onChange={(e) => setForm({ ...form, start_time: e.target.value })} />
-            <input type="time" required className={INPUT_CLASS} value={form.end_time} onChange={(e) => setForm({ ...form, end_time: e.target.value })} />
+            <input type="time" required className={INPUT_CLASS} value={form.startTime} onChange={(e) => setForm({ ...form, startTime: e.target.value })} />
+            <input type="time" required className={INPUT_CLASS} value={form.endTime} onChange={(e) => setForm({ ...form, endTime: e.target.value })} />
             <label className="flex items-center gap-2 text-xs text-ink-muted">
-              <input type="checkbox" checked={form.is_blocked} onChange={(e) => setForm({ ...form, is_blocked: e.target.checked })} />
+              <input type="checkbox" checked={form.isBlocked} onChange={(e) => setForm({ ...form, isBlocked: e.target.checked })} />
               Bloquer (pause / preparation)
             </label>
             {error && <p className="text-sm text-danger-600 sm:col-span-3">{error}</p>}
@@ -110,10 +110,10 @@ export default function AppointmentSlotsPanel() {
               }`}
             >
               <div className="flex items-center gap-3">
-                <span className="w-14 text-sm font-semibold text-ink">{slot.start_time.slice(0, 5)}</span>
+                <span className="w-14 text-sm font-semibold text-ink">{slot.startTime.slice(0, 5)}</span>
                 <div className="h-8 w-px bg-border" />
                 {slot.status === 'blocked' && <span className="text-sm italic text-ink-muted">Pause / Preparation</span>}
-                {slot.status === 'booked' && <span className="text-sm font-semibold text-ink">{slot.candidate_name}</span>}
+                {slot.status === 'booked' && <span className="text-sm font-semibold text-ink">{slot.candidateName}</span>}
                 {slot.status === 'available' && <span className="text-sm text-ink-muted">Disponible</span>}
               </div>
               {slot.status === 'blocked' && <Icon name="lock" className="text-ink-muted" />}

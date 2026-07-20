@@ -98,7 +98,7 @@ export default function AppShell({ navItems, children }) {
               <p className="text-sm font-medium text-ink">
                 {user?.firstName} {user?.lastName}
               </p>
-              <p className="text-xs text-ink-muted">{user?.role_display}</p>
+              <p className="text-xs text-ink-muted">{user?.roleDisplay}</p>
             </div>
             <button
               onClick={logout}

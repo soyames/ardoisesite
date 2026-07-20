@@ -20,7 +20,7 @@ const CREATABLE_ROLES = [
 /**
  * Founder assigns which cycle (Primaire/Secondaire) each Director/
  * Censeur oversees - see the 2026-07-17-cycle-scope-wiring CEO plan.
- * Only Director/Censeur accounts are shown (cycle_scope is meaningless
+ * Only Director/Censeur accounts are shown (cycleScope is meaningless
  * for every other role - the backend rejects any other target with a
  * 400, see UserCycleScopeUpdateView's own docstring). The coverage
  * guardrail below is a soft warning, never a hard block - a school
@@ -36,11 +36,11 @@ export default function CyclesPanel() {
 
   const scopableStaff = (staff.data || []).filter((s) => s.role === 'director' || s.role === 'censeur')
 
-  const setCycle = async (userId, cycle_scope) => {
+  const setCycle = async (userId, cycleScope) => {
     setBusyId(userId)
     setError(null)
     try {
-      await api.patch(`/api/auth/users/${userId}/cycle-scope/`, { cycle_scope })
+      await api.patch(`/api/auth/users/${userId}/cycle-scope/`, { cycleScope })
       staff.refetch()
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Erreur inattendue.')
@@ -55,8 +55,8 @@ export default function CyclesPanel() {
     staff.refetch()
   }
 
-  const primaryStaff = scopableStaff.filter((s) => s.cycle_scope === 'primary')
-  const secondaryStaff = scopableStaff.filter((s) => s.cycle_scope === 'secondary')
+  const primaryStaff = scopableStaff.filter((s) => s.cycleScope === 'primary')
+  const secondaryStaff = scopableStaff.filter((s) => s.cycleScope === 'secondary')
   const primaryCoverage = primaryStaff.length
   const secondaryCoverage = secondaryStaff.length
 
@@ -95,7 +95,7 @@ export default function CyclesPanel() {
       {createdAccount && (
         <div className="rounded-control border border-success-200 bg-success-50 p-4">
           <p className="text-sm font-medium text-success-700">
-            Compte cree pour {createdAccount.full_name} ({createdAccount.email}).
+            Compte cree pour {createdAccount.fullName} ({createdAccount.email}).
           </p>
           {createdAccount.temporary_password ? (
             <p className="mt-1 text-sm text-success-700">
@@ -149,13 +149,13 @@ export default function CyclesPanel() {
           )}
           <ul className="divide-y divide-border">
             {scopableStaff.map((s) => {
-              const overlapWarning = s.cycle_scope && scopableStaff.some(
-                (other) => other.id !== s.id && other.cycle_scope === s.cycle_scope
+              const overlapWarning = s.cycleScope && scopableStaff.some(
+                (other) => other.id !== s.id && other.cycleScope === s.cycleScope
               )
               return (
                 <li key={s.id} className="flex flex-col gap-2 p-4 sm:flex-row sm:items-center sm:justify-between">
                   <div>
-                    <p className="text-sm font-medium text-ink">{s.full_name}</p>
+                    <p className="text-sm font-medium text-ink">{s.fullName}</p>
                     <p className="text-xs text-ink-muted">{s.role === 'director' ? 'Directeur' : 'Censeur'}</p>
                   </div>
                   <div className="flex items-center gap-2">
@@ -164,7 +164,7 @@ export default function CyclesPanel() {
                     )}
                     <select
                       className={INPUT_CLASS}
-                      value={s.cycle_scope || ''}
+                      value={s.cycleScope || ''}
                       disabled={busyId === s.id}
                       onChange={(e) => setCycle(s.id, e.target.value)}
                     >
@@ -224,7 +224,7 @@ function CycleRow({ label, person }) {
       <div>
         <p className="text-xs font-semibold uppercase tracking-wide text-accent-700">{label}</p>
         <p className={`text-sm font-medium ${person ? 'text-ink' : 'italic text-ink-muted'}`}>
-          {person ? person.full_name : 'Non assigne'}
+          {person ? person.fullName : 'Non assigne'}
         </p>
       </div>
       {!person && <Badge tone="warning">A affecter</Badge>}

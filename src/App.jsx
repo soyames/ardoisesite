@@ -19,7 +19,6 @@ import CenseurPortal from './apps/censeur/CenseurPortal.jsx'
 import SurveillantPortal from './apps/surveillant/SurveillantPortal.jsx'
 import CanteenPortal from './apps/canteen/CanteenPortal.jsx'
 import LibrarianPortal from './apps/librarian/LibrarianPortal.jsx'
-import StudentPortal from './apps/student/StudentPortal.jsx'
 import AuditorPortal from './apps/auditor/AuditorPortal.jsx'
 import SuperadminDashboard from './apps/superadmin/SuperadminDashboard.jsx'
 import DeveloperPortal from './apps/developer/DeveloperPortal.jsx'
@@ -116,7 +115,7 @@ function PortalHome() {
   if (!Portal) {
     return (
       <EmptyState
-        title={`Portail ${user.role_display} pas encore disponible`}
+        title={`Portail ${user.roleDisplay} pas encore disponible`}
         description="Cette interface n'a pas encore ete construite pour ce role. Contactez l'administrateur si vous pensez que c'est une erreur."
       />
     )

@@ -12,7 +12,7 @@ function ProfileForm({ me, onSaved }) {
   const [firstName, setFirstName] = useState(me.firstName || '')
   const [lastName, setLastName] = useState(me.lastName || '')
   const [phone, setPhone] = useState(me.phone || '')
-  const [preferredLanguage, setPreferredLanguage] = useState(me.preferred_language || 'fr')
+  const [preferredLanguage, setPreferredLanguage] = useState(me.preferredLanguage || 'fr')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState(null)
   const [saved, setSaved] = useState(false)
@@ -24,7 +24,7 @@ function ProfileForm({ me, onSaved }) {
     setSaved(false)
     try {
       await api.patch('/api/auth/me/profile/', {
-        firstName: firstName, lastName: lastName, phone, preferred_language: preferredLanguage,
+        firstName: firstName, lastName: lastName, phone, preferredLanguage: preferredLanguage,
       })
       setSaved(true)
       onSaved()
@@ -65,7 +65,7 @@ function ProfileForm({ me, onSaved }) {
         </div>
         <div>
           <label className="text-xs font-medium text-ink-muted">Role</label>
-          <input className={INPUT_CLASS} value={me.role_display || '-'} disabled />
+          <input className={INPUT_CLASS} value={me.roleDisplay || '-'} disabled />
         </div>
       </div>
       {error && <p className="text-sm text-danger-600">{error}</p>}
@@ -135,7 +135,7 @@ export default function ProfileTab() {
         </CardBody>
       </Card>
 
-      {me.data.has_usable_password ? (
+      {me.data.hasUsablePassword ? (
         <Card>
           <CardHeader title="Mot de passe" />
           <CardBody>

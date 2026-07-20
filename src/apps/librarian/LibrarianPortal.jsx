@@ -64,11 +64,11 @@ function DashboardTab({ onNavigate }) {
 
   const loading = items.loading || sales.loading || loans.loading
   const today = new Date().toDateString()
-  const todaySales = (sales.data || []).filter((s) => new Date(s.created_at || s.sold_at).toDateString() === today)
-  const todayTotal = todaySales.reduce((sum, s) => sum + Number(s.total_amount), 0)
-  const lowStockItems = (items.data || []).filter((i) => Number(i.quantity_on_hand) <= Number(i.low_stock_threshold))
-  const openLoans = (loans.data || []).filter((l) => !l.returned_date)
-  const overdueLoans = openLoans.filter((l) => l.due_date && new Date(l.due_date) < new Date())
+  const todaySales = (sales.data || []).filter((s) => new Date(s.createdAt || s.sold_at).toDateString() === today)
+  const todayTotal = todaySales.reduce((sum, s) => sum + Number(s.totalAmount), 0)
+  const lowStockItems = (items.data || []).filter((i) => Number(i.quantityOnHand) <= Number(i.lowStockThreshold))
+  const openLoans = (loans.data || []).filter((l) => !l.returnedDate)
+  const overdueLoans = openLoans.filter((l) => l.dueDate && new Date(l.dueDate) < new Date())
 
   return (
     <div className="space-y-6">
@@ -100,7 +100,7 @@ function DashboardTab({ onNavigate }) {
               <ActivityList
                 items={lowStockItems.slice(0, 5).map((i) => ({
                   id: i.id, icon: 'inventory_2', iconTone: 'danger', title: i.name,
-                  badge: `${i.quantity_on_hand} restant(s)`, badgeTone: 'danger',
+                  badge: `${i.quantityOnHand} restant(s)`, badgeTone: 'danger',
                 }))}
               />
             </Card>
@@ -124,7 +124,7 @@ function SaleTab() {
 
   const total = Object.entries(cart).reduce((sum, [itemId, qty]) => {
     const item = sellable.find((i) => String(i.id) === itemId)
-    return sum + (item ? Number(item.unit_price) * Number(qty || 0) : 0)
+    return sum + (item ? Number(item.unitPrice) * Number(qty || 0) : 0)
   }, 0)
 
   const submit = async (e) => {
@@ -139,7 +139,7 @@ function SaleTab() {
         setError('Ajoutez au moins un article.')
         return
       }
-      await api.post('/api/shop/sales/', { method: 'cash', receipt_number: receipt, lines })
+      await api.post('/api/shop/sales/', { method: 'cash', receiptNumber: receipt, lines })
       setCart({})
       setReceipt('')
       sales.refetch()
@@ -164,7 +164,7 @@ function SaleTab() {
                   <div key={i.id} className="flex items-center justify-between rounded-control border border-border p-2">
                     <div>
                       <p className="text-sm text-ink">{i.name}</p>
-                      <p className="text-xs text-ink-muted">{i.unit_price} FCFA - stock {i.quantity_on_hand}</p>
+                      <p className="text-xs text-ink-muted">{i.unitPrice} FCFA - stock {i.quantityOnHand}</p>
                     </div>
                     <input
                       type="number" min="0" className={`w-20 ${INPUT_CLASS}`}
@@ -194,8 +194,8 @@ function SaleTab() {
           <ul className="divide-y divide-border">
             {sales.data?.slice(0, 15).map((s) => (
               <li key={s.id} className="flex items-center justify-between p-4">
-                <p className="text-sm text-ink">Recu {s.receipt_number} - {s.lines.map((l) => l.item_name).join(', ')}</p>
-                <Badge tone="neutral">{Number(s.total_amount).toLocaleString()} FCFA</Badge>
+                <p className="text-sm text-ink">Recu {s.receiptNumber} - {s.lines.map((l) => l.itemName).join(', ')}</p>
+                <Badge tone="neutral">{Number(s.totalAmount).toLocaleString()} FCFA</Badge>
               </li>
             ))}
           </ul>
@@ -208,14 +208,14 @@ function SaleTab() {
 function PretsTab() {
   const items = useApiGet('/api/shop/inventory/')
   const loans = useApiGet('/api/shop/loans/')
-  const [form, setForm] = useState({ item: '', student_matricule: '', due_date: '' })
+  const [form, setForm] = useState({ item: '', studentMatricule: '', dueDate: '' })
   const [error, setError] = useState(null)
   const [submitting, setSubmitting] = useState(false)
   const [busy, setBusy] = useState(null)
 
   const bookItems = items.data?.filter((i) => i.category === 'book') || []
-  const openLoans = loans.data?.filter((l) => !l.returned_date) || []
-  const returnedLoans = loans.data?.filter((l) => l.returned_date) || []
+  const openLoans = loans.data?.filter((l) => !l.returnedDate) || []
+  const returnedLoans = loans.data?.filter((l) => l.returnedDate) || []
 
   const submit = async (e) => {
     e.preventDefault()
@@ -223,7 +223,7 @@ function PretsTab() {
     setError(null)
     try {
       await api.post('/api/shop/loans/', { ...form, item: Number(form.item) })
-      setForm({ item: '', student_matricule: '', due_date: '' })
+      setForm({ item: '', studentMatricule: '', dueDate: '' })
       loans.refetch()
       items.refetch()
     } catch (err) {
@@ -255,18 +255,18 @@ function PretsTab() {
             <select required className={INPUT_CLASS} value={form.item} onChange={(e) => setForm({ ...form, item: e.target.value })}>
               <option value="">Choisir le livre...</option>
               {bookItems.map((i) => (
-                <option key={i.id} value={i.id} disabled={Number(i.quantity_on_hand) <= 0}>
-                  {i.name} ({i.quantity_on_hand} dispo)
+                <option key={i.id} value={i.id} disabled={Number(i.quantityOnHand) <= 0}>
+                  {i.name} ({i.quantityOnHand} dispo)
                 </option>
               ))}
             </select>
             <input
               required className={INPUT_CLASS} placeholder="Matricule eleve"
-              value={form.student_matricule} onChange={(e) => setForm({ ...form, student_matricule: e.target.value })}
+              value={form.studentMatricule} onChange={(e) => setForm({ ...form, studentMatricule: e.target.value })}
             />
             <input
               required type="date" className={INPUT_CLASS}
-              value={form.due_date} onChange={(e) => setForm({ ...form, due_date: e.target.value })}
+              value={form.dueDate} onChange={(e) => setForm({ ...form, dueDate: e.target.value })}
             />
             {error && <p className="text-sm text-danger-600 sm:col-span-3">{error}</p>}
             <div className="sm:col-span-3">
@@ -285,11 +285,11 @@ function PretsTab() {
             {openLoans.map((l) => (
               <li key={l.id} className="flex items-center justify-between p-4">
                 <div>
-                  <p className="text-sm font-medium text-ink">{l.item_name} - {l.student_name}</p>
-                  <p className="text-xs text-ink-muted">{l.student_matricule} - a rendre le {l.due_date}</p>
+                  <p className="text-sm font-medium text-ink">{l.itemName} - {l.studentName}</p>
+                  <p className="text-xs text-ink-muted">{l.studentMatricule} - a rendre le {l.dueDate}</p>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Badge tone={l.is_overdue ? 'danger' : 'neutral'}>{l.is_overdue ? 'En retard' : 'En cours'}</Badge>
+                  <Badge tone={l.isOverdue ? 'danger' : 'neutral'}>{l.isOverdue ? 'En retard' : 'En cours'}</Badge>
                   <Button size="sm" onClick={() => returnLoan(l.id)} disabled={busy === l.id}>
                     {busy === l.id ? 'Retour...' : 'Retourner'}
                   </Button>
@@ -308,10 +308,10 @@ function PretsTab() {
               {returnedLoans.slice(0, 15).map((l) => (
                 <li key={l.id} className="flex items-center justify-between p-4">
                   <div>
-                    <p className="text-sm text-ink">{l.item_name} - {l.student_name}</p>
-                    <p className="text-xs text-ink-muted">Rendu le {l.returned_date}</p>
+                    <p className="text-sm text-ink">{l.itemName} - {l.studentName}</p>
+                    <p className="text-xs text-ink-muted">Rendu le {l.returnedDate}</p>
                   </div>
-                  {Number(l.fine_amount) > 0 && <Badge tone="warning">Amende {l.fine_amount} FCFA</Badge>}
+                  {Number(l.fineAmount) > 0 && <Badge tone="warning">Amende {l.fineAmount} FCFA</Badge>}
                 </li>
               ))}
             </ul>
@@ -324,7 +324,7 @@ function PretsTab() {
 
 function CatalogTab() {
   const items = useApiGet('/api/shop/inventory/')
-  const [form, setForm] = useState({ category: 'book', name: '', unit_price: '', low_stock_threshold: '5' })
+  const [form, setForm] = useState({ category: 'book', name: '', unitPrice: '', lowStockThreshold: '5' })
   const [error, setError] = useState(null)
   const [submitting, setSubmitting] = useState(false)
 
@@ -335,10 +335,10 @@ function CatalogTab() {
     try {
       await api.post('/api/shop/inventory/', {
         ...form,
-        unit_price: Number(form.unit_price),
-        low_stock_threshold: Number(form.low_stock_threshold),
+        unitPrice: Number(form.unitPrice),
+        lowStockThreshold: Number(form.lowStockThreshold),
       })
-      setForm({ category: 'book', name: '', unit_price: '', low_stock_threshold: '5' })
+      setForm({ category: 'book', name: '', unitPrice: '', lowStockThreshold: '5' })
       items.refetch()
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Erreur inattendue.')
@@ -357,8 +357,8 @@ function CatalogTab() {
               {CATEGORIES.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
             </select>
             <input required className={INPUT_CLASS} placeholder="Nom de l'article" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
-            <input required type="number" step="0.01" className={INPUT_CLASS} placeholder="Prix unitaire (FCFA)" value={form.unit_price} onChange={(e) => setForm({ ...form, unit_price: e.target.value })} />
-            <input type="number" step="0.01" className={INPUT_CLASS} placeholder="Seuil de stock bas" value={form.low_stock_threshold} onChange={(e) => setForm({ ...form, low_stock_threshold: e.target.value })} />
+            <input required type="number" step="0.01" className={INPUT_CLASS} placeholder="Prix unitaire (FCFA)" value={form.unitPrice} onChange={(e) => setForm({ ...form, unitPrice: e.target.value })} />
+            <input type="number" step="0.01" className={INPUT_CLASS} placeholder="Seuil de stock bas" value={form.lowStockThreshold} onChange={(e) => setForm({ ...form, lowStockThreshold: e.target.value })} />
             {error && <p className="text-sm text-danger-600 sm:col-span-2">{error}</p>}
             <div className="sm:col-span-2"><Button type="submit" disabled={submitting}>{submitting ? 'Enregistrement...' : 'Ajouter au catalogue'}</Button></div>
           </form>
@@ -374,10 +374,10 @@ function CatalogTab() {
               <li key={i.id} className="flex items-center justify-between p-4">
                 <div>
                   <p className="text-sm text-ink">{i.name}</p>
-                  <p className="text-xs text-ink-muted">{CATEGORIES.find((c) => c.value === i.category)?.label || i.category} - {i.unit_price} FCFA</p>
+                  <p className="text-xs text-ink-muted">{CATEGORIES.find((c) => c.value === i.category)?.label || i.category} - {i.unitPrice} FCFA</p>
                 </div>
-                <Badge tone={Number(i.quantity_on_hand) <= Number(i.low_stock_threshold) ? 'danger' : 'success'}>
-                  {i.quantity_on_hand} en stock
+                <Badge tone={Number(i.quantityOnHand) <= Number(i.lowStockThreshold) ? 'danger' : 'success'}>
+                  {i.quantityOnHand} en stock
                 </Badge>
               </li>
             ))}
@@ -443,8 +443,8 @@ function StockTab() {
             {movements.data?.slice(0, 15).map((m) => (
               <li key={m.id} className="flex items-center justify-between p-4">
                 <div>
-                  <p className="text-sm text-ink">{m.item_name}{m.note ? ` - ${m.note}` : ''}</p>
-                  <p className="text-xs text-ink-muted">{m.recorded_by_name}</p>
+                  <p className="text-sm text-ink">{m.itemName}{m.note ? ` - ${m.note}` : ''}</p>
+                  <p className="text-xs text-ink-muted">{m.recordedByName}</p>
                 </div>
                 <Badge tone={m.direction === 'in' ? 'success' : m.direction === 'out' ? 'warning' : 'neutral'}>
                   {m.direction === 'in' ? '+' : m.direction === 'out' ? '-' : '='}{m.quantity}
@@ -461,7 +461,7 @@ function StockTab() {
 function VendorsTab() {
   const vendors = useApiGet('/api/finance/vendors/')
   const bills = useApiGet('/api/finance/vendor-bills/')
-  const [form, setForm] = useState({ vendor: '', amount: '', description: '', expense_account_code: '601' })
+  const [form, setForm] = useState({ vendor: '', amount: '', description: '', expenseAccountCode: '601' })
   const [error, setError] = useState(null)
   const [submitting, setSubmitting] = useState(false)
 
@@ -471,7 +471,7 @@ function VendorsTab() {
     setError(null)
     try {
       await api.post('/api/finance/vendor-bills/', { ...form, vendor: Number(form.vendor) })
-      setForm({ vendor: '', amount: '', description: '', expense_account_code: '601' })
+      setForm({ vendor: '', amount: '', description: '', expenseAccountCode: '601' })
       bills.refetch()
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Erreur inattendue.')
@@ -506,8 +506,8 @@ function VendorsTab() {
             {bills.data?.map((b) => (
               <li key={b.id} className="flex items-center justify-between p-4">
                 <div>
-                  <p className="text-sm font-medium text-ink">{b.vendor_name}</p>
-                  <p className="text-xs text-ink-muted">{b.description} - {b.bill_date}</p>
+                  <p className="text-sm font-medium text-ink">{b.vendorName}</p>
+                  <p className="text-xs text-ink-muted">{b.description} - {b.billDate}</p>
                 </div>
                 <Badge tone="neutral">{b.amount} FCFA</Badge>
               </li>

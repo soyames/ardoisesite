@@ -70,7 +70,7 @@ function DashboardTab({ onNavigate }) {
     icon: 'receipt_long',
     iconTone: 'accent',
     title: e.description,
-    subtitle: `${e.budget_department} - ${e.requested_by_name}`,
+    subtitle: `${e.budgetDepartment} - ${e.requestedByName}`,
     badge: `${Number(e.amount).toLocaleString()} F`,
     badgeTone: 'neutral',
   }))
@@ -117,16 +117,16 @@ function DashboardTab({ onNavigate }) {
                   <div key={b.id}>
                     <div className="flex items-center justify-between text-sm">
                       <span className="text-ink">{b.department}</span>
-                      <span className="text-ink-muted">{b.utilization_pct}% utilise</span>
+                      <span className="text-ink-muted">{b.utilizationPct}% utilise</span>
                     </div>
                     <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-surface">
                       <div
-                        className={`h-full rounded-full ${Number(b.utilization_pct) >= 90 ? 'bg-danger-500' : 'bg-primary-700'}`}
-                        style={{ width: `${Math.min(100, Number(b.utilization_pct))}%` }}
+                        className={`h-full rounded-full ${Number(b.utilizationPct) >= 90 ? 'bg-danger-500' : 'bg-primary-700'}`}
+                        style={{ width: `${Math.min(100, Number(b.utilizationPct))}%` }}
                       />
                     </div>
                     <p className="mt-1 text-xs text-ink-muted">
-                      Depense: {Number(b.spent_amount).toLocaleString()} F - Total: {Number(b.allocated_amount).toLocaleString()} F
+                      Depense: {Number(b.spentAmount).toLocaleString()} F - Total: {Number(b.allocatedAmount).toLocaleString()} F
                     </p>
                   </div>
                 ))}
@@ -185,13 +185,13 @@ function BatchInvoicesTab() {
             >
               <option value="">Choisir une structure de frais...</option>
               {feeStructures.data?.map((fs) => (
-                <option key={fs.id} value={fs.id}>{fs.label} ({fs.level_display})</option>
+                <option key={fs.id} value={fs.id}>{fs.label} ({fs.levelDisplay})</option>
               ))}
             </select>
             <select required className={INPUT_CLASS} value={trancheId} onChange={(e) => setTrancheId(e.target.value)} disabled={!feeStructureId}>
               <option value="">Choisir une tranche...</option>
               {tranches.map((t) => (
-                <option key={t.id} value={t.id}>{t.label} - {t.amount} FCFA (echeance {t.due_date})</option>
+                <option key={t.id} value={t.id}>{t.label} - {t.amount} FCFA (echeance {t.dueDate})</option>
               ))}
             </select>
             {error && <p className="text-sm text-danger-600 sm:col-span-2">{error}</p>}
@@ -270,8 +270,8 @@ function ExpensesTab() {
           <Card key={b.id}>
             <CardBody>
               <p className="text-xs font-medium uppercase tracking-wide text-ink-muted">{b.department}</p>
-              <p className="mt-1 text-lg font-semibold text-ink">{b.utilization_pct}%</p>
-              <p className="text-xs text-ink-muted">{Number(b.spent_amount).toLocaleString()} / {Number(b.allocated_amount).toLocaleString()} F</p>
+              <p className="mt-1 text-lg font-semibold text-ink">{b.utilizationPct}%</p>
+              <p className="text-xs text-ink-muted">{Number(b.spentAmount).toLocaleString()} / {Number(b.allocatedAmount).toLocaleString()} F</p>
             </CardBody>
           </Card>
         ))}
@@ -311,13 +311,13 @@ function ExpensesTab() {
           <ul className="divide-y divide-border">
             {expenses.data?.map((e) => {
               const budget = budgets.data?.find((b) => b.id === e.budget)
-              const remainingAfter = budget ? Number(budget.allocated_amount) - Number(budget.spent_amount) - Number(e.amount) : null
+              const remainingAfter = budget ? Number(budget.allocatedAmount) - Number(budget.spentAmount) - Number(e.amount) : null
               return (
                 <li key={e.id} className="p-4">
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm font-medium text-ink">{e.description}</p>
-                      <p className="text-xs text-ink-muted">{e.budget_department} - {e.requested_by_name} - {Number(e.amount).toLocaleString()} F</p>
+                      <p className="text-xs text-ink-muted">{e.budgetDepartment} - {e.requestedByName} - {Number(e.amount).toLocaleString()} F</p>
                     </div>
                     <div className="flex items-center gap-2">
                       <Badge tone={STATUS_TONE[e.status]}>{e.status}</Badge>
@@ -417,7 +417,7 @@ function PayrollValidationTab() {
       {pending.data?.map((r) => (
         <Card key={r.id}>
           <CardBody className="flex items-center justify-between">
-            <p className="text-sm text-ink">{r.period_start} au {r.period_end}</p>
+            <p className="text-sm text-ink">{r.periodStart} au {r.periodEnd}</p>
             <Button size="sm" onClick={() => validate(r.id)} disabled={busy === r.id}>
               {busy === r.id ? 'Validation...' : 'Valider et generer les bulletins'}
             </Button>
@@ -455,7 +455,7 @@ function AdvancesApprovalTab() {
         <Card key={a.id}>
           <CardBody className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-ink">{a.staff_name} - {a.amount} FCFA</p>
+              <p className="text-sm font-medium text-ink">{a.staffName} - {a.amount} FCFA</p>
               <p className="text-xs text-ink-muted">{a.reason}</p>
             </div>
             <div className="flex gap-2">
@@ -497,8 +497,8 @@ function LeaveApprovalTab() {
         <Card key={l.id}>
           <CardBody className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-ink">{l.staff_name}</p>
-              <p className="text-xs text-ink-muted">{l.start_date} au {l.end_date} - {l.leave_type} - {l.reason}</p>
+              <p className="text-sm font-medium text-ink">{l.staffName}</p>
+              <p className="text-xs text-ink-muted">{l.startDate} au {l.endDate} - {l.leaveType} - {l.reason}</p>
             </div>
             <div className="flex gap-2">
               <Button size="sm" variant="danger" onClick={() => act(l.id, 'reject')} disabled={busy === l.id}>Rejeter</Button>
@@ -514,7 +514,7 @@ function LeaveApprovalTab() {
 function VendorsTab() {
   const vendors = useApiGet('/api/finance/vendors/')
   const bills = useApiGet('/api/finance/vendor-bills/')
-  const [form, setForm] = useState({ vendor: '', amount: '', description: '', expense_account_code: '601' })
+  const [form, setForm] = useState({ vendor: '', amount: '', description: '', expenseAccountCode: '601' })
   const [error, setError] = useState(null)
   const [submitting, setSubmitting] = useState(false)
 
@@ -524,7 +524,7 @@ function VendorsTab() {
     setError(null)
     try {
       await api.post('/api/finance/vendor-bills/', { ...form, vendor: Number(form.vendor) })
-      setForm({ vendor: '', amount: '', description: '', expense_account_code: '601' })
+      setForm({ vendor: '', amount: '', description: '', expenseAccountCode: '601' })
       bills.refetch()
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Erreur inattendue.')
@@ -559,8 +559,8 @@ function VendorsTab() {
             {bills.data?.map((b) => (
               <li key={b.id} className="flex items-center justify-between p-4">
                 <div>
-                  <p className="text-sm font-medium text-ink">{b.vendor_name}</p>
-                  <p className="text-xs text-ink-muted">{b.description} - {b.bill_date}</p>
+                  <p className="text-sm font-medium text-ink">{b.vendorName}</p>
+                  <p className="text-xs text-ink-muted">{b.description} - {b.billDate}</p>
                 </div>
                 <Badge tone="neutral">{b.amount} FCFA</Badge>
               </li>

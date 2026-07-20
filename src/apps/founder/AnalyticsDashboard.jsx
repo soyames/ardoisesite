@@ -44,18 +44,18 @@ export default function AnalyticsDashboard({ onNavigate }) {
     || pendingDiscipline.loading || pendingLeave.loading || payrollRuns.loading
     || staff.loading || auditLogs.loading
 
-  const activeEnrollments = (enrollments.data || []).filter((e) => e.is_active).length
+  const activeEnrollments = (enrollments.data || []).filter((e) => e.isActive).length
   const pendingPayroll = (payrollRuns.data || []).filter((p) => p.status === 'draft').length
   const totalPending = (pendingBulletins.data?.length || 0) + (pendingDiscipline.data?.length || 0)
     + (pendingLeave.data?.length || 0) + pendingPayroll
-  const activeStaffCount = staff.data?.filter((s) => s.is_active).length || 0
+  const activeStaffCount = staff.data?.filter((s) => s.isActive).length || 0
 
   const activityItems = (auditLogs.data || []).slice(0, 8).map((log) => ({
     id: log.id,
     icon: AUDIT_ICON_BY_ACTION[log.action] || 'history',
     title: log.summary,
-    subtitle: log.actor_name,
-    timestamp: new Date(log.occurred_at).toLocaleString('fr-FR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }),
+    subtitle: log.actorName,
+    timestamp: new Date(log.occurredAt).toLocaleString('fr-FR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }),
   }))
 
   return (

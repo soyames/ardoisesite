@@ -71,7 +71,7 @@ export default function ParentPortal() {
           </div>
 
           {selectedChild && (
-            <ChildDetail key={selectedChild.id} child={selectedChild} parentId={user?.parent_id} />
+            <ChildDetail key={selectedChild.id} child={selectedChild} parentId={user?.parentId} />
           )}
         </>
       )}
@@ -222,7 +222,7 @@ function TutoringContracts({ parentId }) {
 }
 
 function ChildDetail({ child, parentId }) {
-  const enrollmentId = child.current_enrollment?.id
+  const enrollmentId = child.currentEnrollment?.id
   const bulletins = useApiGet(enrollmentId ? `/api/academics/bulletins/?enrollment=${enrollmentId}` : null, {
     skip: !enrollmentId,
   })
@@ -232,7 +232,7 @@ function ChildDetail({ child, parentId }) {
   const discipline = useApiGet(enrollmentId ? `/api/academics/discipline/list/?enrollment=${enrollmentId}` : null, {
     skip: !enrollmentId,
   })
-  const invoices = useApiGet(parentId ? `/api/finance/invoices/?parent=${parentId}&student_matricule=${child.matricule}` : null, {
+  const invoices = useApiGet(parentId ? `/api/finance/invoices/?parent=${parentId}&studentMatricule=${child.matricule}` : null, {
     skip: !parentId,
   })
   const [selectedInvoiceId, setSelectedInvoiceId] = useState(null)
@@ -248,7 +248,7 @@ function ChildDetail({ child, parentId }) {
               {child.firstName} {child.lastName}
             </p>
             <p className="text-xs text-ink-muted">
-              {child.current_enrollment?.classroom_name} · {child.current_enrollment?.academic_year_label} · Matricule {child.matricule}
+              {child.currentEnrollment?.classroomName} · {child.currentEnrollment?.academicYearLabel} · Matricule {child.matricule}
             </p>
           </div>
           <Badge tone="neutral">{child.relation}</Badge>
@@ -270,7 +270,7 @@ function ChildDetail({ child, parentId }) {
               emptyLabel="Aucun bulletin publie pour l'instant."
               items={(bulletins.data || []).map((b) => ({
                 id: b.id, icon: 'fact_check', iconTone: 'success',
-                title: b.exam_period_label, subtitle: `Moyenne ${b.average} - Rang ${b.class_rank}/${b.class_size}`,
+                title: b.examPeriodLabel, subtitle: `Moyenne ${b.average} - Rang ${b.classRank}/${b.classSize}`,
                 badge: 'Publie', badgeTone: 'success',
               }))}
             />
@@ -327,9 +327,9 @@ function ChildDetail({ child, parentId }) {
                   >
                     <div>
                       <p className="text-sm font-medium text-ink underline decoration-dotted underline-offset-2">
-                        {inv.tranche_label || `Facture #${inv.id}`}
+                        {inv.trancheLabel || `Facture #${inv.id}`}
                       </p>
-                      <p className="text-xs text-ink-muted">{inv.amount_due} FCFA</p>
+                      <p className="text-xs text-ink-muted">{inv.amountDue} FCFA</p>
                     </div>
                     <Badge tone={inv.status === 'paid' ? 'success' : inv.status === 'overdue' ? 'danger' : 'warning'}>
                       {inv.status}
@@ -338,7 +338,7 @@ function ChildDetail({ child, parentId }) {
                   {inv.status !== 'paid' && (
                     <div className="mt-2 flex justify-end border-t border-border pt-2">
                       <SchoolPaymentButton
-                        schoolId={child.current_enrollment?.school_id || 1}
+                        schoolId={child.currentEnrollment?.schoolId || 1}
                         invoice={inv}
                         parent={child}
                       />
@@ -381,9 +381,9 @@ function InvoiceDetailModal({ invoiceId, onClose }) {
                 <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">
                   Facture #{detail.data.id}
                 </p>
-                <h3 className="text-lg font-semibold text-ink">{detail.data.tranche_label || detail.data.label}</h3>
+                <h3 className="text-lg font-semibold text-ink">{detail.data.trancheLabel || detail.data.label}</h3>
                 <p className="mt-0.5 text-sm text-ink-muted">
-                  {detail.data.student_name} - {detail.data.student_matricule}
+                  {detail.data.studentName} - {detail.data.studentMatricule}
                 </p>
               </div>
               <button type="button" onClick={onClose} className="rounded-control p-1 text-ink-muted hover:bg-surface-hover hover:text-ink">
@@ -394,26 +394,26 @@ function InvoiceDetailModal({ invoiceId, onClose }) {
             <div className="grid grid-cols-2 gap-3 rounded-control border border-border bg-surface p-3 text-sm">
               <div>
                 <p className="text-xs text-ink-muted">Emise le</p>
-                <p className="text-ink">{new Date(detail.data.issued_on).toLocaleDateString('fr-FR')}</p>
+                <p className="text-ink">{new Date(detail.data.issuedOn).toLocaleDateString('fr-FR')}</p>
               </div>
               <div>
                 <p className="text-xs text-ink-muted">Echeance</p>
                 <p className="text-ink">
-                  {detail.data.due_date ? new Date(detail.data.due_date).toLocaleDateString('fr-FR') : 'N/A'}
+                  {detail.data.dueDate ? new Date(detail.data.dueDate).toLocaleDateString('fr-FR') : 'N/A'}
                 </p>
               </div>
               <div>
                 <p className="text-xs text-ink-muted">Montant du</p>
-                <p className="font-semibold text-ink">{detail.data.amount_due} FCFA</p>
+                <p className="font-semibold text-ink">{detail.data.amountDue} FCFA</p>
               </div>
               <div>
                 <p className="text-xs text-ink-muted">Montant paye</p>
-                <p className="font-semibold text-ink">{detail.data.amount_paid} FCFA</p>
+                <p className="font-semibold text-ink">{detail.data.amountPaid} FCFA</p>
               </div>
             </div>
 
-            {detail.data.parent_names?.length > 0 && (
-              <p className="text-xs text-ink-muted">Responsable(s) : {detail.data.parent_names.join(', ')}</p>
+            {detail.data.parentNames?.length > 0 && (
+              <p className="text-xs text-ink-muted">Responsable(s) : {detail.data.parentNames.join(', ')}</p>
             )}
 
             <Badge tone={detail.data.status === 'paid' ? 'success' : detail.data.status === 'partial' ? 'warning' : 'danger'}>
@@ -430,7 +430,7 @@ function InvoiceDetailModal({ invoiceId, onClose }) {
                     <div className="min-w-0 flex-1">
                       <p className="text-sm text-ink">{p.method_label} - {p.amount} FCFA</p>
                       <p className="text-xs text-ink-muted">
-                        Recu {p.receipt_number} - {new Date(p.received_on).toLocaleDateString('fr-FR')}
+                        Recu {p.receiptNumber} - {new Date(p.receivedOn).toLocaleDateString('fr-FR')}
                       </p>
                     </div>
                   </li>
@@ -438,9 +438,9 @@ function InvoiceDetailModal({ invoiceId, onClose }) {
               </ul>
             </div>
 
-            {detail.data.document_url && (
+            {detail.data.documentUrl && (
               <a
-                href={detail.data.document_url}
+                href={detail.data.documentUrl}
                 target="_blank"
                 rel="noreferrer"
                 className="flex items-center justify-center gap-2 rounded-control bg-primary-50 px-4 py-2.5 text-sm font-semibold text-primary-700 ring-1 ring-inset ring-primary-200 hover:bg-primary-100"
@@ -482,8 +482,8 @@ function SchoolPaymentButton({ schoolId, invoice, parent }) {
   return (
     <FedaPayButton
       publicKey={pubKey}
-      amount={Number(invoice.amount_due) - Number(invoice.amount_paid || 0)}
-      description={`Scolarité: ${invoice.tranche_label || 'Facture'}`}
+      amount={Number(invoice.amountDue) - Number(invoice.amountPaid || 0)}
+      description={`Scolarité: ${invoice.trancheLabel || 'Facture'}`}
       customerName={`${parent.firstName} ${parent.lastName}`}
       customMetadata={{
         type: 'tuition_payment',

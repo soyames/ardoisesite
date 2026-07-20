@@ -39,7 +39,7 @@ const MEASURES = [
 
 /**
  * Grade entry, attendance, and exam paper drafting -- the offline-
- * sensitive flows the backend's local_uuid/created_offline/synced_at
+ * sensitive flows the backend's localUuid/createdOffline/syncedAt
  * fields exist for (see ardoise/apps/core/models.py:TimeStampedModel).
  * This first pass posts straight to the sync endpoints while online;
  * a real offline queue (IndexedDB + background sync) is flagged as
@@ -85,7 +85,7 @@ export default function TeacherPortal() {
                     classSubjectId === c.id ? 'bg-primary-600 text-white' : 'bg-primary-50 text-primary-700 hover:bg-primary-100'
                   }`}
                 >
-                  {c.classroom_name} - {c.subject_name}
+                  {c.classroomName} - {c.subjectName}
                 </button>
               ))}
             </div>
@@ -177,7 +177,7 @@ function AvailabilityPanel() {
     try {
       await api.post('/api/hr/teacher-availability/', {
         notes,
-        hours_requested: hoursRequested ? Number(hoursRequested) : null,
+        hoursRequested: hoursRequested ? Number(hoursRequested) : null,
       })
       setNotes('')
       setHoursRequested('')
@@ -240,8 +240,8 @@ function AvailabilityPanel() {
                   <div>
                     <p className="text-sm text-ink">{s.notes}</p>
                     <p className="mt-1 text-xs text-ink-muted">
-                      {s.hours_requested != null && `${s.hours_requested} h souhaitees - `}
-                      {new Date(s.created_at).toLocaleDateString('fr-FR')}
+                      {s.hoursRequested != null && `${s.hoursRequested} h souhaitees - `}
+                      {new Date(s.createdAt).toLocaleDateString('fr-FR')}
                     </p>
                   </div>
                   <Badge tone={status.tone}>{status.label}</Badge>
@@ -260,7 +260,7 @@ function useRoster(classroomId) {
 }
 
 function GradesPanel({ classSubject, examPeriods }) {
-  const roster = useRoster(classSubject.classroom_id)
+  const roster = useRoster(classSubject.classroomId)
   const [examPeriodId, setExamPeriodId] = useState(examPeriods?.[0]?.id ?? '')
   const [scores, setScores] = useState({})
   const [saving, setSaving] = useState(false)
@@ -275,19 +275,19 @@ function GradesPanel({ classSubject, examPeriods }) {
     setResult(null)
     // Online-only for this first pass: posts straight through
     // /api/academics/grade-entries/sync/ while connected. The upsert-
-    // by-local_uuid shape already supports a real offline queue
+    // by-localUuid shape already supports a real offline queue
     // (write to IndexedDB, retry this same POST on reconnect) -- that
     // queue itself is not built yet, flagged rather than faked.
     const entries = Object.entries(scores)
       .filter(([, score]) => score !== '' && score !== undefined)
       .map(([enrollmentId, score]) => ({
-        local_uuid: crypto.randomUUID(),
+        localUuid: crypto.randomUUID(),
         enrollment: Number(enrollmentId),
-        class_subject: classSubject.id,
-        exam_period: Number(examPeriodId),
+        classSubject: classSubject.id,
+        examPeriod: Number(examPeriodId),
         score,
-        max_score: 20,
-        created_offline: false,
+        maxScore: 20,
+        createdOffline: false,
       }))
     try {
       const res = await api.post('/api/academics/grade-entries/sync/', entries)
@@ -326,10 +326,10 @@ function GradesPanel({ classSubject, examPeriods }) {
             {roster.data.map((student) => (
               <div key={student.id} className="flex items-center justify-between gap-3 rounded-control border border-border p-2.5">
                 <p className="text-sm text-ink">
-                  {student.student_name} <span className="text-ink-muted">({student.matricule})</span>
-                  {student.discipline_score != null && (
-                    <span className={`ml-2 text-xs ${student.discipline_score < 10 ? 'text-danger-600' : 'text-ink-muted'}`}>
-                      &bull; {student.discipline_score} pts discipline
+                  {student.studentName} <span className="text-ink-muted">({student.matricule})</span>
+                  {student.disciplineScore != null && (
+                    <span className={`ml-2 text-xs ${student.disciplineScore < 10 ? 'text-danger-600' : 'text-ink-muted'}`}>
+                      &bull; {student.disciplineScore} pts discipline
                     </span>
                   )}
                 </p>
@@ -367,7 +367,7 @@ const ATTENDANCE_STATES = [
 ]
 
 function AttendancePanel({ classSubject }) {
-  const roster = useRoster(classSubject.classroom_id)
+  const roster = useRoster(classSubject.classroomId)
   const [date, setDate] = useState(() => toLocalDateString())
   const [states, setStates] = useState({})
   const [saving, setSaving] = useState(false)
@@ -377,12 +377,12 @@ function AttendancePanel({ classSubject }) {
     setSaving(true)
     setResult(null)
     const entries = Object.entries(states).map(([enrollmentId, state]) => ({
-      local_uuid: crypto.randomUUID(),
+      localUuid: crypto.randomUUID(),
       enrollment: Number(enrollmentId),
       date,
-      class_subject: classSubject.id,
+      classSubject: classSubject.id,
       state,
-      created_offline: false,
+      createdOffline: false,
     }))
     try {
       const res = await api.post('/api/academics/attendance/sync/', entries)
@@ -413,7 +413,7 @@ function AttendancePanel({ classSubject }) {
           <div className="space-y-2">
             {roster.data.map((student) => (
               <div key={student.id} className="flex flex-wrap items-center justify-between gap-2 rounded-control border border-border p-2.5">
-                <p className="text-sm text-ink">{student.student_name}</p>
+                <p className="text-sm text-ink">{student.studentName}</p>
                 <div className="flex flex-wrap gap-1">
                   {ATTENDANCE_STATES.map((s) => (
                     <button
@@ -460,9 +460,9 @@ function ExamPaperPanel({ classSubject, examPeriods }) {
     setError('')
     try {
       const res = await api.post('/api/academics/exam-papers/draft/', {
-        class_subject: classSubject.id,
-        exam_period: Number(examPeriodId),
-        draft_content: content,
+        classSubject: classSubject.id,
+        examPeriod: Number(examPeriodId),
+        draftContent: content,
       })
       setPaper(res)
     } catch (err) {
@@ -532,8 +532,8 @@ function ExamPaperPanel({ classSubject, examPeriods }) {
 }
 
 function DisciplinePanel({ classSubject }) {
-  const roster = useRoster(classSubject.classroom_id)
-  const [form, setForm] = useState({ enrollment: '', date: toLocalDateString(), measure: 'warning', reason: '', hours: '', points_deducted: '' })
+  const roster = useRoster(classSubject.classroomId)
+  const [form, setForm] = useState({ enrollment: '', date: toLocalDateString(), measure: 'warning', reason: '', hours: '', pointsDeducted: '' })
   const [error, setError] = useState(null)
   const [submitting, setSubmitting] = useState(false)
   const [success, setSuccess] = useState(false)
@@ -552,9 +552,9 @@ function DisciplinePanel({ classSubject }) {
         measure: form.measure,
         reason: form.reason,
         hours: form.measure === 'detention' && form.hours ? Number(form.hours) : null,
-        points_deducted: form.points_deducted ? Number(form.points_deducted) : 0,
+        pointsDeducted: form.pointsDeducted ? Number(form.pointsDeducted) : 0,
       })
-      setForm({ enrollment: '', date: toLocalDateString(), measure: 'warning', reason: '', hours: '', points_deducted: '' })
+      setForm({ enrollment: '', date: toLocalDateString(), measure: 'warning', reason: '', hours: '', pointsDeducted: '' })
       setSuccess(true)
       roster.refetch()
     } catch (err) {
@@ -571,11 +571,11 @@ function DisciplinePanel({ classSubject }) {
         <form onSubmit={submit} className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <select required className="rounded-control border border-border bg-surface px-3 py-2 text-sm" value={form.enrollment} onChange={(e) => setForm({ ...form, enrollment: e.target.value })}>
             <option value="">Choisir l'eleve...</option>
-            {roster.data?.map((r) => <option key={r.id} value={r.id}>{r.student_name}</option>)}
+            {roster.data?.map((r) => <option key={r.id} value={r.id}>{r.studentName}</option>)}
           </select>
           {selectedStudent && (
             <p className="text-xs text-ink-muted">
-              Points de discipline actuels : <span className="font-semibold text-ink">{selectedStudent.discipline_score}</span>
+              Points de discipline actuels : <span className="font-semibold text-ink">{selectedStudent.disciplineScore}</span>
             </p>
           )}
           <input required type="date" className="rounded-control border border-border bg-surface px-3 py-2 text-sm" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} />
@@ -587,7 +587,7 @@ function DisciplinePanel({ classSubject }) {
           )}
           <div>
             <label className="mb-1 block text-xs font-medium text-ink-muted">Points a deduire (selon la gravite)</label>
-            <input type="number" min="0" className="w-full rounded-control border border-border bg-surface px-3 py-2 text-sm" placeholder="ex: 2" value={form.points_deducted} onChange={(e) => setForm({ ...form, points_deducted: e.target.value })} />
+            <input type="number" min="0" className="w-full rounded-control border border-border bg-surface px-3 py-2 text-sm" placeholder="ex: 2" value={form.pointsDeducted} onChange={(e) => setForm({ ...form, pointsDeducted: e.target.value })} />
           </div>
           <textarea required className="rounded-control border border-border bg-surface px-3 py-2 text-sm sm:col-span-2" placeholder="Motif" value={form.reason} onChange={(e) => setForm({ ...form, reason: e.target.value })} />
           {error && <p className="text-sm text-danger-600 sm:col-span-2">{error}</p>}

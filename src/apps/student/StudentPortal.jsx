@@ -30,7 +30,7 @@ export default function StudentPortal() {
         <div>
           <h1 className="text-2xl font-bold text-ink">Espace Eleve</h1>
           <p className="text-ink-muted">
-            {student.first_name} {student.last_name} | {enr.classroom?.label || 'Sans classe'}
+            {student.firstName} {student.lastName} | {enr.classroom?.label || 'Sans classe'}
           </p>
         </div>
       </div>

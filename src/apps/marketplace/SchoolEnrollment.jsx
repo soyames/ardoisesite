@@ -38,7 +38,7 @@ export default function SchoolEnrollment() {
           setChildClassId(data.classrooms[0].id)
         } else {
           // Fallback for E2E testing
-          data.classrooms = [{ id: '1', name: 'CP', registration_fee: 10000 }]
+          data.classrooms = [{ id: '1', name: 'CP', registrationFee: 10000 }]
           setChildClassId('1')
         }
       } else {
@@ -68,15 +68,15 @@ export default function SchoolEnrollment() {
     )
   }
 
-  const fallbackClassrooms = school.classrooms && school.classrooms.length > 0 ? school.classrooms : [{ id: '1', name: 'CP', registration_fee: 10000 }]
+  const fallbackClassrooms = school.classrooms && school.classrooms.length > 0 ? school.classrooms : [{ id: '1', name: 'CP', registrationFee: 10000 }]
   const selectedClass = fallbackClassrooms.find(c => c.id == childClassId)
-  const registrationFee = selectedClass?.registration_fee || 0
+  const registrationFee = selectedClass?.registrationFee || 0
 
   const uploadToSchoolBackend = async (file, documentType, reqId) => {
     if (!file || !school.backendUrl) return false;
     
     const formData = new FormData();
-    formData.append('school_id', school.id);
+    formData.append('schoolId', school.id);
     formData.append('request_id', reqId);
     formData.append('document_type', documentType);
     formData.append('file', file);
@@ -122,7 +122,7 @@ export default function SchoolEnrollment() {
       })
       setRequestDocId(docRef.id)
       requestDocIdRef.current = docRef.id
-      return { enrollment_request_id: docRef.id, school_id: school.id }
+      return { enrollment_request_id: docRef.id, schoolId: school.id }
     } catch (err) {
       console.error(err)
       alert("Une erreur est survenue lors de la préparation de la demande. Réessayez.")
@@ -206,7 +206,7 @@ export default function SchoolEnrollment() {
               <label className="block text-sm font-medium text-ink mb-1">Classe demandée *</label>
               <select value={childClassId} onChange={e => setChildClassId(e.target.value)} className="w-full rounded-control border border-border px-4 py-2 text-sm focus:border-primary-500">
                 {fallbackClassrooms.map(c => (
-                  <option key={c.id} value={c.id}>{c.name} - Frais: {c.registration_fee} FCFA</option>
+                  <option key={c.id} value={c.id}>{c.name} - Frais: {c.registrationFee} FCFA</option>
                 ))}
               </select>
             </div>
@@ -253,7 +253,7 @@ export default function SchoolEnrollment() {
               customerFirstname={user.firstName || 'Parent'}
               customerLastname={user.lastName || ''}
               customerPhoneNumber={user.phone}
-              customMetadata={{ enrollment_request_id: requestDocId, school_id: school.id }}
+              customMetadata={{ enrollment_request_id: requestDocId, schoolId: school.id }}
               onBeforeOpen={handleStartPayment}
               onComplete={handlePaymentComplete}
               className="w-full rounded-control bg-accent-500 px-4 py-3 text-sm font-bold text-primary-950 hover:bg-accent-400"

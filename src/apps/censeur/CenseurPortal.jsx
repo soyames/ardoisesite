@@ -75,7 +75,7 @@ function DashboardTab({ onNavigate }) {
   const pendingBulletins = useApiGet('/api/academics/bulletins/pending-approval/')
   const pendingDiscipline = useApiGet('/api/academics/discipline/pending-approval/')
   const openIncidents = useApiGet('/api/academics/incidents/?status=open')
-  const pendingTimeLogs = useApiGet('/api/hr/time-logs/?is_confirmed=false')
+  const pendingTimeLogs = useApiGet('/api/hr/time-logs/?isConfirmed=false')
   const summary = useApiGet('/api/academics/bulletins/school-summary/')
 
   const loading = pendingBulletins.loading || pendingDiscipline.loading || openIncidents.loading || pendingTimeLogs.loading || summary.loading
@@ -160,7 +160,7 @@ function DashboardTab({ onNavigate }) {
                   <li key={inc.id} className="flex items-center justify-between p-4">
                     <div>
                       <p className="text-sm font-medium text-ink">{inc.description}</p>
-                      <p className="text-xs text-ink-muted">{inc.location} - {new Date(inc.occurred_at).toLocaleString('fr-FR')}</p>
+                      <p className="text-xs text-ink-muted">{inc.location} - {new Date(inc.occurredAt).toLocaleString('fr-FR')}</p>
                     </div>
                     <Badge tone="warning">{inc.kind}</Badge>
                   </li>
@@ -199,7 +199,7 @@ function BulletinsTab() {
       <GenerateBulletinsForm onGenerated={() => pending.refetch()} />
 
       <div className="flex justify-end">
-        <CycleSwitcher userCycleScope={user?.cycle_scope} value={cycle} onChange={setCycle} />
+        <CycleSwitcher userCycleScope={user?.cycleScope} value={cycle} onChange={setCycle} />
       </div>
       {error && <p className="text-sm text-danger-600">{error}</p>}
       {pending.loading && <div className="flex justify-center py-8"><Spinner /></div>}
@@ -208,10 +208,10 @@ function BulletinsTab() {
         <Card key={b.id}>
           <CardBody className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-ink">{b.student_name} - {b.exam_period_label}</p>
+              <p className="text-sm font-medium text-ink">{b.studentName} - {b.examPeriodLabel}</p>
               <p className="text-xs text-ink-muted">
-                Moyenne {b.average} - Rang {b.class_rank}/{b.class_size}
-                {b.discipline_score != null && ` - ${b.discipline_score} pts discipline`}
+                Moyenne {b.average} - Rang {b.classRank}/{b.classSize}
+                {b.disciplineScore != null && ` - ${b.disciplineScore} pts discipline`}
               </p>
             </div>
             <Button size="sm" onClick={() => approve(b.id)} disabled={busy === b.id}>
@@ -239,7 +239,7 @@ function GenerateBulletinsForm({ onGenerated }) {
     setResult(null)
     try {
       const res = await api.post('/api/academics/bulletins/generate/', {
-        classroom: Number(classroomId), exam_period: Number(examPeriodId),
+        classroom: Number(classroomId), examPeriod: Number(examPeriodId),
       })
       setResult(res.length)
       onGenerated?.()
@@ -309,7 +309,7 @@ function DisciplineTab() {
   return (
     <div className="space-y-3">
       <div className="flex justify-end">
-        <CycleSwitcher userCycleScope={user?.cycle_scope} value={cycle} onChange={setCycle} />
+        <CycleSwitcher userCycleScope={user?.cycleScope} value={cycle} onChange={setCycle} />
       </div>
       {error && <p className="text-sm text-danger-600">{error}</p>}
       {pending.loading && <div className="flex justify-center py-8"><Spinner /></div>}
@@ -319,11 +319,11 @@ function DisciplineTab() {
           <CardBody className="space-y-3">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-ink">{d.student_name}</p>
+                <p className="text-sm font-medium text-ink">{d.studentName}</p>
                 <p className="text-xs text-ink-muted">{d.date} - {d.measure} - {d.reason}</p>
                 <p className="text-xs text-ink-muted">
-                  Signale par {d.issued_by_name}
-                  {d.points_deducted > 0 && <span> &bull; -{d.points_deducted} pts discipline</span>}
+                  Signale par {d.issuedByName}
+                  {d.pointsDeducted > 0 && <span> &bull; -{d.pointsDeducted} pts discipline</span>}
                 </p>
               </div>
               <Badge tone="warning">{d.measure}</Badge>
@@ -354,16 +354,16 @@ function CalendrierTab() {
   const [teacherId, setTeacherId] = useState('')
   const [selectedDate, setSelectedDate] = useState(null)
 
-  const currentYear = academicYears.data?.find((y) => y.is_current) || academicYears.data?.[0]
+  const currentYear = academicYears.data?.find((y) => y.isCurrent) || academicYears.data?.[0]
 
   const slotsQuery = new URLSearchParams()
   if (classroomId) slotsQuery.set('classroom', classroomId)
   if (teacherId) slotsQuery.set('teacher', teacherId)
   const slots = useApiGet(`/api/academics/timetable-slots/?${slotsQuery.toString()}`)
-  const events = useApiGet(`/api/academics/calendar-events/?academic_year=${currentYear?.id || ''}`, { skip: !currentYear })
+  const events = useApiGet(`/api/academics/calendar-events/?academicYear=${currentYear?.id || ''}`, { skip: !currentYear })
 
   const [showSlotForm, setShowSlotForm] = useState(false)
-  const [slotForm, setSlotForm] = useState({ class_subject: '', day_of_week: '0', start_time: '08:00', end_time: '09:00' })
+  const [slotForm, setSlotForm] = useState({ classSubject: '', dayOfWeek: '0', startTime: '08:00', endTime: '09:00' })
   const [slotError, setSlotError] = useState(null)
   const [submittingSlot, setSubmittingSlot] = useState(false)
 
@@ -376,11 +376,11 @@ function CalendrierTab() {
     setSlotError(null)
     try {
       await api.post('/api/academics/timetable-slots/', {
-        academic_year: currentYear.id,
-        class_subject: Number(slotForm.class_subject),
-        day_of_week: Number(slotForm.day_of_week),
-        start_time: slotForm.start_time,
-        end_time: slotForm.end_time,
+        academicYear: currentYear.id,
+        classSubject: Number(slotForm.classSubject),
+        dayOfWeek: Number(slotForm.dayOfWeek),
+        startTime: slotForm.startTime,
+        endTime: slotForm.endTime,
       })
       setShowSlotForm(false)
       slots.refetch()
@@ -445,20 +445,20 @@ function CalendrierTab() {
             <form onSubmit={submitSlot} className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <select
                 required className={`sm:col-span-2 ${INPUT_CLASS}`}
-                value={slotForm.class_subject}
-                onChange={(e) => setSlotForm({ ...slotForm, class_subject: e.target.value })}
+                value={slotForm.classSubject}
+                onChange={(e) => setSlotForm({ ...slotForm, classSubject: e.target.value })}
               >
                 <option value="">Choisir classe + matiere...</option>
                 {classSubjectOptions.map((cs) => (
-                  <option key={cs.id} value={cs.id}>{cs.classroom_name} - {cs.subject_name}</option>
+                  <option key={cs.id} value={cs.id}>{cs.classroomName} - {cs.subjectName}</option>
                 ))}
               </select>
-              <select className={INPUT_CLASS} value={slotForm.day_of_week} onChange={(e) => setSlotForm({ ...slotForm, day_of_week: e.target.value })}>
+              <select className={INPUT_CLASS} value={slotForm.dayOfWeek} onChange={(e) => setSlotForm({ ...slotForm, dayOfWeek: e.target.value })}>
                 {DAYS.map((d) => <option key={d.value} value={d.value}>{d.label}</option>)}
               </select>
               <div className="flex gap-2">
-                <input type="time" className={INPUT_CLASS} value={slotForm.start_time} onChange={(e) => setSlotForm({ ...slotForm, start_time: e.target.value })} />
-                <input type="time" className={INPUT_CLASS} value={slotForm.end_time} onChange={(e) => setSlotForm({ ...slotForm, end_time: e.target.value })} />
+                <input type="time" className={INPUT_CLASS} value={slotForm.startTime} onChange={(e) => setSlotForm({ ...slotForm, startTime: e.target.value })} />
+                <input type="time" className={INPUT_CLASS} value={slotForm.endTime} onChange={(e) => setSlotForm({ ...slotForm, endTime: e.target.value })} />
               </div>
               {slotError && <p className="text-sm text-danger-600 sm:col-span-2">{slotError}</p>}
               <div className="sm:col-span-2">
@@ -541,7 +541,7 @@ function PlanificationTab() {
                   <p className="text-sm text-ink">{c.detail_a}</p>
                   <p className="text-sm text-ink">{c.detail_b}</p>
                   <p className="mt-1 text-xs text-ink-muted">
-                    {c.kind === 'teacher' ? `Meme enseignant : ${c.teacher_name}` : `Meme salle : ${c.classroom_name}`}
+                    {c.kind === 'teacher' ? `Meme enseignant : ${c.teacherName}` : `Meme salle : ${c.classroomName}`}
                   </p>
                 </div>
                 <Badge tone="warning">{c.kind === 'teacher' ? 'Enseignant' : 'Salle'}</Badge>
@@ -565,11 +565,11 @@ function PlanificationTab() {
               return (
                 <li key={s.id} className="flex flex-col gap-2 p-4 sm:flex-row sm:items-start sm:justify-between">
                   <div>
-                    <p className="text-sm font-medium text-ink">{s.staff_name}{s.subject_name && ` - ${s.subject_name}`}</p>
+                    <p className="text-sm font-medium text-ink">{s.staffName}{s.subjectName && ` - ${s.subjectName}`}</p>
                     <p className="text-sm text-ink-muted">{s.notes}</p>
                     <p className="mt-1 text-xs text-ink-muted">
-                      {s.hours_requested != null && `${s.hours_requested} h souhaitees - `}
-                      {new Date(s.created_at).toLocaleDateString('fr-FR')}
+                      {s.hoursRequested != null && `${s.hoursRequested} h souhaitees - `}
+                      {new Date(s.createdAt).toLocaleDateString('fr-FR')}
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
@@ -601,7 +601,7 @@ function PlanificationTab() {
 }
 
 function TimeLogsTab() {
-  const pending = useApiGet('/api/hr/time-logs/?is_confirmed=false')
+  const pending = useApiGet('/api/hr/time-logs/?isConfirmed=false')
   const [busy, setBusy] = useState(null)
   const [error, setError] = useState(null)
 
@@ -628,7 +628,7 @@ function TimeLogsTab() {
         <Card key={t.id}>
           <CardBody className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-ink">{t.staff_name} - {t.class_subject_label}</p>
+              <p className="text-sm font-medium text-ink">{t.staffName} - {t.classSubjectLabel}</p>
               <p className="text-xs text-ink-muted">{t.date} - {t.hours} h</p>
             </div>
             <Button size="sm" onClick={() => confirm(t.id)} disabled={busy === t.id}>
@@ -654,8 +654,8 @@ function ExamsTab() {
           {exams.data?.map((e) => (
             <li key={e.id} className="flex items-center justify-between p-4">
               <div>
-                <p className="text-sm font-medium text-ink">{e.class_label} - {e.subject_name}</p>
-                <p className="text-xs text-ink-muted">{e.exam_period_label} - Redige par {e.drafted_by_name || '-'}</p>
+                <p className="text-sm font-medium text-ink">{e.classLabel} - {e.subjectName}</p>
+                <p className="text-xs text-ink-muted">{e.examPeriodLabel} - Redige par {e.draftedByName || '-'}</p>
               </div>
               <Badge tone={e.status === 'TYPED' ? 'success' : e.status === 'SUBMITTED' ? 'warning' : 'neutral'}>{e.status}</Badge>
             </li>

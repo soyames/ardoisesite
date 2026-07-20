@@ -111,18 +111,18 @@ export function AuthProvider({ children }) {
               if (res && res.id) {
                 userData = userData || {}
                 userData.id = res.id // Store the Django user ID for frontend resolution
-                // cycle_scope: which cycle (primaire/secondaire) this Director/
+                // cycleScope: which cycle (primaire/secondaire) this Director/
                 // Censeur oversees, blank = both - see the 2026-07-17-cycle-
                 // scope-wiring CEO plan. Needed client-side to decide whether
                 // to show a CycleBadge (cycle-scoped) or a CycleSwitcher
                 // (blank - oversees both).
-                userData.cycle_scope = res.cycle_scope || ''
-                // staff_id: the caller's own hr.StaffProfile id, when
+                userData.cycleScope = res.cycleScope || ''
+                // staffId: the caller's own hr.StaffProfile id, when
                 // linked - needed by "Mon espace RH" (see the 2026-07-16
                 // ERP-gap CEO plan's "Employee self-service" expansion)
                 // to file a leave request/log hours as themselves,
                 // since those endpoints require an explicit `staff`.
-                userData.staff_id = res.staff_id || null
+                userData.staffId = res.staffId || null
               }
             } catch (authErr) {
               // FirebaseLoginView refuses to establish an ERP session
