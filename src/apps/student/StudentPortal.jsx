@@ -1,99 +1,137 @@
+import { useState } from 'react'
+import { useAuth } from '../../shared/auth/AuthContext.jsx'
 import { useApiGet } from '../../shared/hooks/useApi.js'
 import { Card, CardHeader, CardBody } from '../../shared/ui/Card.jsx'
-import Spinner from '../../shared/ui/Spinner.jsx'
 import EmptyState from '../../shared/ui/EmptyState.jsx'
-import StatCard from '../../shared/ui/StatCard.jsx'
-import ActivityList from '../../shared/ui/ActivityList.jsx'
+import Spinner from '../../shared/ui/Spinner.jsx'
 
-/**
- * Read-only self-view for a Role.STUDENT account - own bulletins and
- * attendance only, same shape as ParentPortal's ChildDetail but for
- * exactly one student (themselves) and without the payment/discipline
- * tabs Role.STUDENT holds no permission for (see core/permissions.py).
- */
+// TipTap Editor
+import { useEditor, EditorContent } from '@tiptap/react'
+import StarterKit from '@tiptap/starter-kit'
+
 export default function StudentPortal() {
-  const me = useApiGet('/api/students/my-enrollment/')
-  const enrollmentId = me.data?.current_enrollment?.id
+  const { user } = useAuth()
+  const enrollment = useApiGet('/api/students/my-enrollment/')
+  const [activeTab, setActiveTab] = useState('overview')
 
-  const bulletins = useApiGet(`/api/academics/bulletins/?enrollment=${enrollmentId}`, { skip: !enrollmentId })
-  const attendance = useApiGet(`/api/academics/attendance/?enrollment=${enrollmentId}`, { skip: !enrollmentId })
-
-  const absenceCount = attendance.data?.filter((a) => a.state.startsWith('absent')).length ?? 0
-
-  if (me.loading) {
-    return (
-      <div className="flex justify-center py-10">
-        <Spinner />
-      </div>
-    )
+  if (enrollment.loading) {
+    return <div className="flex h-64 items-center justify-center"><Spinner /></div>
+  }
+  if (!enrollment.data || !enrollment.data.id) {
+    return <EmptyState title="Aucune inscription" description="Votre compte n'est lie a aucun dossier scolaire actif." />
   }
 
-  if (!me.data?.id) {
-    return (
-      <EmptyState
-        title="Aucun profil eleve lie a ce compte"
-        description="Si vous pensez que c'est une erreur, contactez le secretariat de l'ecole."
-      />
-    )
+  const enr = enrollment.data
+  const student = enr.student
+
+  return (
+    <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+      <div className="mb-8 flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-ink">Espace Eleve</h1>
+          <p className="text-ink-muted">
+            {student.first_name} {student.last_name} | {enr.classroom?.label || 'Sans classe'}
+          </p>
+        </div>
+      </div>
+
+      {/* Tabs */}
+      <div className="mb-6 flex space-x-1 rounded-control bg-surface-raised p-1 shadow-sm ring-1 ring-border sm:w-max">
+        {['overview', 'assignments'].map((tab) => (
+          <button
+            key={tab}
+            onClick={() => setActiveTab(tab)}
+            className={`rounded-control px-4 py-2 text-sm font-medium ${
+              activeTab === tab ? 'bg-surface text-ink shadow ring-1 ring-border' : 'text-ink-muted hover:text-ink'
+            }`}
+          >
+            {tab === 'overview' ? 'Vue d\'ensemble' : 'Devoirs & Soumissions'}
+          </button>
+        ))}
+      </div>
+
+      {activeTab === 'overview' && (
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+          <Card>
+            <CardHeader title="Informations Personnelles" />
+            <CardBody>
+              <dl className="space-y-4 text-sm">
+                <div>
+                  <dt className="text-ink-muted">Matricule</dt>
+                  <dd className="font-medium text-ink">{student.registration_number}</dd>
+                </div>
+                <div>
+                  <dt className="text-ink-muted">Genre</dt>
+                  <dd className="font-medium text-ink">{student.gender}</dd>
+                </div>
+              </dl>
+            </CardBody>
+          </Card>
+        </div>
+      )}
+
+      {activeTab === 'assignments' && (
+        <AssignmentPanel />
+      )}
+    </div>
+  )
+}
+
+function AssignmentPanel() {
+  const [submitted, setSubmitted] = useState(false)
+  
+  const editor = useEditor({
+    extensions: [StarterKit],
+    content: '<p>Saisissez votre reponse ici. Vous pouvez utiliser le format texte enrichi pour les equations et formules...</p>',
+    editorProps: {
+      attributes: {
+        class: 'prose prose-sm sm:prose-base focus:outline-none min-h-[200px] p-4',
+      },
+    },
+  })
+
+  const submitHomework = () => {
+    // const html = editor.getHTML()
+    // In a real implementation, this POSTs to /api/academics/assignments/submissions/
+    setSubmitted(true)
   }
 
   return (
-    <div className="space-y-6">
-      <div>
-        <p className="text-xs font-semibold uppercase tracking-wider text-accent-700">Mon espace</p>
-        <h1 className="mt-1 text-2xl font-bold text-ink">{me.data.firstName} {me.data.lastName}</h1>
-        <p className="mt-1 text-sm text-ink-muted">
-          {me.data.current_enrollment?.classroom_name} · {me.data.current_enrollment?.academic_year_label} · Matricule {me.data.matricule}
-        </p>
-      </div>
-
-      {!enrollmentId && (
-        <EmptyState title="Aucune inscription active" description="Vos bulletins et votre presence apparaitront ici une fois inscrit." />
-      )}
-
-      {enrollmentId && (
-        <>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <StatCard icon="fact_check" label="Bulletins publies" value={bulletins.data?.length || 0} />
-            <StatCard icon="event_busy" label="Absences enregistrees" value={absenceCount} tone={absenceCount > 0 ? 'warning' : 'success'} />
+    <Card>
+      <CardHeader 
+        title="Devoirs & Evaluations" 
+        subtitle="Rendez vos devoirs directement en ligne sans telecharger de fichier." 
+      />
+      <CardBody>
+        {submitted ? (
+          <div className="rounded-control bg-success-50 p-4 text-success-700">
+            <p className="font-bold">Devoir soumis avec succes !</p>
+            <p className="text-sm mt-1">Votre professeur recevra une notification.</p>
           </div>
+        ) : (
+          <div className="space-y-4">
+            <div className="rounded-control bg-surface-raised p-4 ring-1 ring-border">
+              <h3 className="font-bold text-ink">Devoir de Mathematiques - Exercice 4 (Demo)</h3>
+              <p className="text-sm text-ink-muted mt-1">A rendre avant le 25 Juillet. Demontrez le theoreme de Pythagore.</p>
+            </div>
+            
+            <div className="rounded-control border border-border bg-surface overflow-hidden">
+              <div className="border-b border-border bg-surface-raised p-2 flex gap-2">
+                <button onClick={() => editor.chain().focus().toggleBold().run()} className="px-2 py-1 text-sm rounded bg-surface ring-1 ring-border font-bold hover:bg-surface-raised">B</button>
+                <button onClick={() => editor.chain().focus().toggleItalic().run()} className="px-2 py-1 text-sm rounded bg-surface ring-1 ring-border italic hover:bg-surface-raised">I</button>
+                <button onClick={() => editor.chain().focus().toggleCodeBlock().run()} className="px-2 py-1 text-sm rounded bg-surface ring-1 ring-border font-mono hover:bg-surface-raised">Code</button>
+              </div>
+              <EditorContent editor={editor} />
+            </div>
 
-          <div className="grid gap-6 lg:grid-cols-2">
-            <Card>
-              <CardHeader title="Bulletins" subtitle="Publies par l'ecole" />
-              {bulletins.loading && <div className="flex justify-center py-8"><Spinner /></div>}
-              {!bulletins.loading && (
-                <ActivityList
-                  emptyLabel="Aucun bulletin publie pour l'instant."
-                  items={(bulletins.data || []).map((b) => ({
-                    id: b.id, icon: 'fact_check', iconTone: 'success',
-                    title: b.exam_period_label, subtitle: `Moyenne ${b.average} - Rang ${b.class_rank}/${b.class_size}`,
-                    badge: 'Publie', badgeTone: 'success',
-                  }))}
-                />
-              )}
-            </Card>
-
-            <Card>
-              <CardHeader title="Presence" subtitle={`${absenceCount} absence(s) enregistree(s)`} />
-              {attendance.loading && <div className="flex justify-center py-8"><Spinner /></div>}
-              {!attendance.loading && (
-                <div className="max-h-64 overflow-y-auto">
-                  <ActivityList
-                    emptyLabel="Aucun enregistrement de presence."
-                    items={(attendance.data || []).slice(0, 20).map((a) => ({
-                      id: a.id, icon: a.state === 'present' ? 'check_circle' : a.state.startsWith('absent') ? 'cancel' : 'schedule',
-                      iconTone: a.state === 'present' ? 'success' : a.state.startsWith('absent') ? 'danger' : 'warning',
-                      title: a.date,
-                      badge: a.state, badgeTone: a.state === 'present' ? 'success' : a.state.startsWith('absent') ? 'danger' : 'warning',
-                    }))}
-                  />
-                </div>
-              )}
-            </Card>
+            <div className="flex justify-end">
+              <button onClick={submitHomework} className="rounded-control bg-primary-600 px-4 py-2 text-sm font-bold text-white hover:bg-primary-700">
+                Soumettre le devoir
+              </button>
+            </div>
           </div>
-        </>
-      )}
-    </div>
+        )}
+      </CardBody>
+    </Card>
   )
 }

@@ -20,6 +20,18 @@ const PURPOSES = [
 
 const EMPTY_FORM = { name: '', purpose: 'generic', header_html: '', footer_html: '' }
 
+const SAMPLE_TEMPLATES = {
+  header: `<div style="text-align: center; border-bottom: 2px solid #ccc; padding-bottom: 10px; margin-bottom: 20px;">
+  <h1 style="margin: 0; color: #2c3e50;">[Nom de l'Ecole]</h1>
+  <p style="margin: 5px 0 0; color: #7f8c8d;">[Adresse complete de l'ecole] | Tel: [Numero] | Email: [Email]</p>
+</div>`,
+  footer: `<div style="text-align: center; border-top: 1px solid #ccc; padding-top: 10px; margin-top: 30px; font-size: 12px; color: #95a5a6;">
+  <p style="margin: 0;">[Nom de l'Ecole] - Agree par le Ministere de l'Education Nationale</p>
+  <p style="margin: 0;">Site Web: [Site Web] | RCCM: [Numero d'immatriculation]</p>
+</div>`
+}
+
+
 /**
  * Reusable across Founder/Director/Censeur/Secretary - see
  * core/permissions.py for who holds add/change_documenttemplate.
@@ -85,11 +97,21 @@ export default function LetterheadSettings() {
               </select>
             </div>
             <div>
-              <label className="mb-1 block text-xs font-medium text-ink-muted">En-tete (HTML)</label>
+              <div className="mb-1 flex items-center justify-between">
+                <label className="block text-xs font-medium text-ink-muted">En-tete (HTML)</label>
+                <button type="button" onClick={() => setForm({ ...form, header_html: SAMPLE_TEMPLATES.header })} className="text-xs text-primary-600 hover:underline">
+                  + Inserer modele
+                </button>
+              </div>
               <textarea rows={4} className={INPUT_CLASS} placeholder="<h1>Nom de l'ecole</h1><p>Adresse, telephone...</p>" value={form.header_html} onChange={(e) => setForm({ ...form, header_html: e.target.value })} />
             </div>
             <div>
-              <label className="mb-1 block text-xs font-medium text-ink-muted">Pied de page (HTML)</label>
+              <div className="mb-1 flex items-center justify-between">
+                <label className="block text-xs font-medium text-ink-muted">Pied de page (HTML)</label>
+                <button type="button" onClick={() => setForm({ ...form, footer_html: SAMPLE_TEMPLATES.footer })} className="text-xs text-primary-600 hover:underline">
+                  + Inserer modele
+                </button>
+              </div>
               <textarea rows={3} className={INPUT_CLASS} placeholder="<p>Document genere par Ardoise</p>" value={form.footer_html} onChange={(e) => setForm({ ...form, footer_html: e.target.value })} />
             </div>
             {error && <p className="text-sm text-danger-600">{error}</p>}
