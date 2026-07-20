@@ -14,8 +14,15 @@ name: Deploy to GitHub Pages
 # docstring for why -- one backend per school, this frontend build
 # points at exactly one). Set it as a repository Actions variable
 # (Settings > Secrets and variables > Actions > Variables) named
-# VITE_API_BASE_URL; falls back to the pilot school's URL if unset so
-# a first deploy doesn't silently break.
+# VITE_API_BASE_URL; falls back to the central platform Worker if unset
+# (the old pilot-school fallback here pointed at a backend that is no
+# longer in service and silently broke every fresh session with no
+# ARDOISE_SCHOOL_API_URL in localStorage yet).
+#
+# VITE_FEDAPAY_PUBLIC_KEY/VITE_FEDAPAY_ENVIRONMENT: FedaPay publishable
+# key, safe to bake into the client bundle (same trust model as a
+# Stripe publishable key). Set as repo Actions variables; falls back to
+# the sandbox key so a first deploy doesn't silently break checkout.
 on:
   push:
     branches: [main]
@@ -45,7 +52,9 @@ jobs:
 
       - run: npm run build
         env:
-          VITE_API_BASE_URL: ${{ vars.VITE_API_BASE_URL || 'https://api.laliberte.soyames.com' }}
+          VITE_API_BASE_URL: ${{ vars.VITE_API_BASE_URL || 'https://api.ardoise.soyames.com' }}
+          VITE_FEDAPAY_PUBLIC_KEY: ${{ vars.VITE_FEDAPAY_PUBLIC_KEY || 'pk_sandbox_OmhNPRnROc1ZNiJAM5Yq0sQ4' }}
+          VITE_FEDAPAY_ENVIRONMENT: ${{ vars.VITE_FEDAPAY_ENVIRONMENT || 'sandbox' }}
 
       - uses: actions/upload-pages-artifact@v3
         with:
