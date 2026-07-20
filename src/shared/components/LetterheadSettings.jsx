@@ -6,6 +6,7 @@ import Button from '../ui/Button.jsx'
 import Badge from '../ui/Badge.jsx'
 import Spinner from '../ui/Spinner.jsx'
 import EmptyState from '../ui/EmptyState.jsx'
+import RichTextEditor from './RichTextEditor.jsx'
 
 const INPUT_CLASS =
   'block w-full rounded-control border-0 py-2 px-3 bg-surface text-ink ring-1 ring-inset ring-border focus:ring-2 focus:ring-primary-500 sm:text-sm'
@@ -21,14 +22,8 @@ const PURPOSES = [
 const EMPTY_FORM = { name: '', purpose: 'generic', headerHtml: '', footerHtml: '' }
 
 const SAMPLE_TEMPLATES = {
-  header: `<div style="text-align: center; border-bottom: 2px solid #ccc; padding-bottom: 10px; margin-bottom: 20px;">
-  <h1 style="margin: 0; color: #2c3e50;">[Nom de l'Ecole]</h1>
-  <p style="margin: 5px 0 0; color: #7f8c8d;">[Adresse complete de l'ecole] | Tel: [Numero] | Email: [Email]</p>
-</div>`,
-  footer: `<div style="text-align: center; border-top: 1px solid #ccc; padding-top: 10px; margin-top: 30px; font-size: 12px; color: #95a5a6;">
-  <p style="margin: 0;">[Nom de l'Ecole] - Agree par le Ministere de l'Education Nationale</p>
-  <p style="margin: 0;">Site Web: [Site Web] | RCCM: [Numero d'immatriculation]</p>
-</div>`
+  header: `<h1 style="text-align: center"><strong>[Nom de l'Ecole]</strong></h1><p style="text-align: center">[Adresse complete de l'ecole] | Tel: [Numero] | Email: [Email]</p><p style="text-align: center"></p>`,
+  footer: `<p style="text-align: center"><strong>[Nom de l'Ecole]</strong> - Agree par le Ministere de l'Education Nationale</p><p style="text-align: center">Site Web: [Site Web] | RCCM: [Numero d'immatriculation]</p>`
 }
 
 
@@ -98,21 +93,21 @@ export default function LetterheadSettings() {
             </div>
             <div>
               <div className="mb-1 flex items-center justify-between">
-                <label className="block text-xs font-medium text-ink-muted">En-tete (HTML)</label>
+                <label className="block text-xs font-medium text-ink-muted">En-tête (Visuel)</label>
                 <button type="button" onClick={() => setForm({ ...form, headerHtml: SAMPLE_TEMPLATES.header })} className="text-xs text-primary-600 hover:underline">
                   + Inserer modele
                 </button>
               </div>
-              <textarea rows={4} className={INPUT_CLASS} placeholder="<h1>Nom de l'ecole</h1><p>Adresse, telephone...</p>" value={form.headerHtml} onChange={(e) => setForm({ ...form, headerHtml: e.target.value })} />
+              <RichTextEditor value={form.headerHtml} onChange={(html) => setForm({ ...form, headerHtml: html })} />
             </div>
             <div>
               <div className="mb-1 flex items-center justify-between">
-                <label className="block text-xs font-medium text-ink-muted">Pied de page (HTML)</label>
+                <label className="block text-xs font-medium text-ink-muted">Pied de page (Visuel)</label>
                 <button type="button" onClick={() => setForm({ ...form, footerHtml: SAMPLE_TEMPLATES.footer })} className="text-xs text-primary-600 hover:underline">
                   + Inserer modele
                 </button>
               </div>
-              <textarea rows={3} className={INPUT_CLASS} placeholder="<p>Document genere par Ardoise</p>" value={form.footerHtml} onChange={(e) => setForm({ ...form, footerHtml: e.target.value })} />
+              <RichTextEditor value={form.footerHtml} onChange={(html) => setForm({ ...form, footerHtml: html })} />
             </div>
             {error && <p className="text-sm text-danger-600">{error}</p>}
             <Button type="submit" size="sm" disabled={submitting}>{submitting ? 'Enregistrement...' : editingId ? 'Mettre a jour' : 'Creer'}</Button>
