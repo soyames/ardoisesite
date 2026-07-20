@@ -44,6 +44,9 @@ export default function SystemPanel() {
   const documents = useApiGet('/api/collab/documents/')
   const auditLogs = useApiGet('/api/audit/logs/')
   const backupStatus = useApiGet('/api/backup/status/')
+  // /health/ is a plain Django view (not DRF), same JSON shape either
+  // way since "version" is a single word - no camelCase concern here.
+  const health = useApiGet('/health/')
 
   const loading = school.loading || academicYears.loading || staff.loading || documents.loading || auditLogs.loading || backupStatus.loading
 
@@ -66,9 +69,16 @@ export default function SystemPanel() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-xl font-semibold text-ink">Systeme</h1>
-        <p className="mt-1 text-sm text-ink-muted">Configuration de l'ecole, comptes, stockage et journal d'audit.</p>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-xl font-semibold text-ink">Systeme</h1>
+          <p className="mt-1 text-sm text-ink-muted">Configuration de l'ecole, comptes, stockage et journal d'audit.</p>
+        </div>
+        {health.data?.version && (
+          <span className="whitespace-nowrap rounded-full bg-surface-raised px-3 py-1 text-xs font-medium text-ink-muted ring-1 ring-border">
+            Ardoise v{health.data.version}
+          </span>
+        )}
       </div>
 
       {loading && <div className="flex justify-center py-10"><Spinner /></div>}
