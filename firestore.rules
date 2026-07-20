@@ -49,7 +49,11 @@ service cloud.firestore {
 
     // Utilisateurs
     match /users/{userId} {
-      allow read, write: if true;
+      allow read: if isSignedIn();
+      allow write: if isSignedIn() 
+                   && request.auth.uid == userId
+                   && !request.resource.data.diff(resource.data).affectedKeys()
+                         .hasAny(['role', 'schoolId', 'subscriptionActive']);
     }
 
     // Offres d'emploi -- tableau public du marketplace, lecture libre.
@@ -138,11 +142,6 @@ service cloud.firestore {
     // ne doit y écrire.
     match /team_members/{memberId} {
       allow read, write: if false;
-    }
-
-    // Règle par défaut pour toute autre collection non listée explicitement ci-dessus
-    match /{document=**} {
-      allow read, write: if isSignedIn();
     }
   }
 }
