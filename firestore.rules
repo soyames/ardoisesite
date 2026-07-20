@@ -62,10 +62,21 @@ service cloud.firestore {
     // Utilisateurs
     match /users/{userId} {
       allow read: if isSignedIn();
-      allow write: if isSignedIn() 
-                   && request.auth.uid == userId
-                   && !request.resource.data.diff(resource.data).affectedKeys()
-                         .hasAny(['role', 'schoolId', 'subscriptionActive']);
+
+      // La création (inscription - RegisterPage.jsx) est le tout premier
+      // write sur ce document : resource n'existe pas encore, donc
+      // resource.data plante dans une seule règle allow write commune à
+      // create et update - Firestore traite une règle qui plante comme
+      // un refus. C'est ce qui cassait TOUTE inscription (role/schoolId
+      // sont justement les champs que RegisterPage.jsx doit écrire au
+      // tout premier write). Séparée de update, qui garde la vraie
+      // restriction de sécurité : après création, role/schoolId/
+      // subscriptionActive ne doivent plus jamais changer côté client.
+      allow create: if isSignedIn() && request.auth.uid == userId;
+      allow update: if isSignedIn()
+                    && request.auth.uid == userId
+                    && !request.resource.data.diff(resource.data).affectedKeys()
+                          .hasAny(['role', 'schoolId', 'subscriptionActive']);
     }
 
     // Offres d'emploi -- tableau public du marketplace, lecture libre.
