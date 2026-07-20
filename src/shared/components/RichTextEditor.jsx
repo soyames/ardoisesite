@@ -2,6 +2,7 @@ import React from 'react'
 import { useEditor, EditorContent } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import TextAlign from '@tiptap/extension-text-align'
+import Image from '@tiptap/extension-image'
 
 // Supported variables that the backend renderer replaces
 const VARIABLES = [
@@ -20,6 +21,10 @@ export default function RichTextEditor({ value, onChange, placeholder }) {
       TextAlign.configure({
         types: ['heading', 'paragraph'],
       }),
+      Image.configure({
+        inline: true,
+        allowBase64: true,
+      }),
     ],
     content: value,
     onUpdate: ({ editor }) => {
@@ -29,6 +34,26 @@ export default function RichTextEditor({ value, onChange, placeholder }) {
       attributes: {
         class: 'prose prose-sm sm:prose lg:prose-lg xl:prose-2xl mx-auto focus:outline-none min-h-[150px] p-4',
       },
+      handleDrop: function(view, event, slice, moved) {
+        if (!moved && event.dataTransfer && event.dataTransfer.files && event.dataTransfer.files[0]) {
+          const file = event.dataTransfer.files[0]
+          if (file.type.startsWith('image/')) {
+            event.preventDefault()
+            const reader = new FileReader()
+            reader.readAsDataURL(file)
+            reader.onload = function () {
+              const { schema } = view.state
+              const coordinates = view.posAtCoords({ left: event.clientX, top: event.clientY })
+              if (!coordinates) return
+              const node = schema.nodes.image.create({ src: reader.result })
+              const transaction = view.state.tr.insert(coordinates.pos, node)
+              view.dispatch(transaction)
+            }
+            return true
+          }
+        }
+        return false
+      }
     },
   })
 

@@ -15,6 +15,14 @@ const CYCLE_LABELS = { primary: 'Primaire', secondary: 'Secondaire', '': 'Les de
 const CREATABLE_ROLES = [
   { value: 'director', label: 'Directeur' },
   { value: 'censeur', label: 'Censeur' },
+  { value: 'surveillant', label: 'Surveillant' },
+  { value: 'secretary', label: 'Secrétaire' },
+  { value: 'comptable', label: 'Comptable' },
+  { value: 'cashier', label: 'Caissier' },
+  { value: 'hr', label: 'RH' },
+  { value: 'canteen', label: 'Cantine' },
+  { value: 'librarian', label: 'Bibliothécaire' },
+  { value: 'auditor', label: 'Auditeur' },
 ]
 
 /**

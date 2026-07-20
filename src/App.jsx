@@ -24,6 +24,7 @@ import SuperadminDashboard from './apps/superadmin/SuperadminDashboard.jsx'
 import DeveloperPortal from './apps/developer/DeveloperPortal.jsx'
 import CollabHub from './shared/collab/CollabHub.jsx'
 import SettingsPage from './shared/settings/SettingsPage.jsx'
+import LiveKitRoomUI from './shared/ui/LiveKitRoomUI.jsx'
 
 // Public Marketplace Layout & Pages
 import PublicLayout from './shared/layout/PublicLayout.jsx'
@@ -166,6 +167,14 @@ export default function App() {
         </Route>
 
         {/* Private School Portal Routes */}
+        <Route
+          path="/meet/:roomId"
+          element={
+            <RequireRole>
+              <LiveKitRoomUI />
+            </RequireRole>
+          }
+        />
         <Route
           path="/portal"
           element={
