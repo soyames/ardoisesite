@@ -256,7 +256,7 @@ export default function TutoringBookingFlow() {
                   Votre abonnement pour {teacher.name} est confirmé. Vous recevrez très bientôt un email avec les détails de la première séance.
                 </p>
                 <Link
-                  to="/marketplace"
+                  to="/"
                   className="inline-flex justify-center rounded-control bg-accent-500 px-6 py-3 text-sm font-bold text-primary-950 shadow-card hover:bg-accent-400"
                 >
                   Retour à l'accueil

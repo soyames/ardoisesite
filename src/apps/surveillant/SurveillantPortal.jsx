@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { api, ApiError } from '../../shared/api/client.js'
 import { useApiGet } from '../../shared/hooks/useApi.js'
+import { toLocalDateString } from '../../shared/utils/date.js'
 import { Card, CardHeader, CardBody } from '../../shared/ui/Card.jsx'
 import Button from '../../shared/ui/Button.jsx'
 import Badge from '../../shared/ui/Badge.jsx'
@@ -227,7 +228,7 @@ function IncidentsTab() {
 function AttendanceTab() {
   const classrooms = useApiGet('/api/students/classrooms/')
   const [classroomId, setClassroomId] = useState('')
-  const [date, setDate] = useState(new Date().toISOString().slice(0, 10))
+  const [date, setDate] = useState(toLocalDateString())
   const [states, setStates] = useState({})
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState(null)
@@ -328,7 +329,7 @@ function DisciplineTab() {
   const classrooms = useApiGet('/api/students/classrooms/')
   const [classroomId, setClassroomId] = useState('')
   const roster = useApiGet(`/api/students/roster/?classroom=${classroomId}`, { skip: !classroomId })
-  const [form, setForm] = useState({ enrollment: '', date: new Date().toISOString().slice(0, 10), measure: 'warning', reason: '', hours: '', points_deducted: '' })
+  const [form, setForm] = useState({ enrollment: '', date: toLocalDateString(), measure: 'warning', reason: '', hours: '', points_deducted: '' })
   const [error, setError] = useState(null)
   const [submitting, setSubmitting] = useState(false)
   const [success, setSuccess] = useState(false)
@@ -349,7 +350,7 @@ function DisciplineTab() {
         hours: form.measure === 'detention' && form.hours ? Number(form.hours) : null,
         points_deducted: form.points_deducted ? Number(form.points_deducted) : 0,
       })
-      setForm({ enrollment: '', date: new Date().toISOString().slice(0, 10), measure: 'warning', reason: '', hours: '', points_deducted: '' })
+      setForm({ enrollment: '', date: toLocalDateString(), measure: 'warning', reason: '', hours: '', points_deducted: '' })
       setSuccess(true)
       roster.refetch()
     } catch (err) {
