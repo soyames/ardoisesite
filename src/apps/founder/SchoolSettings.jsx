@@ -32,6 +32,8 @@ export default function SchoolSettings() {
           commune: data.commune || '',
           address: data.address || '',
           phone: data.phone || '',
+          enrollmentRequirements: data.enrollmentRequirements || '',
+          hasPreselectionTest: data.hasPreselectionTest || false,
         })
         setLoading(false)
       })
@@ -58,17 +60,24 @@ export default function SchoolSettings() {
     
     try {
       const data = new FormData()
+      // SchoolSettingsView is a multipart PATCH - the project's
+      // CamelCaseJSONParser only wraps JSON bodies (see
+      // config/settings.py DEFAULT_PARSER_CLASSES: MultiPartParser/
+      // FormParser are plain, unwrapped), so these keys must match the
+      // School model's raw snake_case field names, not the camelCase
+      // used in this component's own state.
+      const FIELD_NAME_MAP = {
+        shortCode: 'short_code',
+        enrollmentRequirements: 'enrollment_requirements',
+        hasPreselectionTest: 'has_preselection_test',
+      }
       Object.entries(formData).forEach(([key, value]) => {
-        data.append(key, value)
+        data.append(FIELD_NAME_MAP[key] || key, value)
       })
       if (logoFile) {
         data.append('logo', logoFile)
       }
 
-      // Since the client uses api.post and api.get, but we need PATCH for partial update:
-      // client.js only exports get and post by default. Let's see if we can POST it if we configure the view, or we just write a direct request.
-      // Wait, api.js might not export patch. Let's use request directly or add patch.
-      
       const response = await api.patchForm('/api/auth/school/', data)
       setSettings(response)
       alert("Paramètres enregistrés avec succès !")

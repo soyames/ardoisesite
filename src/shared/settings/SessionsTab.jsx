@@ -67,17 +67,17 @@ export default function SessionsTab() {
               <div className="min-w-0">
                 <div className="flex items-center gap-2">
                   <p className="text-sm font-medium text-ink">
-                    {DEVICE_LABEL[s.device_type] || 'Appareil'}
+                    {DEVICE_LABEL[s.deviceType] || 'Appareil'}
                     {s.browser && ` - ${s.browser}`}
-                    {s.operating_system && ` (${s.operating_system})`}
+                    {s.operatingSystem && ` (${s.operatingSystem})`}
                   </p>
-                  {s.is_current && <Badge tone="success">Session actuelle</Badge>}
+                  {s.isCurrent && <Badge tone="success">Session actuelle</Badge>}
                 </div>
                 <p className="mt-0.5 text-xs text-ink-muted">
-                  {s.ip_address || 'IP inconnue'} - active {timeAgo(s.last_seen_at)}
+                  {s.ipAddress || 'IP inconnue'} - active {timeAgo(s.lastSeenAt)}
                 </p>
               </div>
-              {!s.is_current && (
+              {!s.isCurrent && (
                 <Button
                   size="sm" variant="danger"
                   onClick={() => revoke(s.id)}

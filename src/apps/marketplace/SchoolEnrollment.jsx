@@ -76,7 +76,11 @@ export default function SchoolEnrollment() {
     if (!file || !school.backendUrl) return false;
     
     const formData = new FormData();
-    formData.append('schoolId', school.id);
+    // EnrollmentRequestDocumentUploadView (apps/students/api_views.py) uses
+    // MultiPartParser, not JSONParser - the project's camelCase renderer only
+    // wraps JSON, so these keys must match request.data.get(...) verbatim:
+    // school_id/request_id/document_type, all snake_case.
+    formData.append('school_id', school.id);
     formData.append('request_id', reqId);
     formData.append('document_type', documentType);
     formData.append('file', file);

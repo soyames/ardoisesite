@@ -94,7 +94,7 @@ function DashboardTab({ onNavigate }) {
       {!loading && (
         <>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <StatCard icon="account_balance" label="Resultat net (mois)" value={`${Number(incomeStatement.data?.net_income || 0).toLocaleString()} F`} />
+            <StatCard icon="account_balance" label="Resultat net (mois)" value={`${Number(incomeStatement.data?.netIncome || 0).toLocaleString()} F`} />
             <StatCard
               icon="request_quote"
               label="Depenses en attente"
@@ -356,10 +356,10 @@ function ReportsTab() {
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-        <StatCard label="Revenus (mois)" value={incomeStatement.data ? `${Number(incomeStatement.data.total_revenue).toLocaleString()} F` : '-'} />
-        <StatCard label="Depenses (mois)" value={incomeStatement.data ? `${Number(incomeStatement.data.total_expense).toLocaleString()} F` : '-'} />
-        <StatCard label="Resultat net" value={incomeStatement.data ? `${Number(incomeStatement.data.net_income).toLocaleString()} F` : '-'} />
-        <StatCard label="Total debit (balance)" value={trialBalance.data ? `${Number(trialBalance.data.total_debit).toLocaleString()} F` : '-'} />
+        <StatCard label="Revenus (mois)" value={incomeStatement.data ? `${Number(incomeStatement.data.totalRevenue).toLocaleString()} F` : '-'} />
+        <StatCard label="Depenses (mois)" value={incomeStatement.data ? `${Number(incomeStatement.data.totalExpense).toLocaleString()} F` : '-'} />
+        <StatCard label="Resultat net" value={incomeStatement.data ? `${Number(incomeStatement.data.netIncome).toLocaleString()} F` : '-'} />
+        <StatCard label="Total debit (balance)" value={trialBalance.data ? `${Number(trialBalance.data.totalDebit).toLocaleString()} F` : '-'} />
       </div>
 
       <Card>
@@ -375,10 +375,10 @@ function ReportsTab() {
               </thead>
               <tbody className="divide-y divide-border tabular-nums">
                 {trialBalance.data?.rows.map((r) => (
-                  <tr key={r.account_code}>
-                    <td className="p-3 text-ink">{r.account_code} - {r.account_name}</td>
-                    <td className="p-3 text-ink-muted">{Number(r.debit_total).toLocaleString()}</td>
-                    <td className="p-3 text-ink-muted">{Number(r.credit_total).toLocaleString()}</td>
+                  <tr key={r.accountCode}>
+                    <td className="p-3 text-ink">{r.accountCode} - {r.accountName}</td>
+                    <td className="p-3 text-ink-muted">{Number(r.debitTotal).toLocaleString()}</td>
+                    <td className="p-3 text-ink-muted">{Number(r.creditTotal).toLocaleString()}</td>
                     <td className="p-3 text-ink">{Number(r.balance).toLocaleString()}</td>
                   </tr>
                 ))}

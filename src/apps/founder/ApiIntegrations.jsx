@@ -24,11 +24,17 @@ export default function ApiIntegrations() {
         })
         if (res.ok) {
           const data = await res.json()
+          // SystemSettingsView returns a plain dict, but the project's
+          // CamelCaseJSONRenderer (djangorestframework-camel-case) still
+          // camelCases it at the render layer regardless of whether a
+          // Serializer was used - fedapay_public_key -> fedapayPublicKey
+          // etc. in the actual wire response, not the snake_case Python
+          // field names on SystemSettings.
           setConfig({
-            fedaPayPublicKey: data.fedapay_public_key || '',
-            fedaPaySecretKey: data.fedapay_secret_key || '',
-            whatsappToken: data.whatsapp_token || '',
-            whatsappPhoneNumberId: data.whatsapp_phone_number_id || ''
+            fedaPayPublicKey: data.fedapayPublicKey || '',
+            fedaPaySecretKey: data.fedapaySecretKey || '',
+            whatsappToken: data.whatsappToken || '',
+            whatsappPhoneNumberId: data.whatsappPhoneNumberId || ''
           })
         }
       } catch (err) {
@@ -52,10 +58,10 @@ export default function ApiIntegrations() {
           'X-CSRFToken': document.cookie.split('csrftoken=')[1]?.split(';')[0]
         },
         body: JSON.stringify({
-          fedapay_public_key: config.fedaPayPublicKey,
-          fedapay_secret_key: config.fedaPaySecretKey,
-          whatsapp_token: config.whatsappToken,
-          whatsapp_phone_number_id: config.whatsappPhoneNumberId
+          fedapayPublicKey: config.fedaPayPublicKey,
+          fedapaySecretKey: config.fedaPaySecretKey,
+          whatsappToken: config.whatsappToken,
+          whatsappPhoneNumberId: config.whatsappPhoneNumberId
         })
       })
 

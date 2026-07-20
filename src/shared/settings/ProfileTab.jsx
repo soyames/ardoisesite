@@ -9,10 +9,10 @@ const INPUT_CLASS =
   'block w-full rounded-control border-0 py-2 px-3 bg-surface-raised text-ink ring-1 ring-inset ring-border focus:ring-2 focus:ring-primary-500 sm:text-sm'
 
 function ProfileForm({ me, onSaved }) {
-  const [firstName, setFirstName] = useState(me.first_name || '')
-  const [lastName, setLastName] = useState(me.last_name || '')
+  const [firstName, setFirstName] = useState(me.firstName || '')
+  const [lastName, setLastName] = useState(me.lastName || '')
   const [phone, setPhone] = useState(me.phone || '')
-  const [preferredLanguage, setPreferredLanguage] = useState(me.preferred_language || 'fr')
+  const [preferredLanguage, setPreferredLanguage] = useState(me.preferredLanguage || 'fr')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState(null)
   const [saved, setSaved] = useState(false)
@@ -23,8 +23,12 @@ function ProfileForm({ me, onSaved }) {
     setError(null)
     setSaved(false)
     try {
+      // The backend renders/parses camelCase globally
+      // (djangorestframework-camel-case) - these keys must match what
+      // MeSerializer actually emits (first_name -> firstName etc.),
+      // not the Python-side snake_case field names.
       await api.patch('/api/auth/me/profile/', {
-        first_name: firstName, last_name: lastName, phone, preferred_language: preferredLanguage,
+        firstName, lastName, phone, preferredLanguage,
       })
       setSaved(true)
       onSaved()
@@ -65,7 +69,7 @@ function ProfileForm({ me, onSaved }) {
         </div>
         <div>
           <label className="text-xs font-medium text-ink-muted">Role</label>
-          <input className={INPUT_CLASS} value={me.role_display || '-'} disabled />
+          <input className={INPUT_CLASS} value={me.roleDisplay || '-'} disabled />
         </div>
       </div>
       {error && <p className="text-sm text-danger-600">{error}</p>}
@@ -88,7 +92,7 @@ function ChangePasswordForm() {
     setError(null)
     setDone(false)
     try {
-      await api.post('/api/auth/me/change-password/', { current_password: currentPassword, new_password: newPassword })
+      await api.post('/api/auth/me/change-password/', { currentPassword, newPassword })
       setDone(true)
       setCurrentPassword('')
       setNewPassword('')
@@ -136,7 +140,7 @@ export default function ProfileTab() {
         </CardBody>
       </Card>
 
-      {me.data.has_usable_password ? (
+      {me.data.hasUsablePassword ? (
         <Card>
           <CardHeader title="Mot de passe" />
           <CardBody>
