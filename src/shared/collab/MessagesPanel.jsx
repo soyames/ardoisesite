@@ -13,9 +13,9 @@ const INPUT_CLASS =
   'block w-full rounded-control border-0 py-2 px-3 bg-surface-raised text-ink ring-1 ring-inset ring-border focus:ring-2 focus:ring-primary-500 sm:text-sm'
 
 function conversationLabel(conversation, currentUserId) {
-  if (conversation.is_group) return conversation.name || 'Groupe sans nom'
+  if (conversation.isGroup) return conversation.name || 'Groupe sans nom'
   const other = conversation.participants.find((p) => p.id !== currentUserId)
-  return other?.full_name || 'Conversation'
+  return other?.fullName || 'Conversation'
 }
 
 function NewConversationForm({ staff, onCreated, onCancel }) {
@@ -34,8 +34,8 @@ function NewConversationForm({ staff, onCreated, onCancel }) {
     setError(null)
     try {
       const conversation = await api.post('/api/collab/conversations/', {
-        participant_ids: selected,
-        is_group: selected.length > 1,
+        participantIds: selected,
+        isGroup: selected.length > 1,
         name: selected.length > 1 ? name : '',
       })
       onCreated(conversation)
@@ -53,7 +53,7 @@ function NewConversationForm({ staff, onCreated, onCancel }) {
         {staff.map((person) => (
           <label key={person.id} className="flex items-center gap-2 rounded-control px-2 py-1.5 text-sm hover:bg-primary-50/60">
             <input type="checkbox" checked={selected.includes(person.id)} onChange={() => toggle(person.id)} />
-            <span className="text-ink">{person.full_name}</span>
+            <span className="text-ink">{person.fullName}</span>
             <span className="text-xs text-ink-muted">({person.role})</span>
           </label>
         ))}
@@ -159,24 +159,24 @@ export default function MessagesPanel() {
                 }`}
               >
                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary-100 text-primary-700">
-                  {c.is_group ? <Icon name="groups" /> : <span className="text-xs font-bold">{label.slice(0, 2).toUpperCase()}</span>}
+                  {c.isGroup ? <Icon name="groups" /> : <span className="text-xs font-bold">{label.slice(0, 2).toUpperCase()}</span>}
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center justify-between gap-2">
                     <span className="truncate text-sm font-medium text-ink">{label}</span>
-                    {c.last_message && (
+                    {c.lastMessage && (
                       <span className="shrink-0 text-[11px] text-ink-muted">
-                        {new Date(c.last_message.created_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+                        {new Date(c.lastMessage.createdAt).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
                       </span>
                     )}
                   </div>
                   <div className="flex items-center justify-between gap-2">
-                    {c.last_message ? (
-                      <span className="truncate text-xs text-ink-muted">{c.last_message.body || 'Document partage'}</span>
+                    {c.lastMessage ? (
+                      <span className="truncate text-xs text-ink-muted">{c.lastMessage.body || 'Document partage'}</span>
                     ) : (
                       <span className="text-xs text-ink-muted">Aucun message</span>
                     )}
-                    {c.unread_count > 0 && <Badge tone="info">{c.unread_count}</Badge>}
+                    {c.unreadCount > 0 && <Badge tone="info">{c.unreadCount}</Badge>}
                   </div>
                 </div>
               </button>
@@ -196,9 +196,9 @@ export default function MessagesPanel() {
           <>
             <div className="border-b border-border px-4 py-3">
               <p className="text-sm font-semibold text-ink">{conversationLabel(activeConversation, user.id)}</p>
-              {activeConversation.is_group && (
+              {activeConversation.isGroup && (
                 <p className="text-xs text-ink-muted">
-                  {activeConversation.participants.map((p) => p.full_name).join(', ')}
+                  {activeConversation.participants.map((p) => p.fullName).join(', ')}
                 </p>
               )}
             </div>
@@ -207,7 +207,7 @@ export default function MessagesPanel() {
               {messages.loading && <div className="flex justify-center py-6"><Spinner /></div>}
               {messages.data?.map((m) => (
                 <div key={m.id} className="max-w-[80%] rounded-card bg-primary-50/70 px-3 py-2">
-                  <p className="text-xs font-medium text-primary-700">{m.sender?.full_name}</p>
+                  <p className="text-xs font-medium text-primary-700">{m.sender?.fullName}</p>
                   {m.body && <p className="mt-0.5 text-sm text-ink">{m.body}</p>}
                   {m.document && (
                     <a href={m.document.file} target="_blank" rel="noreferrer" className="mt-1 block text-xs text-primary-600 underline">

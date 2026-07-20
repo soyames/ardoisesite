@@ -27,7 +27,7 @@ function ToolbarButton({ editor, isActive, onClick, label, title }) {
  * just headings/bold/italic/lists (see the CEO plan's explicit
  * boundary - 2026-07-18-office-suite-editor.md). Same checkout/release
  * lock as every other Document, content stored as HTML in `file`
- * (content_type=text/html is the discriminator DocumentsPanel uses to
+ * (contentType=text/html is the discriminator DocumentsPanel uses to
  * offer this editor instead of the plain upload/download flow).
  */
 export default function NoteEditor({ document: doc, onClose, onSaved }) {

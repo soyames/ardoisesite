@@ -11,14 +11,14 @@ const DAY_LABELS = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi']
  * only ever shows real, already-approved slots).
  */
 export default function WeeklyTimetableGrid({ slots = [], onSelectSlot }) {
-  const startTimes = [...new Set(slots.map((s) => s.start_time))].sort()
+  const startTimes = [...new Set(slots.map((s) => s.startTime))].sort()
 
   if (startTimes.length === 0) {
     return <p className="p-6 text-center text-sm text-ink-muted">Aucun creneau a afficher.</p>
   }
 
   const slotAt = (dayValue, startTime) =>
-    slots.filter((s) => s.day_of_week === dayValue && s.start_time === startTime)
+    slots.filter((s) => s.dayOfWeek === dayValue && s.startTime === startTime)
 
   return (
     <div className="overflow-x-auto rounded-card border border-border">
@@ -45,8 +45,8 @@ export default function WeeklyTimetableGrid({ slots = [], onSelectSlot }) {
                       onClick={() => onSelectSlot?.(s)}
                       className="block w-full rounded-control border-l-4 border-accent-500 bg-accent-50 p-1.5 text-left transition hover:bg-accent-100"
                     >
-                      <p className="truncate text-xs font-semibold text-accent-800">{s.subject_name}</p>
-                      <p className="truncate text-[11px] text-ink-muted">{s.classroom_name}</p>
+                      <p className="truncate text-xs font-semibold text-accent-800">{s.subjectName}</p>
+                      <p className="truncate text-[11px] text-ink-muted">{s.classroomName}</p>
                     </button>
                   ))}
                 </div>

@@ -11,7 +11,7 @@ export default function StructureTab() {
 
   const [formError, setFormError] = useState(null)
 
-  const [newClass, setNewClass] = useState({ name: '', capacity: 50, registration_fee: 0, level: '6eme', academic_year: '' })
+  const [newClass, setNewClass] = useState({ name: '', capacity: 50, registrationFee: 0, level: '6eme', academicYear: '' })
   const [newSubject, setNewSubject] = useState({ name: '' })
   const [newClassSubject, setNewClassSubject] = useState({ classroom: '', subject: '', teacher: '' })
 
@@ -20,7 +20,7 @@ export default function StructureTab() {
     setFormError(null)
     try {
       await api.post('/api/students/classrooms/', newClass)
-      setNewClass({ name: '', capacity: 50, registration_fee: 0, level: '6eme', academic_year: newClass.academic_year })
+      setNewClass({ name: '', capacity: 50, registrationFee: 0, level: '6eme', academicYear: newClass.academicYear })
       classrooms.refetch()
     } catch (err) {
       setFormError(err instanceof ApiError ? err.message : 'Erreur inattendue.')
@@ -60,8 +60,8 @@ export default function StructureTab() {
           <h2 className="mb-4 text-lg font-bold text-ink">Nouvelle Classe</h2>
           <form onSubmit={createClassroom} className="space-y-3">
             <select
-              value={newClass.academic_year}
-              onChange={e => setNewClass({ ...newClass, academic_year: e.target.value })}
+              value={newClass.academicYear}
+              onChange={e => setNewClass({ ...newClass, academicYear: e.target.value })}
               className="w-full rounded-control border border-border p-2 focus:border-primary-500 focus:outline-none"
               required
             >
@@ -96,17 +96,17 @@ export default function StructureTab() {
               <input
                 type="number"
                 placeholder="Frais d'inscr. (FedaPay)"
-                value={newClass.registration_fee}
-                onChange={e => setNewClass({ ...newClass, registration_fee: e.target.value })}
+                value={newClass.registrationFee}
+                onChange={e => setNewClass({ ...newClass, registrationFee: e.target.value })}
                 className="w-1/4 rounded-control border border-border p-2 focus:border-primary-500 focus:outline-none"
               />
-              <button type="submit" disabled={!newClass.academic_year} className="bg-primary-600 text-white px-4 py-2 rounded-control font-bold hover:bg-primary-700 disabled:opacity-50">
+              <button type="submit" disabled={!newClass.academicYear} className="bg-primary-600 text-white px-4 py-2 rounded-control font-bold hover:bg-primary-700 disabled:opacity-50">
                 Ajouter
               </button>
             </div>
           </form>
           <ul className="mt-4 space-y-1">
-            {classrooms.data?.map(c => <li key={c.id} className="text-sm text-ink-muted">{c.name} ({c.level}) - {c.capacity} places - {c.registration_fee} FCFA</li>)}
+            {classrooms.data?.map(c => <li key={c.id} className="text-sm text-ink-muted">{c.name} ({c.level}) - {c.capacity} places - {c.registrationFee} FCFA</li>)}
           </ul>
         </section>
 
@@ -164,7 +164,7 @@ export default function StructureTab() {
         <ul className="mt-4 space-y-1">
           {classSubjects.data?.map(cs => (
             <li key={cs.id} className="text-sm text-ink-muted">
-              {cs.classroom_name} - {cs.subject_name} {cs.teacher_name ? `(Prof: ${cs.teacher_name})` : ''}
+              {cs.classroomName} - {cs.subjectName} {cs.teacherName ? `(Prof: ${cs.teacherName})` : ''}
             </li>
           ))}
         </ul>

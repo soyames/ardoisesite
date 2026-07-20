@@ -46,7 +46,7 @@ function DashboardTab({ onNavigate }) {
 
   const loading = logs.loading || payments.loading || advances.loading
   const today = new Date().toDateString()
-  const todayLogs = (logs.data || []).filter((l) => new Date(l.occurred_at).toDateString() === today)
+  const todayLogs = (logs.data || []).filter((l) => new Date(l.occurredAt).toDateString() === today)
   const deleteAttempts = (logs.data || []).filter((l) => l.action === 'delete_attempt')
   const pendingAdvances = (advances.data || []).filter((a) => a.status === 'pending')
 
@@ -55,8 +55,8 @@ function DashboardTab({ onNavigate }) {
     icon: l.action === 'delete_attempt' ? 'block' : 'history',
     iconTone: l.action === 'delete_attempt' ? 'danger' : 'primary',
     title: l.summary,
-    subtitle: l.actor_name,
-    timestamp: new Date(l.occurred_at).toLocaleString('fr-FR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }),
+    subtitle: l.actorName,
+    timestamp: new Date(l.occurredAt).toLocaleString('fr-FR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }),
   }))
 
   return (
@@ -105,8 +105,8 @@ function AuditLogTab() {
           {logs.data?.slice(0, 50).map((l) => (
             <li key={l.id} className="p-4">
               <div className="flex items-center justify-between">
-                <p className="text-sm font-medium text-ink">{l.actor_name} - {l.action}</p>
-                <span className="text-xs text-ink-muted">{new Date(l.occurred_at).toLocaleString()}</span>
+                <p className="text-sm font-medium text-ink">{l.actorName} - {l.action}</p>
+                <span className="text-xs text-ink-muted">{new Date(l.occurredAt).toLocaleString()}</span>
               </div>
               <p className="mt-1 text-xs text-ink-muted">{l.summary}</p>
             </li>
@@ -168,8 +168,8 @@ function FinanceTab() {
             {payments.data?.slice(0, 20).map((p) => (
               <li key={p.id} className="flex items-center justify-between p-4">
                 <div>
-                  <p className="text-sm text-ink">{p.parent_name} - Recu {p.receipt_number}</p>
-                  <p className="text-xs text-ink-muted">{new Date(p.received_on).toLocaleDateString()} - {p.method}</p>
+                  <p className="text-sm text-ink">{p.parentName} - Recu {p.receiptNumber}</p>
+                  <p className="text-xs text-ink-muted">{new Date(p.receivedOn).toLocaleDateString()} - {p.method}</p>
                 </div>
                 <Badge tone="neutral">{Number(p.amount).toLocaleString()} FCFA</Badge>
               </li>
@@ -196,8 +196,8 @@ function HrTab() {
           <ul className="divide-y divide-border">
             {payslips.data?.slice(0, 15).map((p) => (
               <li key={p.id} className="p-3">
-                <p className="text-sm text-ink">{p.staff_name}</p>
-                <p className="text-xs text-ink-muted">Net: {Number(p.net_amount).toLocaleString()} FCFA</p>
+                <p className="text-sm text-ink">{p.staffName}</p>
+                <p className="text-xs text-ink-muted">Net: {Number(p.netAmount).toLocaleString()} FCFA</p>
               </li>
             ))}
           </ul>
@@ -213,7 +213,7 @@ function HrTab() {
             {advances.data?.slice(0, 15).map((a) => (
               <li key={a.id} className="p-3">
                 <div className="flex items-center justify-between">
-                  <p className="text-sm text-ink">{a.staff_name}</p>
+                  <p className="text-sm text-ink">{a.staffName}</p>
                   <Badge tone={a.status === 'APPROVED' ? 'success' : a.status === 'REJECTED' ? 'danger' : 'warning'}>{a.status}</Badge>
                 </div>
                 <p className="text-xs text-ink-muted">{Number(a.amount).toLocaleString()} FCFA</p>
@@ -232,10 +232,10 @@ function HrTab() {
             {leave.data?.slice(0, 15).map((l) => (
               <li key={l.id} className="p-3">
                 <div className="flex items-center justify-between">
-                  <p className="text-sm text-ink">{l.staff_name}</p>
+                  <p className="text-sm text-ink">{l.staffName}</p>
                   <Badge tone={l.status === 'APPROVED' ? 'success' : l.status === 'REJECTED' ? 'danger' : 'warning'}>{l.status}</Badge>
                 </div>
-                <p className="text-xs text-ink-muted">{l.start_date} au {l.end_date} - {l.leave_type}</p>
+                <p className="text-xs text-ink-muted">{l.startDate} au {l.endDate} - {l.leaveType}</p>
               </li>
             ))}
           </ul>
@@ -258,8 +258,8 @@ function CommsTab() {
           {messages.data?.slice(0, 30).map((m) => (
             <li key={m.id} className="flex items-center justify-between p-4">
               <div>
-                <p className="text-sm text-ink">{m.template_code || m.trigger_type} - {m.recipient_phone}</p>
-                <p className="text-xs text-ink-muted">{m.channel} - {new Date(m.created_at).toLocaleString()}</p>
+                <p className="text-sm text-ink">{m.templateCode || m.triggerType} - {m.recipientPhone}</p>
+                <p className="text-xs text-ink-muted">{m.channel} - {new Date(m.createdAt).toLocaleString()}</p>
               </div>
               <Badge tone={m.status === 'sent' || m.status === 'delivered' ? 'success' : m.status === 'failed' ? 'danger' : 'neutral'}>{m.status}</Badge>
             </li>

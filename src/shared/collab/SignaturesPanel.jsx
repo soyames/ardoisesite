@@ -117,10 +117,10 @@ export default function SignaturesPanel() {
                     <Icon name="picture_as_pdf" />
                   </div>
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-medium text-ink">{req.document_title || `Document #${req.document}`}</p>
-                    <p className="text-xs text-ink-muted">Demande par {req.requested_by?.full_name}</p>
+                    <p className="truncate text-sm font-medium text-ink">{req.documentTitle || `Document #${req.document}`}</p>
+                    <p className="text-xs text-ink-muted">Demande par {req.requestedBy?.fullName}</p>
                   </div>
-                  {step && <Badge tone="warning">En attente: {step.signer?.full_name}</Badge>}
+                  {step && <Badge tone="warning">En attente: {step.signer?.fullName}</Badge>}
                   {tab === 'pending' && (
                     <Button size="sm" onClick={(e) => { e.stopPropagation(); signCurrent(req) }} disabled={busy}>
                       Signer maintenant
@@ -142,8 +142,8 @@ export default function SignaturesPanel() {
             />
             <CardBody className="space-y-4">
               <div className="border-b border-border pb-4">
-                <p className="text-sm font-semibold text-ink">{selected.document_title || `Document #${selected.document}`}</p>
-                <p className="mt-1 text-xs text-ink-muted">Initie par {selected.requested_by?.full_name}</p>
+                <p className="text-sm font-semibold text-ink">{selected.documentTitle || `Document #${selected.document}`}</p>
+                <p className="mt-1 text-xs text-ink-muted">Initie par {selected.requestedBy?.fullName}</p>
               </div>
 
               <ol className="space-y-4">
@@ -160,11 +160,11 @@ export default function SignaturesPanel() {
                       <Icon name={s.status === 'signed' ? 'check' : s.status === 'rejected' ? 'close' : 'edit_square'} className="text-[18px]" />
                     </div>
                     <div className="flex-1 pb-1">
-                      <p className="text-sm font-medium text-ink">{s.signer?.full_name}</p>
-                      {s.status === 'signed' && s.signed_at && (
-                        <p className="text-xs text-ink-muted">Signe le {new Date(s.signed_at).toLocaleString('fr-FR')}</p>
+                      <p className="text-sm font-medium text-ink">{s.signer?.fullName}</p>
+                      {s.status === 'signed' && s.signedAt && (
+                        <p className="text-xs text-ink-muted">Signe le {new Date(s.signedAt).toLocaleString('fr-FR')}</p>
                       )}
-                      {s.status === 'rejected' && <p className="text-xs text-danger-600">Rejete{s.rejection_reason ? ` - ${s.rejection_reason}` : ''}</p>}
+                      {s.status === 'rejected' && <p className="text-xs text-danger-600">Rejete{s.rejectionReason ? ` - ${s.rejectionReason}` : ''}</p>}
                       {s.status === 'pending' && currentStepFor(selected)?.id === s.id && (
                         <p className="text-xs font-medium text-primary-700">Necessite sa signature</p>
                       )}

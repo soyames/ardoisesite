@@ -63,7 +63,7 @@ function DashboardTab({ onNavigate }) {
 
   const loading = staff.loading || advances.loading || leaves.loading || runs.loading
 
-  const activeStaff = (staff.data || []).filter((s) => s.is_active)
+  const activeStaff = (staff.data || []).filter((s) => s.isActive)
   const pendingAdvances = (advances.data || []).filter((a) => a.status === 'pending')
   const pendingLeaves = (leaves.data || []).filter((l) => l.status === 'pending')
   const draftRuns = (runs.data || []).filter((r) => r.status === 'draft')
@@ -71,12 +71,12 @@ function DashboardTab({ onNavigate }) {
   const requestItems = [
     ...pendingAdvances.slice(0, 4).map((a) => ({
       id: `adv-${a.id}`, icon: 'payments', iconTone: 'warning',
-      title: `${a.staff_name} - Avance`, subtitle: 'Avance sur salaire',
+      title: `${a.staffName} - Avance`, subtitle: 'Avance sur salaire',
       badge: `${a.amount} FCFA`, badgeTone: 'warning',
     })),
     ...pendingLeaves.slice(0, 4).map((l) => ({
       id: `leave-${l.id}`, icon: 'event_busy', iconTone: 'warning',
-      title: `${l.staff_name} - Conge`, subtitle: `${l.start_date} au ${l.end_date}`,
+      title: `${l.staffName} - Conge`, subtitle: `${l.startDate} au ${l.endDate}`,
       badge: 'En attente', badgeTone: 'warning',
     })),
   ]
@@ -118,7 +118,7 @@ function DashboardTab({ onNavigate }) {
 function StaffTab() {
   const staff = useApiGet('/api/hr/staff/')
   const [showForm, setShowForm] = useState(false)
-  const [form, setForm] = useState({ firstName: '', lastName: '', phone: '', function: 'teacher', bank_or_momo_account: '' })
+  const [form, setForm] = useState({ firstName: '', lastName: '', phone: '', function: 'teacher', bankOrMomoAccount: '' })
   const [error, setError] = useState(null)
   const [submitting, setSubmitting] = useState(false)
 
@@ -128,7 +128,7 @@ function StaffTab() {
     setError(null)
     try {
       await api.post('/api/hr/staff/', form)
-      setForm({ firstName: '', lastName: '', phone: '', function: 'teacher', bank_or_momo_account: '' })
+      setForm({ firstName: '', lastName: '', phone: '', function: 'teacher', bankOrMomoAccount: '' })
       setShowForm(false)
       staff.refetch()
     } catch (err) {
@@ -154,7 +154,7 @@ function StaffTab() {
               <select className={INPUT_CLASS} value={form.function} onChange={(e) => setForm({ ...form, function: e.target.value })}>
                 {FUNCTIONS.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
               </select>
-              <input className={`sm:col-span-2 ${INPUT_CLASS}`} placeholder="Compte bancaire / Mobile Money" value={form.bank_or_momo_account} onChange={(e) => setForm({ ...form, bank_or_momo_account: e.target.value })} />
+              <input className={`sm:col-span-2 ${INPUT_CLASS}`} placeholder="Compte bancaire / Mobile Money" value={form.bankOrMomoAccount} onChange={(e) => setForm({ ...form, bankOrMomoAccount: e.target.value })} />
               {error && <p className="text-sm text-danger-600 sm:col-span-2">{error}</p>}
               <div className="sm:col-span-2"><Button type="submit" disabled={submitting}>{submitting ? 'Enregistrement...' : 'Enregistrer'}</Button></div>
             </form>
@@ -172,7 +172,7 @@ function StaffTab() {
                   <p className="text-sm font-medium text-ink">{s.lastName} {s.firstName}</p>
                   <p className="text-xs text-ink-muted">{FUNCTIONS.find(([v]) => v === s.function)?.[1] || s.function} - {s.phone}</p>
                 </div>
-                <Badge tone={s.is_active ? 'success' : 'neutral'}>{s.is_active ? 'Actif' : 'Inactif'}</Badge>
+                <Badge tone={s.isActive ? 'success' : 'neutral'}>{s.isActive ? 'Actif' : 'Inactif'}</Badge>
               </li>
             ))}
           </ul>
@@ -184,7 +184,7 @@ function StaffTab() {
 
 function ContractsTab() {
   const staff = useApiGet('/api/hr/staff/')
-  const [form, setForm] = useState({ staff: '', contract_type: 'permanent', start_date: '', end_date: '', fixed_monthly_salary: '' })
+  const [form, setForm] = useState({ staff: '', contractType: 'permanent', startDate: '', endDate: '', fixedMonthlySalary: '' })
   const [error, setError] = useState(null)
   const [success, setSuccess] = useState(false)
   const [submitting, setSubmitting] = useState(false)
@@ -196,12 +196,12 @@ function ContractsTab() {
     setSuccess(false)
     try {
       await api.post('/api/hr/contracts/', {
-        staff: Number(form.staff), contract_type: form.contract_type, start_date: form.start_date,
-        end_date: form.end_date || null, fixed_monthly_salary: form.contract_type === 'permanent' ? form.fixed_monthly_salary : null,
-        is_active: true,
+        staff: Number(form.staff), contractType: form.contractType, startDate: form.startDate,
+        endDate: form.endDate || null, fixedMonthlySalary: form.contractType === 'permanent' ? form.fixedMonthlySalary : null,
+        isActive: true,
       })
       setSuccess(true)
-      setForm({ staff: '', contract_type: 'permanent', start_date: '', end_date: '', fixed_monthly_salary: '' })
+      setForm({ staff: '', contractType: 'permanent', startDate: '', endDate: '', fixedMonthlySalary: '' })
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Erreur inattendue.')
     } finally {
@@ -218,15 +218,15 @@ function ContractsTab() {
             <option value="">Choisir le membre du personnel...</option>
             {staff.data?.map((s) => <option key={s.id} value={s.id}>{s.lastName} {s.firstName}</option>)}
           </select>
-          <select className={INPUT_CLASS} value={form.contract_type} onChange={(e) => setForm({ ...form, contract_type: e.target.value })}>
+          <select className={INPUT_CLASS} value={form.contractType} onChange={(e) => setForm({ ...form, contractType: e.target.value })}>
             <option value="permanent">Permanent</option>
             <option value="vacataire">Vacataire</option>
           </select>
-          {form.contract_type === 'permanent' && (
-            <input type="number" step="0.01" className={INPUT_CLASS} placeholder="Salaire mensuel fixe (FCFA)" value={form.fixed_monthly_salary} onChange={(e) => setForm({ ...form, fixed_monthly_salary: e.target.value })} />
+          {form.contractType === 'permanent' && (
+            <input type="number" step="0.01" className={INPUT_CLASS} placeholder="Salaire mensuel fixe (FCFA)" value={form.fixedMonthlySalary} onChange={(e) => setForm({ ...form, fixedMonthlySalary: e.target.value })} />
           )}
-          <input required type="date" className={INPUT_CLASS} value={form.start_date} onChange={(e) => setForm({ ...form, start_date: e.target.value })} />
-          <input type="date" className={INPUT_CLASS} placeholder="Date de fin (optionnel)" value={form.end_date} onChange={(e) => setForm({ ...form, end_date: e.target.value })} />
+          <input required type="date" className={INPUT_CLASS} value={form.startDate} onChange={(e) => setForm({ ...form, startDate: e.target.value })} />
+          <input type="date" className={INPUT_CLASS} placeholder="Date de fin (optionnel)" value={form.endDate} onChange={(e) => setForm({ ...form, endDate: e.target.value })} />
           {error && <p className="text-sm text-danger-600 sm:col-span-2">{error}</p>}
           {success && <p className="text-sm text-success-600 sm:col-span-2">Contrat cree avec succes.</p>}
           <div className="sm:col-span-2"><Button type="submit" disabled={submitting}>{submitting ? 'Enregistrement...' : 'Creer le contrat'}</Button></div>
@@ -239,7 +239,7 @@ function ContractsTab() {
 function PayrollTab() {
   const runs = useApiGet('/api/hr/payroll-runs/')
   const payslips = useApiGet('/api/hr/payslips/')
-  const [form, setForm] = useState({ period_start: '', period_end: '' })
+  const [form, setForm] = useState({ periodStart: '', periodEnd: '' })
   const [error, setError] = useState(null)
   const [submitting, setSubmitting] = useState(false)
 
@@ -249,7 +249,7 @@ function PayrollTab() {
     setError(null)
     try {
       await api.post('/api/hr/payroll-runs/', form)
-      setForm({ period_start: '', period_end: '' })
+      setForm({ periodStart: '', periodEnd: '' })
       runs.refetch()
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Erreur inattendue.')
@@ -266,8 +266,8 @@ function PayrollTab() {
         <CardHeader title="Nouveau cycle de paie" subtitle="Cree en brouillon - le Comptable/Directeur/Fondateur doit le valider pour generer les bulletins." />
         <CardBody>
           <form onSubmit={submit} className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            <input required type="date" className={INPUT_CLASS} placeholder="Debut de periode" value={form.period_start} onChange={(e) => setForm({ ...form, period_start: e.target.value })} />
-            <input required type="date" className={INPUT_CLASS} placeholder="Fin de periode" value={form.period_end} onChange={(e) => setForm({ ...form, period_end: e.target.value })} />
+            <input required type="date" className={INPUT_CLASS} placeholder="Debut de periode" value={form.periodStart} onChange={(e) => setForm({ ...form, periodStart: e.target.value })} />
+            <input required type="date" className={INPUT_CLASS} placeholder="Fin de periode" value={form.periodEnd} onChange={(e) => setForm({ ...form, periodEnd: e.target.value })} />
             {error && <p className="text-sm text-danger-600 sm:col-span-2">{error}</p>}
             <div className="sm:col-span-2"><Button type="submit" disabled={submitting}>{submitting ? 'Creation...' : 'Creer le cycle'}</Button></div>
           </form>
@@ -282,7 +282,7 @@ function PayrollTab() {
           <ul className="divide-y divide-border">
             {runs.data?.map((r) => (
               <li key={r.id} className="flex items-center justify-between p-4">
-                <p className="text-sm text-ink">{r.period_start} au {r.period_end}</p>
+                <p className="text-sm text-ink">{r.periodStart} au {r.periodEnd}</p>
                 <Badge tone={STATUS_TONE[r.status] || 'neutral'}>{r.status}</Badge>
               </li>
             ))}
@@ -299,10 +299,10 @@ function PayrollTab() {
             {payslips.data?.map((p) => (
               <li key={p.id} className="flex items-center justify-between p-4">
                 <div>
-                  <p className="text-sm font-medium text-ink">{p.staff_name}</p>
-                  <p className="text-xs text-ink-muted">Brut {p.gross_amount} FCFA - Net {p.net_amount} FCFA</p>
+                  <p className="text-sm font-medium text-ink">{p.staffName}</p>
+                  <p className="text-xs text-ink-muted">Brut {p.grossAmount} FCFA - Net {p.netAmount} FCFA</p>
                 </div>
-                <Badge tone={p.paid_at ? 'success' : 'warning'}>{p.paid_at ? 'Paye' : 'En attente'}</Badge>
+                <Badge tone={p.paidAt ? 'success' : 'warning'}>{p.paidAt ? 'Paye' : 'En attente'}</Badge>
               </li>
             ))}
           </ul>
@@ -361,7 +361,7 @@ function AdvancesTab() {
             {advances.data?.map((a) => (
               <li key={a.id} className="flex items-center justify-between p-4">
                 <div>
-                  <p className="text-sm font-medium text-ink">{a.staff_name} - {a.amount} FCFA</p>
+                  <p className="text-sm font-medium text-ink">{a.staffName} - {a.amount} FCFA</p>
                   <p className="text-xs text-ink-muted">{a.reason}</p>
                 </div>
                 <Badge tone={STATUS_TONE[a.status] || 'neutral'}>{a.status}</Badge>
@@ -377,7 +377,7 @@ function AdvancesTab() {
 function LeaveTab() {
   const staff = useApiGet('/api/hr/staff/')
   const leaves = useApiGet('/api/hr/leave-requests/')
-  const [form, setForm] = useState({ staff: '', start_date: '', end_date: '', leave_type: 'paid', reason: '' })
+  const [form, setForm] = useState({ staff: '', startDate: '', endDate: '', leaveType: 'paid', reason: '' })
   const [error, setError] = useState(null)
   const [submitting, setSubmitting] = useState(false)
 
@@ -387,7 +387,7 @@ function LeaveTab() {
     setError(null)
     try {
       await api.post('/api/hr/leave-requests/', form)
-      setForm({ staff: '', start_date: '', end_date: '', leave_type: 'paid', reason: '' })
+      setForm({ staff: '', startDate: '', endDate: '', leaveType: 'paid', reason: '' })
       leaves.refetch()
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Erreur inattendue.')
@@ -408,13 +408,13 @@ function LeaveTab() {
               <option value="">Choisir...</option>
               {staff.data?.map((s) => <option key={s.id} value={s.id}>{s.lastName} {s.firstName}</option>)}
             </select>
-            <select className={INPUT_CLASS} value={form.leave_type} onChange={(e) => setForm({ ...form, leave_type: e.target.value })}>
+            <select className={INPUT_CLASS} value={form.leaveType} onChange={(e) => setForm({ ...form, leaveType: e.target.value })}>
               <option value="paid">Conge paye</option>
               <option value="unpaid">Conge sans solde</option>
               <option value="sick">Conge maladie</option>
             </select>
-            <input required type="date" className={INPUT_CLASS} value={form.start_date} onChange={(e) => setForm({ ...form, start_date: e.target.value })} />
-            <input required type="date" className={INPUT_CLASS} value={form.end_date} onChange={(e) => setForm({ ...form, end_date: e.target.value })} />
+            <input required type="date" className={INPUT_CLASS} value={form.startDate} onChange={(e) => setForm({ ...form, startDate: e.target.value })} />
+            <input required type="date" className={INPUT_CLASS} value={form.endDate} onChange={(e) => setForm({ ...form, endDate: e.target.value })} />
             <textarea required className={`sm:col-span-2 ${INPUT_CLASS}`} placeholder="Motif" rows={2} value={form.reason} onChange={(e) => setForm({ ...form, reason: e.target.value })} />
             {error && <p className="text-sm text-danger-600 sm:col-span-2">{error}</p>}
             <div className="sm:col-span-2"><Button type="submit" disabled={submitting}>{submitting ? 'Enregistrement...' : 'Soumettre'}</Button></div>
@@ -429,8 +429,8 @@ function LeaveTab() {
             {leaves.data?.map((l) => (
               <li key={l.id} className="flex items-center justify-between p-4">
                 <div>
-                  <p className="text-sm font-medium text-ink">{l.staff_name}</p>
-                  <p className="text-xs text-ink-muted">{l.start_date} au {l.end_date} - {l.leave_type}</p>
+                  <p className="text-sm font-medium text-ink">{l.staffName}</p>
+                  <p className="text-xs text-ink-muted">{l.startDate} au {l.endDate} - {l.leaveType}</p>
                 </div>
                 <Badge tone={STATUS_TONE[l.status] || 'neutral'}>{l.status}</Badge>
               </li>
@@ -446,7 +446,7 @@ function AssetsTab() {
   const staff = useApiGet('/api/hr/staff/')
   const assets = useApiGet('/api/auth/it-assets/')
   const [showForm, setShowForm] = useState(false)
-  const [form, setForm] = useState({ name: '', asset_tag: '', serial_number: '', condition: 'good', assigned_to: '' })
+  const [form, setForm] = useState({ name: '', assetTag: '', serialNumber: '', condition: 'good', assignedTo: '' })
   const [error, setError] = useState(null)
   const [submitting, setSubmitting] = useState(false)
 
@@ -455,8 +455,8 @@ function AssetsTab() {
     setSubmitting(true)
     setError(null)
     try {
-      await api.post('/api/auth/it-assets/', { ...form, assigned_to: form.assigned_to || null })
-      setForm({ name: '', asset_tag: '', serial_number: '', condition: 'good', assigned_to: '' })
+      await api.post('/api/auth/it-assets/', { ...form, assignedTo: form.assignedTo || null })
+      setForm({ name: '', assetTag: '', serialNumber: '', condition: 'good', assignedTo: '' })
       setShowForm(false)
       assets.refetch()
     } catch (err) {
@@ -479,8 +479,8 @@ function AssetsTab() {
           <CardBody>
             <form onSubmit={submit} className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <input required className={INPUT_CLASS} placeholder="Nom (ex: Lenovo ThinkPad T14)" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
-              <input required className={INPUT_CLASS} placeholder="Numero d'inventaire" value={form.asset_tag} onChange={(e) => setForm({ ...form, asset_tag: e.target.value })} />
-              <input className={INPUT_CLASS} placeholder="Numero de serie" value={form.serial_number} onChange={(e) => setForm({ ...form, serial_number: e.target.value })} />
+              <input required className={INPUT_CLASS} placeholder="Numero d'inventaire" value={form.assetTag} onChange={(e) => setForm({ ...form, assetTag: e.target.value })} />
+              <input className={INPUT_CLASS} placeholder="Numero de serie" value={form.serialNumber} onChange={(e) => setForm({ ...form, serialNumber: e.target.value })} />
               <select className={INPUT_CLASS} value={form.condition} onChange={(e) => setForm({ ...form, condition: e.target.value })}>
                 <option value="new">Neuf</option>
                 <option value="good">Bon etat</option>
@@ -488,7 +488,7 @@ function AssetsTab() {
                 <option value="poor">Mauvais etat</option>
                 <option value="broken">Defectueux</option>
               </select>
-              <select className={`sm:col-span-2 ${INPUT_CLASS}`} value={form.assigned_to} onChange={(e) => setForm({ ...form, assigned_to: e.target.value })}>
+              <select className={`sm:col-span-2 ${INPUT_CLASS}`} value={form.assignedTo} onChange={(e) => setForm({ ...form, assignedTo: e.target.value })}>
                 <option value="">Non assigne</option>
                 {staff.data?.map((s) => <option key={s.id} value={s.id}>{s.lastName} {s.firstName}</option>)}
               </select>
@@ -507,7 +507,7 @@ function AssetsTab() {
               <li key={a.id} className="flex items-center justify-between p-4">
                 <div>
                   <p className="text-sm font-medium text-ink">{a.name}</p>
-                  <p className="text-xs text-ink-muted">{a.asset_tag}</p>
+                  <p className="text-xs text-ink-muted">{a.assetTag}</p>
                 </div>
                 <Badge tone={CONDITION_TONE[a.condition] || 'neutral'}>{a.condition}</Badge>
               </li>

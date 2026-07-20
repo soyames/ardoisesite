@@ -33,21 +33,21 @@ export default function MonEspaceRH() {
   const { user } = useAuth()
   const payslips = useApiGet('/api/hr/payslips/')
   const leaveRequests = useApiGet('/api/hr/leave-requests/')
-  const [form, setForm] = useState({ start_date: '', end_date: '', leave_type: 'paid', reason: '' })
+  const [form, setForm] = useState({ startDate: '', endDate: '', leaveType: 'paid', reason: '' })
   const [error, setError] = useState(null)
   const [submitting, setSubmitting] = useState(false)
 
   const submitLeaveRequest = async (e) => {
     e.preventDefault()
-    if (!user?.staff_id) {
+    if (!user?.staffId) {
       setError("Votre compte n'est pas encore lie a une fiche du personnel - contactez les RH.")
       return
     }
     setSubmitting(true)
     setError(null)
     try {
-      await api.post('/api/hr/leave-requests/', { ...form, staff: user.staff_id })
-      setForm({ start_date: '', end_date: '', leave_type: 'paid', reason: '' })
+      await api.post('/api/hr/leave-requests/', { ...form, staff: user.staffId })
+      setForm({ startDate: '', endDate: '', leaveType: 'paid', reason: '' })
       leaveRequests.refetch()
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Erreur inattendue.')
@@ -67,9 +67,9 @@ export default function MonEspaceRH() {
         <CardHeader title="Demander un conge" />
         <CardBody>
           <form onSubmit={submitLeaveRequest} className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            <input required type="date" className={INPUT_CLASS} value={form.start_date} onChange={(e) => setForm({ ...form, start_date: e.target.value })} />
-            <input required type="date" className={INPUT_CLASS} value={form.end_date} onChange={(e) => setForm({ ...form, end_date: e.target.value })} />
-            <select className={INPUT_CLASS} value={form.leave_type} onChange={(e) => setForm({ ...form, leave_type: e.target.value })}>
+            <input required type="date" className={INPUT_CLASS} value={form.startDate} onChange={(e) => setForm({ ...form, startDate: e.target.value })} />
+            <input required type="date" className={INPUT_CLASS} value={form.endDate} onChange={(e) => setForm({ ...form, endDate: e.target.value })} />
+            <select className={INPUT_CLASS} value={form.leaveType} onChange={(e) => setForm({ ...form, leaveType: e.target.value })}>
               {LEAVE_TYPES.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
             </select>
             <input required className={INPUT_CLASS} placeholder="Motif" value={form.reason} onChange={(e) => setForm({ ...form, reason: e.target.value })} />
@@ -92,7 +92,7 @@ export default function MonEspaceRH() {
             {leaveRequests.data?.map((r) => (
               <li key={r.id} className="flex items-center justify-between p-4">
                 <div>
-                  <p className="text-sm text-ink">{r.start_date} - {r.end_date}</p>
+                  <p className="text-sm text-ink">{r.startDate} - {r.endDate}</p>
                   <p className="text-xs text-ink-muted">{r.reason}</p>
                 </div>
                 <Badge tone={LEAVE_STATUS_TONE[r.status] || 'neutral'}>{r.status}</Badge>
@@ -113,10 +113,10 @@ export default function MonEspaceRH() {
             {payslips.data?.map((p) => (
               <li key={p.id} className="flex items-center justify-between p-4">
                 <div>
-                  <p className="text-sm text-ink">Bulletin du {new Date(p.created_at).toLocaleDateString('fr-FR')}</p>
-                  <p className="text-xs text-ink-muted">{Number(p.gross_amount).toLocaleString()} FCFA brut</p>
+                  <p className="text-sm text-ink">Bulletin du {new Date(p.createdAt).toLocaleDateString('fr-FR')}</p>
+                  <p className="text-xs text-ink-muted">{Number(p.grossAmount).toLocaleString()} FCFA brut</p>
                 </div>
-                <Badge tone={p.paid_at ? 'success' : 'neutral'}>{Number(p.net_amount).toLocaleString()} FCFA net</Badge>
+                <Badge tone={p.paidAt ? 'success' : 'neutral'}>{Number(p.netAmount).toLocaleString()} FCFA net</Badge>
               </li>
             ))}
           </ul>

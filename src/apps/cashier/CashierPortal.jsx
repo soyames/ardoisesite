@@ -46,7 +46,7 @@ export default function CashierPortal() {
 function DashboardTab({ onNavigate }) {
   const payments = useApiGet('/api/finance/payments/')
   const today = new Date().toDateString()
-  const todayPayments = (payments.data || []).filter((p) => new Date(p.created_at || p.paid_at).toDateString() === today)
+  const todayPayments = (payments.data || []).filter((p) => new Date(p.createdAt || p.paidAt).toDateString() === today)
   const todayTotal = todayPayments.reduce((sum, p) => sum + Number(p.amount), 0)
 
   return (

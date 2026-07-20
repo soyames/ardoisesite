@@ -45,21 +45,21 @@ export default function SystemPanel() {
 
   const loading = school.loading || academicYears.loading || staff.loading || documents.loading || auditLogs.loading
 
-  const currentYear = academicYears.data?.find((y) => y.is_current) || academicYears.data?.[0]
+  const currentYear = academicYears.data?.find((y) => y.isCurrent) || academicYears.data?.[0]
 
   const roleCounts = (staff.data || []).reduce((acc, s) => {
     acc[s.role] = (acc[s.role] || 0) + 1
     return acc
   }, {})
 
-  const totalStorage = (documents.data || []).reduce((sum, d) => sum + (d.file_size || 0), 0)
+  const totalStorage = (documents.data || []).reduce((sum, d) => sum + (d.fileSize || 0), 0)
 
   const activityItems = (auditLogs.data || []).slice(0, 8).map((log) => ({
     id: log.id,
     icon: AUDIT_ICON_BY_ACTION[log.action] || 'history',
     title: log.summary,
-    subtitle: log.actor_name,
-    timestamp: new Date(log.occurred_at).toLocaleString('fr-FR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }),
+    subtitle: log.actorName,
+    timestamp: new Date(log.occurredAt).toLocaleString('fr-FR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }),
   }))
 
   return (
@@ -75,7 +75,7 @@ export default function SystemPanel() {
         <>
           {school.data && (
             <Card>
-              <CardHeader title={school.data.name} subtitle={school.data.short_code} />
+              <CardHeader title={school.data.name} subtitle={school.data.shortCode} />
               <CardBody className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">Adresse</p>

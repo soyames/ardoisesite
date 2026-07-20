@@ -41,7 +41,7 @@ export default function CalendarGrid({ events = [], selectedDate, onSelectDate }
 
   const eventsByDate = {}
   for (const ev of events) {
-    const key = ev.start_date || ev.date
+    const key = ev.startDate || ev.date
     if (!key) continue
     if (!eventsByDate[key]) eventsByDate[key] = []
     eventsByDate[key].push(ev)

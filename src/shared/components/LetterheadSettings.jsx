@@ -18,7 +18,7 @@ const PURPOSES = [
   { value: 'bulletin', label: 'Bulletin de notes' },
 ]
 
-const EMPTY_FORM = { name: '', purpose: 'generic', header_html: '', footer_html: '' }
+const EMPTY_FORM = { name: '', purpose: 'generic', headerHtml: '', footerHtml: '' }
 
 const SAMPLE_TEMPLATES = {
   header: `<div style="text-align: center; border-bottom: 2px solid #ccc; padding-bottom: 10px; margin-bottom: 20px;">
@@ -55,7 +55,7 @@ export default function LetterheadSettings() {
 
   const startEdit = (t) => {
     setEditingId(t.id)
-    setForm({ name: t.name, purpose: t.purpose, header_html: t.header_html, footer_html: t.footer_html })
+    setForm({ name: t.name, purpose: t.purpose, headerHtml: t.headerHtml, footerHtml: t.footerHtml })
     setShowForm(true)
   }
 
@@ -99,20 +99,20 @@ export default function LetterheadSettings() {
             <div>
               <div className="mb-1 flex items-center justify-between">
                 <label className="block text-xs font-medium text-ink-muted">En-tete (HTML)</label>
-                <button type="button" onClick={() => setForm({ ...form, header_html: SAMPLE_TEMPLATES.header })} className="text-xs text-primary-600 hover:underline">
+                <button type="button" onClick={() => setForm({ ...form, headerHtml: SAMPLE_TEMPLATES.header })} className="text-xs text-primary-600 hover:underline">
                   + Inserer modele
                 </button>
               </div>
-              <textarea rows={4} className={INPUT_CLASS} placeholder="<h1>Nom de l'ecole</h1><p>Adresse, telephone...</p>" value={form.header_html} onChange={(e) => setForm({ ...form, header_html: e.target.value })} />
+              <textarea rows={4} className={INPUT_CLASS} placeholder="<h1>Nom de l'ecole</h1><p>Adresse, telephone...</p>" value={form.headerHtml} onChange={(e) => setForm({ ...form, headerHtml: e.target.value })} />
             </div>
             <div>
               <div className="mb-1 flex items-center justify-between">
                 <label className="block text-xs font-medium text-ink-muted">Pied de page (HTML)</label>
-                <button type="button" onClick={() => setForm({ ...form, footer_html: SAMPLE_TEMPLATES.footer })} className="text-xs text-primary-600 hover:underline">
+                <button type="button" onClick={() => setForm({ ...form, footerHtml: SAMPLE_TEMPLATES.footer })} className="text-xs text-primary-600 hover:underline">
                   + Inserer modele
                 </button>
               </div>
-              <textarea rows={3} className={INPUT_CLASS} placeholder="<p>Document genere par Ardoise</p>" value={form.footer_html} onChange={(e) => setForm({ ...form, footer_html: e.target.value })} />
+              <textarea rows={3} className={INPUT_CLASS} placeholder="<p>Document genere par Ardoise</p>" value={form.footerHtml} onChange={(e) => setForm({ ...form, footerHtml: e.target.value })} />
             </div>
             {error && <p className="text-sm text-danger-600">{error}</p>}
             <Button type="submit" size="sm" disabled={submitting}>{submitting ? 'Enregistrement...' : editingId ? 'Mettre a jour' : 'Creer'}</Button>

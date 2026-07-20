@@ -83,7 +83,7 @@ function DashboardTab({ onNavigate }) {
   const activeStudents = students.data?.filter((s) => (s.status || 'active') === 'active').length ?? 0
   const totalParents = parents.data?.length ?? 0
   const totalEnrollments = enrollments.data?.length ?? 0
-  const activeEnrollments = enrollments.data?.filter((e) => e.is_active).length ?? 0
+  const activeEnrollments = enrollments.data?.filter((e) => e.isActive).length ?? 0
 
   const linkedStudentIds = new Set((guardianships.data ?? []).map((g) => g.student))
   const unlinkedCount = (students.data ?? []).filter((s) => !linkedStudentIds.has(s.id)).length
@@ -95,11 +95,11 @@ function DashboardTab({ onNavigate }) {
   const recentEnrollmentItems = recentEnrollments.map((e) => ({
     id: e.id,
     icon: 'school',
-    iconTone: e.is_active ? 'success' : 'primary',
-    title: e.student_name,
-    subtitle: `${e.classroom_name} - inscrit le ${e.enrolled_on}`,
-    badge: e.is_active ? 'Actif' : 'Inactif',
-    badgeTone: e.is_active ? 'success' : 'neutral',
+    iconTone: e.isActive ? 'success' : 'primary',
+    title: e.studentName,
+    subtitle: `${e.classroomName} - inscrit le ${e.enrolledOn}`,
+    badge: e.isActive ? 'Actif' : 'Inactif',
+    badgeTone: e.isActive ? 'success' : 'neutral',
   }))
 
   return (
@@ -172,7 +172,7 @@ function StudentsTab() {
   const students = useApiGet('/api/students/students/')
   const [showForm, setShowForm] = useState(false)
   const [selectedId, setSelectedId] = useState(null)
-  const [form, setForm] = useState({ matricule: '', firstName: '', lastName: '', sex: 'M', date_of_birth: '', birth_place: '' })
+  const [form, setForm] = useState({ matricule: '', firstName: '', lastName: '', sex: 'M', dateOfBirth: '', birthPlace: '' })
   const [error, setError] = useState(null)
   const [submitting, setSubmitting] = useState(false)
 
@@ -182,7 +182,7 @@ function StudentsTab() {
     setError(null)
     try {
       await api.post('/api/students/students/', form)
-      setForm({ matricule: '', firstName: '', lastName: '', sex: 'M', date_of_birth: '', birth_place: '' })
+      setForm({ matricule: '', firstName: '', lastName: '', sex: 'M', dateOfBirth: '', birthPlace: '' })
       setShowForm(false)
       students.refetch()
     } catch (err) {
@@ -214,8 +214,8 @@ function StudentsTab() {
               </select>
               <input required className={INPUT_CLASS} placeholder="Prenom" value={form.firstName} onChange={(e) => setForm({ ...form, firstName: e.target.value })} />
               <input required className={INPUT_CLASS} placeholder="Nom" value={form.lastName} onChange={(e) => setForm({ ...form, lastName: e.target.value })} />
-              <input type="date" className={INPUT_CLASS} value={form.date_of_birth} onChange={(e) => setForm({ ...form, date_of_birth: e.target.value })} />
-              <input className={INPUT_CLASS} placeholder="Lieu de naissance" value={form.birth_place} onChange={(e) => setForm({ ...form, birth_place: e.target.value })} />
+              <input type="date" className={INPUT_CLASS} value={form.dateOfBirth} onChange={(e) => setForm({ ...form, dateOfBirth: e.target.value })} />
+              <input className={INPUT_CLASS} placeholder="Lieu de naissance" value={form.birthPlace} onChange={(e) => setForm({ ...form, birthPlace: e.target.value })} />
               {error && <p className="text-sm text-danger-600 sm:col-span-2">{error}</p>}
               <div className="sm:col-span-2">
                 <Button type="submit" disabled={submitting}>{submitting ? 'Enregistrement...' : 'Enregistrer'}</Button>
@@ -244,7 +244,7 @@ function StudentsTab() {
                   </div>
                   <div>
                     <p className="text-sm font-medium text-ink">{s.lastName} {s.firstName}</p>
-                    <p className="text-xs text-ink-muted">{s.matricule} {s.date_of_birth && `- ne(e) le ${s.date_of_birth}`}</p>
+                    <p className="text-xs text-ink-muted">{s.matricule} {s.dateOfBirth && `- ne(e) le ${s.dateOfBirth}`}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
@@ -264,7 +264,7 @@ function StudentProfile({ studentId, onBack, onUpdated }) {
   const student = useApiGet(`/api/students/students/${studentId}/`)
   const enrollments = useApiGet(`/api/students/enrollments/?student=${studentId}`)
   const guardianships = useApiGet(`/api/students/guardianships/?student=${studentId}`)
-  const currentEnrollment = enrollments.data?.find((e) => e.is_active) || enrollments.data?.[0]
+  const currentEnrollment = enrollments.data?.find((e) => e.isActive) || enrollments.data?.[0]
   const bulletins = useApiGet(currentEnrollment ? `/api/academics/bulletins/?enrollment=${currentEnrollment.id}` : null, { skip: !currentEnrollment })
   const attendance = useApiGet(currentEnrollment ? `/api/academics/attendance/?enrollment=${currentEnrollment.id}` : null, { skip: !currentEnrollment })
 
@@ -276,7 +276,7 @@ function StudentProfile({ studentId, onBack, onUpdated }) {
   const startEditing = () => {
     setForm({
       matricule: student.data.matricule, firstName: student.data.firstName, lastName: student.data.lastName,
-      sex: student.data.sex, date_of_birth: student.data.date_of_birth || '', birth_place: student.data.birth_place || '',
+      sex: student.data.sex, dateOfBirth: student.data.dateOfBirth || '', birthPlace: student.data.birthPlace || '',
     })
     setEditing(true)
   }
@@ -321,7 +321,7 @@ function StudentProfile({ studentId, onBack, onUpdated }) {
             <div>
               <h2 className="text-xl font-bold text-ink">{student.data.lastName} {student.data.firstName}</h2>
               <p className="text-sm text-ink-muted">
-                {student.data.matricule} - {currentEnrollment?.classroom_name || 'Non inscrit(e)'}
+                {student.data.matricule} - {currentEnrollment?.classroomName || 'Non inscrit(e)'}
               </p>
             </div>
           </div>
@@ -344,8 +344,8 @@ function StudentProfile({ studentId, onBack, onUpdated }) {
               </select>
               <input required className={INPUT_CLASS} placeholder="Prenom" value={form.firstName} onChange={(e) => setForm({ ...form, firstName: e.target.value })} />
               <input required className={INPUT_CLASS} placeholder="Nom" value={form.lastName} onChange={(e) => setForm({ ...form, lastName: e.target.value })} />
-              <input type="date" className={INPUT_CLASS} value={form.date_of_birth} onChange={(e) => setForm({ ...form, date_of_birth: e.target.value })} />
-              <input className={INPUT_CLASS} placeholder="Lieu de naissance" value={form.birth_place} onChange={(e) => setForm({ ...form, birth_place: e.target.value })} />
+              <input type="date" className={INPUT_CLASS} value={form.dateOfBirth} onChange={(e) => setForm({ ...form, dateOfBirth: e.target.value })} />
+              <input className={INPUT_CLASS} placeholder="Lieu de naissance" value={form.birthPlace} onChange={(e) => setForm({ ...form, birthPlace: e.target.value })} />
               {error && <p className="text-sm text-danger-600 sm:col-span-2">{error}</p>}
               <div className="flex gap-2 sm:col-span-2">
                 <Button type="submit" disabled={saving}>{saving ? 'Enregistrement...' : 'Enregistrer'}</Button>
@@ -369,8 +369,8 @@ function StudentProfile({ studentId, onBack, onUpdated }) {
             emptyLabel="Aucun tuteur lie a cet eleve."
             items={(guardianships.data || []).map((g) => ({
               id: g.id, icon: 'family_restroom', iconTone: 'primary',
-              title: g.parent_name, subtitle: g.relation,
-              badge: g.is_primary_payer ? 'Payeur principal' : undefined, badgeTone: 'neutral',
+              title: g.parentName, subtitle: g.relation,
+              badge: g.isPrimaryPayer ? 'Payeur principal' : undefined, badgeTone: 'neutral',
             }))}
           />
         </Card>
@@ -380,9 +380,9 @@ function StudentProfile({ studentId, onBack, onUpdated }) {
           <ActivityList
             emptyLabel="Aucune inscription enregistree."
             items={(enrollments.data || []).map((e) => ({
-              id: e.id, icon: 'school', iconTone: e.is_active ? 'success' : 'primary',
-              title: e.classroom_name, subtitle: `Inscrit le ${e.enrolled_on}`,
-              badge: e.is_active ? 'Actif' : 'Inactif', badgeTone: e.is_active ? 'success' : 'neutral',
+              id: e.id, icon: 'school', iconTone: e.isActive ? 'success' : 'primary',
+              title: e.classroomName, subtitle: `Inscrit le ${e.enrolledOn}`,
+              badge: e.isActive ? 'Actif' : 'Inactif', badgeTone: e.isActive ? 'success' : 'neutral',
             }))}
           />
         </Card>
@@ -395,7 +395,7 @@ function StudentProfile({ studentId, onBack, onUpdated }) {
               emptyLabel="Aucun bulletin publie pour l'instant."
               items={(bulletins.data || []).map((b) => ({
                 id: b.id, icon: 'fact_check', iconTone: 'success',
-                title: b.exam_period_label, subtitle: `Moyenne ${b.average} - Rang ${b.class_rank}/${b.class_size}`,
+                title: b.examPeriodLabel, subtitle: `Moyenne ${b.average} - Rang ${b.classRank}/${b.classSize}`,
                 badge: 'Publie', badgeTone: 'success',
               }))}
             />
@@ -443,8 +443,8 @@ function ParentsTab() {
           <ul className="divide-y divide-border">
             {parents.data?.map((p) => (
               <li key={p.id} className="p-4">
-                <p className="text-sm font-medium text-ink">{p.full_name}</p>
-                <p className="text-xs text-ink-muted">{p.phone_primary} {p.profession && `- ${p.profession}`}</p>
+                <p className="text-sm font-medium text-ink">{p.fullName}</p>
+                <p className="text-xs text-ink-muted">{p.phonePrimary} {p.profession && `- ${p.profession}`}</p>
               </li>
             ))}
           </ul>
@@ -472,7 +472,7 @@ function GuardianshipsTab() {
     setSuccess(false)
     try {
       await api.post('/api/students/guardianships/', {
-        student: Number(studentId), parent: Number(parentId), relation, is_primary_payer: isPrimaryPayer,
+        student: Number(studentId), parent: Number(parentId), relation, isPrimaryPayer: isPrimaryPayer,
       })
       setSuccess(true)
       setStudentId(''); setParentId('')
@@ -494,7 +494,7 @@ function GuardianshipsTab() {
           </select>
           <select required className={INPUT_CLASS} value={parentId} onChange={(e) => setParentId(e.target.value)}>
             <option value="">Choisir le parent...</option>
-            {parents.data?.map((p) => <option key={p.id} value={p.id}>{p.full_name}</option>)}
+            {parents.data?.map((p) => <option key={p.id} value={p.id}>{p.fullName}</option>)}
           </select>
           <select className={INPUT_CLASS} value={relation} onChange={(e) => setRelation(e.target.value)}>
             <option value="mother">Mere</option>
@@ -534,7 +534,7 @@ function EnrollmentsTab() {
     try {
       const classroom = classrooms.data?.find((c) => c.id === Number(classroomId))
       await api.post('/api/students/enrollments/', {
-        student: Number(studentId), classroom: Number(classroomId), academic_year: classroom?.academic_year, kind: 'normal',
+        student: Number(studentId), classroom: Number(classroomId), academicYear: classroom?.academicYear, kind: 'normal',
       })
       setStudentId(''); setClassroomId(''); setShowForm(false)
       enrollments.refetch()
@@ -562,7 +562,7 @@ function EnrollmentsTab() {
               </select>
               <select required className={INPUT_CLASS} value={classroomId} onChange={(e) => setClassroomId(e.target.value)}>
                 <option value="">Choisir la classe...</option>
-                {classrooms.data?.map((c) => <option key={c.id} value={c.id}>{c.name} ({c.academic_year_label})</option>)}
+                {classrooms.data?.map((c) => <option key={c.id} value={c.id}>{c.name} ({c.academicYearLabel})</option>)}
               </select>
               {classrooms.data?.length === 0 && (
                 <p className="text-xs text-warning-600 sm:col-span-2">
@@ -588,10 +588,10 @@ function EnrollmentsTab() {
             {enrollments.data?.map((e) => (
               <li key={e.id} className="flex items-center justify-between p-4">
                 <div>
-                  <p className="text-sm font-medium text-ink">{e.student_name}</p>
-                  <p className="text-xs text-ink-muted">{e.classroom_name} - inscrit le {e.enrolled_on}</p>
+                  <p className="text-sm font-medium text-ink">{e.studentName}</p>
+                  <p className="text-xs text-ink-muted">{e.classroomName} - inscrit le {e.enrolledOn}</p>
                 </div>
-                <Badge tone={e.is_active ? 'success' : 'neutral'}>{e.is_active ? 'Actif' : 'Inactif'}</Badge>
+                <Badge tone={e.isActive ? 'success' : 'neutral'}>{e.isActive ? 'Actif' : 'Inactif'}</Badge>
               </li>
             ))}
           </ul>

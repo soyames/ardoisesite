@@ -10,7 +10,7 @@ import Icon from '../ui/Icon.jsx'
 import SpreadsheetEditor from './SpreadsheetEditor.jsx'
 import NoteEditor from './NoteEditor.jsx'
 
-const isNote = (doc) => doc.kind === 'freeform' && doc.content_type === 'text/html'
+const isNote = (doc) => doc.kind === 'freeform' && doc.contentType === 'text/html'
 
 const ICON_CHIP_TONE = {
   primary: 'bg-primary-100 text-primary-700',
@@ -22,7 +22,7 @@ function docIconInfo(doc) {
   if (doc.kind === 'spreadsheet') return { icon: 'table_chart', tone: 'accent' }
   if (isNote(doc)) return { icon: 'article', tone: 'primary' }
   if (doc.kind === 'templated') return { icon: 'receipt_long', tone: 'primary' }
-  const ct = doc.content_type || ''
+  const ct = doc.contentType || ''
   if (ct.includes('pdf')) return { icon: 'picture_as_pdf', tone: 'danger' }
   if (ct.startsWith('image/')) return { icon: 'image', tone: 'primary' }
   if (ct.includes('word') || ct.includes('document')) return { icon: 'description', tone: 'primary' }
@@ -241,7 +241,7 @@ export default function DocumentsPanel() {
 function DocumentRow({ doc, busy, onOpenSheet, onOpenNote, onAct, onReleaseWithFile, onRequestedSignatures }) {
   const { icon, tone } = docIconInfo(doc)
   const [showRequestForm, setShowRequestForm] = useState(false)
-  const activeChain = doc.signature_request?.status === 'pending' ? doc.signature_request : null
+  const activeChain = doc.signatureRequest?.status === 'pending' ? doc.signatureRequest : null
   const currentStep = activeChain?.steps.find((s) => s.status === 'pending')
 
   return (
@@ -254,16 +254,16 @@ function DocumentRow({ doc, busy, onOpenSheet, onOpenNote, onAct, onReleaseWithF
           <div className="min-w-0">
             <p className="truncate text-sm font-medium text-ink">{doc.title}</p>
             <p className="text-xs text-ink-muted">
-              {doc.uploaded_by?.full_name} - {formatSize(doc.file_size)}
-              {doc.document_template_name && ` - ${doc.document_template_name}`}
-              {doc.status === 'checked_out' && doc.checked_out_by && ` - Verrouille par ${doc.checked_out_by.full_name}`}
+              {doc.uploadedBy?.fullName} - {formatSize(doc.fileSize)}
+              {doc.documentTemplateName && ` - ${doc.documentTemplateName}`}
+              {doc.status === 'checked_out' && doc.checkedOutBy && ` - Verrouille par ${doc.checkedOutBy.fullName}`}
             </p>
           </div>
         </div>
         <div className="flex shrink-0 flex-wrap items-center gap-2">
           <Badge tone={STATUS_TONE[doc.status] || 'neutral'}>{STATUS_LABEL[doc.status] || doc.status}</Badge>
           {activeChain && currentStep && (
-            <Badge tone="warning">Circuit: en attente de {currentStep.signer?.full_name}</Badge>
+            <Badge tone="warning">Circuit: en attente de {currentStep.signer?.fullName}</Badge>
           )}
           {doc.kind === 'spreadsheet' ? (
             <Button size="sm" onClick={onOpenSheet}>
@@ -339,7 +339,7 @@ function RequestSignaturesForm({ documentId, onCancel, onSent }) {
     setSubmitting(true)
     setError(null)
     try {
-      await api.post(`/api/collab/documents/${documentId}/signature-requests/`, { signer_ids: order })
+      await api.post(`/api/collab/documents/${documentId}/signature-requests/`, { signerIds: order })
       onSent()
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Erreur inattendue.')
@@ -365,7 +365,7 @@ function RequestSignaturesForm({ documentId, onCancel, onSent }) {
               }`}
             >
               {stepNumber > 0 && <span className="flex h-4 w-4 items-center justify-center rounded-full bg-white/20 text-[10px]">{stepNumber}</span>}
-              {s.full_name}
+              {s.fullName}
             </button>
           )
         })}

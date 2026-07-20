@@ -53,17 +53,17 @@ function DashboardTab({ onNavigate }) {
 
   const loading = items.loading || sales.loading
   const today = new Date().toDateString()
-  const todaySales = (sales.data || []).filter((s) => new Date(s.created_at || s.sold_at).toDateString() === today)
-  const todayTotal = todaySales.reduce((sum, s) => sum + Number(s.total_amount), 0)
-  const lowStockItems = (items.data || []).filter((i) => Number(i.quantity_on_hand) <= Number(i.low_stock_threshold))
+  const todaySales = (sales.data || []).filter((s) => new Date(s.createdAt || s.sold_at).toDateString() === today)
+  const todayTotal = todaySales.reduce((sum, s) => sum + Number(s.totalAmount), 0)
+  const lowStockItems = (items.data || []).filter((i) => Number(i.quantityOnHand) <= Number(i.lowStockThreshold))
 
   const saleItems = (sales.data || []).slice(0, 6).map((s) => ({
     id: s.id,
     icon: s.method === 'wallet' ? 'account_balance_wallet' : 'payments',
     iconTone: 'accent',
-    title: `Recu ${s.receipt_number}`,
+    title: `Recu ${s.receiptNumber}`,
     subtitle: s.method === 'wallet' ? 'Portefeuille' : 'Especes',
-    badge: `${Number(s.total_amount).toLocaleString()} FCFA`,
+    badge: `${Number(s.totalAmount).toLocaleString()} FCFA`,
     badgeTone: 'neutral',
   }))
 
@@ -104,7 +104,7 @@ function DashboardTab({ onNavigate }) {
               <ActivityList
                 items={lowStockItems.slice(0, 5).map((i) => ({
                   id: i.id, icon: 'flatware', iconTone: 'danger', title: i.name,
-                  badge: `${i.quantity_on_hand} restant(s)`, badgeTone: 'danger',
+                  badge: `${i.quantityOnHand} restant(s)`, badgeTone: 'danger',
                 }))}
               />
             </Card>
@@ -134,7 +134,7 @@ function SaleTab() {
 
   const total = Object.entries(cart).reduce((sum, [itemId, qty]) => {
     const item = items.data?.find((i) => String(i.id) === itemId)
-    return sum + (item ? Number(item.unit_price) * Number(qty || 0) : 0)
+    return sum + (item ? Number(item.unitPrice) * Number(qty || 0) : 0)
   }, 0)
 
   const submit = async (e) => {
@@ -150,9 +150,9 @@ function SaleTab() {
         return
       }
       await api.post('/api/shop/sales/', {
-        student_matricule: matricule || undefined,
+        studentMatricule: matricule || undefined,
         method,
-        receipt_number: receipt,
+        receiptNumber: receipt,
         lines,
       })
       setCart({})
@@ -180,7 +180,7 @@ function SaleTab() {
                   <div key={i.id} className="flex items-center justify-between rounded-control border border-border p-2">
                     <div>
                       <p className="text-sm text-ink">{i.name}</p>
-                      <p className="text-xs text-ink-muted">{i.unit_price} FCFA - stock {i.quantity_on_hand}</p>
+                      <p className="text-xs text-ink-muted">{i.unitPrice} FCFA - stock {i.quantityOnHand}</p>
                     </div>
                     <input
                       type="number" min="0" className={`w-20 ${INPUT_CLASS}`}
@@ -221,10 +221,10 @@ function SaleTab() {
             {sales.data?.slice(0, 15).map((s) => (
               <li key={s.id} className="flex items-center justify-between p-4">
                 <div>
-                  <p className="text-sm text-ink">Recu {s.receipt_number} - {s.lines.map((l) => l.item_name).join(', ')}</p>
+                  <p className="text-sm text-ink">Recu {s.receiptNumber} - {s.lines.map((l) => l.itemName).join(', ')}</p>
                   <p className="text-xs text-ink-muted">{s.method === 'wallet' ? 'Portefeuille' : 'Especes'}</p>
                 </div>
-                <Badge tone="neutral">{Number(s.total_amount).toLocaleString()} FCFA</Badge>
+                <Badge tone="neutral">{Number(s.totalAmount).toLocaleString()} FCFA</Badge>
               </li>
             ))}
           </ul>
@@ -238,7 +238,7 @@ function WalletsTab() {
   const [matricule, setMatricule] = useState('')
   const [wallet, setWallet] = useState(null)
   const [lookupError, setLookupError] = useState(null)
-  const [topup, setTopup] = useState({ amount: '', method: 'cash', receipt_number: '' })
+  const [topup, setTopup] = useState({ amount: '', method: 'cash', receiptNumber: '' })
   const [error, setError] = useState(null)
   const [submitting, setSubmitting] = useState(false)
 
@@ -247,7 +247,7 @@ function WalletsTab() {
     setLookupError(null)
     setWallet(null)
     try {
-      const res = await api.get(`/api/shop/wallets/?student_matricule=${encodeURIComponent(matricule)}`)
+      const res = await api.get(`/api/shop/wallets/?studentMatricule=${encodeURIComponent(matricule)}`)
       setWallet(res)
     } catch (err) {
       setLookupError(err instanceof ApiError ? err.message : 'Erreur inattendue.')
@@ -258,7 +258,7 @@ function WalletsTab() {
     setLookupError(null)
     setWallet(null)
     try {
-      const res = await api.get(`/api/shop/wallets/?id_card_code=${encodeURIComponent(idCardCode)}`)
+      const res = await api.get(`/api/shop/wallets/?idCardCode=${encodeURIComponent(idCardCode)}`)
       setWallet(res)
     } catch (err) {
       setLookupError(err instanceof ApiError ? err.message : 'Carte non reconnue - utilisez le matricule.')
@@ -270,9 +270,9 @@ function WalletsTab() {
     setSubmitting(true)
     setError(null)
     try {
-      const res = await api.post('/api/shop/wallet-topups/', { student_matricule: matricule, ...topup, amount: Number(topup.amount) })
+      const res = await api.post('/api/shop/wallet-topups/', { studentMatricule: matricule, ...topup, amount: Number(topup.amount) })
       setWallet(res)
-      setTopup({ amount: '', method: 'cash', receipt_number: '' })
+      setTopup({ amount: '', method: 'cash', receiptNumber: '' })
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Erreur inattendue.')
     } finally {
@@ -296,7 +296,7 @@ function WalletsTab() {
 
       {wallet && (
         <Card>
-          <CardHeader title={wallet.student_name} subtitle={`Solde: ${Number(wallet.balance).toLocaleString()} FCFA`} />
+          <CardHeader title={wallet.studentName} subtitle={`Solde: ${Number(wallet.balance).toLocaleString()} FCFA`} />
           <CardBody>
             <form onSubmit={submitTopup} className="grid grid-cols-1 gap-3 sm:grid-cols-3">
               <input required type="number" step="0.01" className={INPUT_CLASS} placeholder="Montant" value={topup.amount} onChange={(e) => setTopup({ ...topup, amount: e.target.value })} />
@@ -305,7 +305,7 @@ function WalletsTab() {
                 <option value="momo">Mobile Money</option>
                 <option value="flooz">Flooz</option>
               </select>
-              <input required className={INPUT_CLASS} placeholder="N° recu" value={topup.receipt_number} onChange={(e) => setTopup({ ...topup, receipt_number: e.target.value })} />
+              <input required className={INPUT_CLASS} placeholder="N° recu" value={topup.receiptNumber} onChange={(e) => setTopup({ ...topup, receiptNumber: e.target.value })} />
               {error && <p className="text-sm text-danger-600 sm:col-span-3">{error}</p>}
               <div className="sm:col-span-3"><Button type="submit" disabled={submitting}>{submitting ? 'Rechargement...' : 'Recharger'}</Button></div>
             </form>
@@ -349,8 +349,8 @@ function StockTab() {
             {items.data?.map((i) => (
               <li key={i.id} className="flex items-center justify-between p-4">
                 <p className="text-sm text-ink">{i.name}</p>
-                <Badge tone={Number(i.quantity_on_hand) <= Number(i.low_stock_threshold) ? 'danger' : 'success'}>
-                  {i.quantity_on_hand} en stock
+                <Badge tone={Number(i.quantityOnHand) <= Number(i.lowStockThreshold) ? 'danger' : 'success'}>
+                  {i.quantityOnHand} en stock
                 </Badge>
               </li>
             ))}
@@ -388,8 +388,8 @@ function StockTab() {
             {movements.data?.slice(0, 15).map((m) => (
               <li key={m.id} className="flex items-center justify-between p-4">
                 <div>
-                  <p className="text-sm text-ink">{m.item_name}{m.note ? ` - ${m.note}` : ''}</p>
-                  <p className="text-xs text-ink-muted">{m.recorded_by_name}</p>
+                  <p className="text-sm text-ink">{m.itemName}{m.note ? ` - ${m.note}` : ''}</p>
+                  <p className="text-xs text-ink-muted">{m.recordedByName}</p>
                 </div>
                 <Badge tone={m.direction === 'in' ? 'success' : m.direction === 'out' ? 'warning' : 'neutral'}>
                   {m.direction === 'in' ? '+' : m.direction === 'out' ? '-' : '='}{m.quantity}
@@ -406,7 +406,7 @@ function StockTab() {
 function VendorsTab() {
   const vendors = useApiGet('/api/finance/vendors/')
   const bills = useApiGet('/api/finance/vendor-bills/')
-  const [form, setForm] = useState({ vendor: '', amount: '', description: '', expense_account_code: '601' })
+  const [form, setForm] = useState({ vendor: '', amount: '', description: '', expenseAccountCode: '601' })
   const [error, setError] = useState(null)
   const [submitting, setSubmitting] = useState(false)
 
@@ -416,7 +416,7 @@ function VendorsTab() {
     setError(null)
     try {
       await api.post('/api/finance/vendor-bills/', { ...form, vendor: Number(form.vendor) })
-      setForm({ vendor: '', amount: '', description: '', expense_account_code: '601' })
+      setForm({ vendor: '', amount: '', description: '', expenseAccountCode: '601' })
       bills.refetch()
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Erreur inattendue.')
@@ -451,8 +451,8 @@ function VendorsTab() {
             {bills.data?.map((b) => (
               <li key={b.id} className="flex items-center justify-between p-4">
                 <div>
-                  <p className="text-sm font-medium text-ink">{b.vendor_name}</p>
-                  <p className="text-xs text-ink-muted">{b.description} - {b.bill_date}</p>
+                  <p className="text-sm font-medium text-ink">{b.vendorName}</p>
+                  <p className="text-xs text-ink-muted">{b.description} - {b.billDate}</p>
                 </div>
                 <Badge tone="neutral">{b.amount} FCFA</Badge>
               </li>

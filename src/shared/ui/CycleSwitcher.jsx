@@ -3,9 +3,9 @@ import Badge from './Badge.jsx'
 /**
  * Which cycle (Primaire/Secondaire) the data on screen belongs to - see
  * the 2026-07-17-cycle-scope-wiring CEO plan's "cycle switcher" cherry-
- * pick. A cycle-scoped user (Director/Censeur with cycle_scope set) only
+ * pick. A cycle-scoped user (Director/Censeur with cycleScope set) only
  * ever sees their own cycle - no switcher needed, just the badge so it's
- * never ambiguous. A blank-cycle_scope user (Founder/Auditor - "oversees
+ * never ambiguous. A blank-cycleScope user (Founder/Auditor - "oversees
  * both") gets the 3-way toggle to voluntarily narrow their view; the
  * chosen value is passed by the caller as `?cycle=` on the relevant
  * list endpoints (pending-approvals, leave-requests, staff-directory,
