@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@jridgewell/trace-mapping": "^0.3.31",
+    "@sentry/react": "^10.66.0",
     "@tiptap/extension-text-align": "^3.28.0",
     "@tiptap/pm": "^3.28.0",
     "@tiptap/react": "^3.28.0",
