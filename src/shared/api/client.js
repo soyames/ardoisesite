@@ -1,12 +1,25 @@
 import { getApiBaseUrl } from '../../config/env.js'
 
 /**
- * Thin fetch wrapper matching the backend's actual auth model exactly
+ * Thin fetch wrapper matching the backend's actual auth model
  * (see ardoise/apps/core/api_views.py): Django session cookie auth,
- * plus an X-CSRFToken header read from the csrftoken cookie on every
- * unsafe request. No token/JWT storage anywhere in this file on
- * purpose -- there is nothing to store, the cookie IS the session.
+ * plus an X-CSRFToken header on every unsafe request.
+ *
+ * The token is captured from primeCsrf()'s response BODY, not read
+ * from document.cookie: every real deployment has this frontend
+ * (saas.ardoise.soyames.com) on a different origin than the school's
+ * own backend, and document.cookie can only ever see cookies set for
+ * the page's own origin - no CORS or SameSite setting changes that,
+ * it's basic same-origin policy. The csrftoken cookie IS still
+ * correctly stored by the browser and sent automatically on
+ * subsequent cross-origin requests (SESSION_COOKIE_SAMESITE=None on
+ * the backend), which is why session auth itself worked - only the
+ * client's own attempt to read the cookie value to build the
+ * X-CSRFToken header never could. Every unsafe request 403'd as a
+ * result, for every real (necessarily cross-origin) deployment.
  */
+
+let csrfToken = null
 
 class ApiError extends Error {
   constructor(status, data) {
@@ -16,14 +29,10 @@ class ApiError extends Error {
   }
 }
 
-function readCookie(name) {
-  const match = document.cookie.match(new RegExp(`(?:^|; )${name}=([^;]*)`))
-  return match ? decodeURIComponent(match[1]) : null
-}
-
 /** Call once on app boot, before any login attempt -- see LoginView's docstring on the backend for why this step is not optional. */
 export async function primeCsrf() {
-  await request('/api/auth/csrf/', { method: 'GET' })
+  const data = await request('/api/auth/csrf/', { method: 'GET' })
+  if (data?.csrfToken) csrfToken = data.csrfToken
 }
 
 async function request(path, { method = 'GET', body, headers = {}, isFormData = false } = {}) {
@@ -32,9 +41,8 @@ async function request(path, { method = 'GET', body, headers = {}, isFormData = 
   if (!isFormData) {
     finalHeaders['Content-Type'] = 'application/json'
   }
-  if (isUnsafe) {
-    const csrfToken = readCookie('csrftoken')
-    if (csrfToken) finalHeaders['X-CSRFToken'] = csrfToken
+  if (isUnsafe && csrfToken) {
+    finalHeaders['X-CSRFToken'] = csrfToken
   }
 
   const response = await fetch(`${getApiBaseUrl()}${path}`, {
