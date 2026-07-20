@@ -19,8 +19,20 @@ service cloud.firestore {
     match /schools/{schoolId} {
       allow read: if true;
 
-      // La création est autorisée lors de l'inscription
-      allow create: if isSignedIn();
+      // La création est autorisée lors de l'inscription -- mais les
+      // memes champs d'abonnement interdits en update() ci-dessous
+      // doivent l'etre ici aussi : sans cette restriction, n'importe
+      // quel utilisateur connecte pouvait creer sa propre ecole avec
+      // subscriptionActive: true des la creation, contournant
+      // entierement le webhook FedaPay signe (meme classe de faille
+      // que celle deja corrigee sur update()). activationCode reste
+      // autorise ici : RegisterPage.jsx en genere un a l'inscription
+      // (compte gratuit inclus) pour que report_backend_url ait un
+      // identifiant a utiliser, distinct du statut d'abonnement.
+      allow create: if isSignedIn()
+                    && !request.resource.data.keys().hasAny(
+                          ['subscriptionActive', 'subscriptionExpiresAt', 'subscriptionStatus',
+                           'lastPaymentDate', 'lastPaymentTx']);
 
       // SEUL le fondateur lié à cette école a le droit de modifier les infos (comme le backendUrl) --
       // MAIS jamais les champs d'abonnement. Ces champs ne sont écrits que par

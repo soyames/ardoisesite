@@ -1,4 +1,7 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
+import { doc, getDoc } from 'firebase/firestore'
+import { db } from '../../shared/api/firebase.js'
+import { useAuth } from '../../shared/auth/AuthContext.jsx'
 
 function CodeBlock({ children }) {
   return (
@@ -44,6 +47,19 @@ const SCENARIOS = [
 
 export default function InstallGuide() {
   const [scenario, setScenario] = useState('laptop')
+  const { user } = useAuth()
+  const [activationCode, setActivationCode] = useState(null)
+
+  useEffect(() => {
+    if (user?.role !== 'founder' || !user?.schoolId) return
+    let cancelled = false
+    getDoc(doc(db, 'schools', String(user.schoolId))).then((snap) => {
+      if (!cancelled && snap.exists()) {
+        setActivationCode(snap.data().activationCode || null)
+      }
+    }).catch(() => {})
+    return () => { cancelled = true }
+  }, [user?.role, user?.schoolId])
 
   return (
     <div className="mx-auto max-w-4xl px-6 py-16">
@@ -147,14 +163,20 @@ export default function InstallGuide() {
 
         {/* ---------------------------------------------------------------- */}
         <section>
-          <h2 className="text-xl font-bold text-ink mb-4">2. Obtenir votre Code d'Activation</h2>
+          <h2 className="text-xl font-bold text-ink mb-4">2. Votre Code d'Activation</h2>
           <p className="text-ink-muted mb-4">
-            Pour connecter votre instance au réseau Ardoise et activer les fonctionnalités premium, vous devez
-            posséder un code d'activation. Inscrivez votre école via notre portail pour obtenir un code de la
-            forme <code className="bg-primary-100 px-1 rounded">LALIBERTE-XXXXXX</code>. Laissez ce champ vide pour
-            démarrer sur le forfait gratuit (SIS, présence, frais de base) - vous pourrez l'ajouter plus tard sans
-            réinstaller.
+            Chaque école reçoit un code d'activation dès son inscription sur le portail - forfait gratuit inclus.
+            C'est le seul moyen pour votre installation de se faire connaître de la Plateforme (pour que le
+            marketplace puisse vous joindre) ; il n'accorde aucune fonctionnalité payante par lui-même, celles-ci
+            restent gérées séparément par votre abonnement.
           </p>
+          {activationCode ? (
+            <CodeBlock>{activationCode}</CodeBlock>
+          ) : (
+            <Callout tone="info">
+              Connectez-vous avec votre compte fondateur pour afficher votre code ici automatiquement.
+            </Callout>
+          )}
         </section>
 
         {/* ---------------------------------------------------------------- */}
@@ -168,7 +190,7 @@ export default function InstallGuide() {
   --name ardoise-backend \\
   -p 8000:8000 \\
   -v ardoise_data:/app/data \\
-  -e ARDOISE_ACTIVATION_CODE="VOTRE_CODE_ICI" \\
+  -e ARDOISE_ACTIVATION_CODE="${activationCode || 'VOTRE_CODE_ICI'}" \\
   -e FIREBASE_SERVICE_ACCOUNT='COLLEZ_ICI_LE_JSON_FOURNI_PAR_ARDOISE' \\
   amesc/ardoise:latest`}</CodeBlock>
               <p className="text-ink-muted mt-4">
@@ -273,8 +295,8 @@ docker run -d --name caddy -p 80:80 -p 443:443 \\
                 </tr>
                 <tr>
                   <td className="px-4 py-2 font-mono text-xs">ARDOISE_ACTIVATION_CODE</td>
-                  <td className="px-4 py-2">Non</td>
-                  <td className="px-4 py-2">Laissez vide pour le forfait gratuit.</td>
+                  <td className="px-4 py-2">Oui</td>
+                  <td className="px-4 py-2">Généré automatiquement à l'inscription (voir l'étape 2 ci-dessus) - sans lui, votre installation ne peut pas se faire connaître de la Plateforme, même en forfait gratuit.</td>
                 </tr>
                 <tr>
                   <td className="px-4 py-2 font-mono text-xs">DB_ENGINE, DB_NAME,<br/>DB_USER, DB_PASSWORD</td>
