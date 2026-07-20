@@ -18,6 +18,7 @@ export default function SchoolSettings() {
     phone: '',
   })
   const [logoFile, setLogoFile] = useState(null)
+  const [msg, setMsg] = useState('')
 
   useEffect(() => {
     let active = true
@@ -57,7 +58,8 @@ export default function SchoolSettings() {
   const handleSubmit = async (e) => {
     e.preventDefault()
     setSaving(true)
-    
+    setMsg('')
+
     try {
       const data = new FormData()
       // SchoolSettingsView is a multipart PATCH - the project's
@@ -80,9 +82,12 @@ export default function SchoolSettings() {
 
       const response = await api.patchForm('/api/auth/school/', data)
       setSettings(response)
-      alert("Paramètres enregistrés avec succès !")
+      setMsg('success:Paramètres enregistrés avec succès !')
     } catch (err) {
-      alert("Erreur lors de l'enregistrement.")
+      // A blocking alert() here used to swallow err.message entirely and
+      // hang the page (native dialogs pause the whole JS thread) - worth
+      // seeing the real reason, not just "something failed".
+      setMsg(`error:Erreur lors de l'enregistrement : ${err.message}`)
       console.error(err)
     } finally {
       setSaving(false)
@@ -151,7 +156,12 @@ export default function SchoolSettings() {
             </div>
           </div>
 
-          <div className="pt-4 flex justify-end">
+          <div className="pt-4 flex items-center justify-end gap-4">
+            {msg && (
+              <p className={`text-sm ${msg.startsWith('error:') ? 'text-danger-600' : 'text-success-600'}`}>
+                {msg.slice(msg.indexOf(':') + 1)}
+              </p>
+            )}
             <Button type="submit" disabled={saving}>
               {saving ? 'Enregistrement...' : 'Enregistrer les modifications'}
             </Button>
