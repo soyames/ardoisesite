@@ -13,6 +13,7 @@
   "dependencies": {
     "@jridgewell/trace-mapping": "^0.3.31",
     "@livekit/components-react": "^2.9.23",
+    "@livekit/components-styles": "^1.2.0",
     "@sentry/react": "^10.66.0",
     "@tiptap/extension-image": "^3.28.0",
     "@tiptap/extension-text-align": "^3.28.0",
