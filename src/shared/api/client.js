@@ -17,9 +17,20 @@ import { getApiBaseUrl } from '../../config/env.js'
  * client's own attempt to read the cookie value to build the
  * X-CSRFToken header never could. Every unsafe request 403'd as a
  * result, for every real (necessarily cross-origin) deployment.
+ *
+ * The token itself is kept in sessionStorage, not a module-level
+ * variable: this file is both statically and dynamically imported
+ * across the app (see the Vite build's own INEFFECTIVE_DYNAMIC_IMPORT
+ * warning naming this exact file), which means different route
+ * chunks can each end up with their own separate bundled copy and
+ * their own separate closure - a plain `let csrfToken` set by
+ * AuthContext.jsx's primeCsrf() call was invisible to every other
+ * chunk's copy of this module, which always saw csrfToken as null
+ * and silently sent no header. sessionStorage is the one thing every
+ * copy actually shares.
  */
 
-let csrfToken = null
+const CSRF_STORAGE_KEY = 'ARDOISE_CSRF_TOKEN'
 
 class ApiError extends Error {
   constructor(status, data) {
@@ -32,7 +43,7 @@ class ApiError extends Error {
 /** Call once on app boot, before any login attempt -- see LoginView's docstring on the backend for why this step is not optional. */
 export async function primeCsrf() {
   const data = await request('/api/auth/csrf/', { method: 'GET' })
-  if (data?.csrfToken) csrfToken = data.csrfToken
+  if (data?.csrfToken) sessionStorage.setItem(CSRF_STORAGE_KEY, data.csrfToken)
 }
 
 async function request(path, { method = 'GET', body, headers = {}, isFormData = false } = {}) {
@@ -41,8 +52,9 @@ async function request(path, { method = 'GET', body, headers = {}, isFormData = 
   if (!isFormData) {
     finalHeaders['Content-Type'] = 'application/json'
   }
-  if (isUnsafe && csrfToken) {
-    finalHeaders['X-CSRFToken'] = csrfToken
+  if (isUnsafe) {
+    const csrfToken = sessionStorage.getItem(CSRF_STORAGE_KEY)
+    if (csrfToken) finalHeaders['X-CSRFToken'] = csrfToken
   }
 
   const response = await fetch(`${getApiBaseUrl()}${path}`, {
