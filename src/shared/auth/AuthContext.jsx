@@ -108,6 +108,17 @@ export function AuthProvider({ children }) {
             try {
               await primeCsrf()
               const res = await api.post('/api/auth/firebase-login/', { token, role, schoolId })
+              // django.contrib.auth.login() (called inside FirebaseLoginView
+              // on success) calls Django's own rotate_token() internally -
+              // a deliberate security measure that cycles the CSRF secret
+              // on every login, documented Django behavior. The token
+              // primeCsrf() fetched a moment ago is now permanently stale:
+              // every subsequent write (school settings, staff accounts,
+              // anything) 403'd with "CSRF token ... incorrect" for the
+              // rest of the session, confirmed live by testing an actual
+              // save immediately after a fresh login. Re-prime once more
+              // now that the rotated cookie is in place.
+              await primeCsrf()
               if (res && res.id) {
                 userData = userData || {}
                 userData.id = res.id // Store the Django user ID for frontend resolution
