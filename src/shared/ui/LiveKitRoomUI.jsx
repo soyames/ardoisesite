@@ -6,7 +6,7 @@ import {
   RoomAudioRenderer,
 } from '@livekit/components-react'
 import '@livekit/components-styles'
-import { useAuth } from '../../auth/AuthContext.jsx'
+import { useAuth } from '../auth/AuthContext.jsx'
 import Spinner from './Spinner.jsx'
 
 /**
