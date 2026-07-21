@@ -7,6 +7,8 @@ import Spinner from '../../shared/ui/Spinner.jsx'
 import EmptyState from '../../shared/ui/EmptyState.jsx'
 import Icon from '../../shared/ui/Icon.jsx'
 import InfoTooltip from '../../shared/ui/InfoTooltip.jsx'
+import Toast from '../../shared/ui/Toast.jsx'
+import ConfirmDialog from '../../shared/ui/ConfirmDialog.jsx'
 
 const INPUT_CLASS =
   'block w-full rounded-control border-0 py-2 px-3 bg-surface-raised text-ink ring-1 ring-inset ring-border focus:ring-2 focus:ring-primary-500 sm:text-sm'
@@ -53,7 +55,8 @@ export default function CyclesPanel() {
   const [showCreateForm, setShowCreateForm] = useState(false)
   const [createdAccount, setCreatedAccount] = useState(null)
   const [resetResult, setResetResult] = useState(null)
-  const [staffActionError, setStaffActionError] = useState(null)
+  const [toast, setToast] = useState(null)
+  const [pendingAction, setPendingAction] = useState(null) // { type: 'reset' | 'suspend', member }
 
   const scopableStaff = (staff.data || []).filter((s) => s.role === 'director' || s.role === 'censeur')
 
@@ -76,29 +79,32 @@ export default function CyclesPanel() {
     staff.refetch()
   }
 
-  const handleResetPassword = async (member) => {
-    if (!confirm(`Generer un nouveau mot de passe pour ${member.fullName} ? L'ancien cessera immediatement de fonctionner.`)) return
-    setStaffActionBusyId(member.id)
-    setStaffActionError(null)
-    try {
-      const result = await api.post(`/api/auth/staff-accounts/${member.id}/reset-password/`, {})
-      setResetResult({ fullName: member.fullName, ...result })
-    } catch (err) {
-      setStaffActionError(err instanceof ApiError ? err.message : 'Erreur inattendue.')
-    } finally {
-      setStaffActionBusyId(null)
-    }
-  }
+  // Reset/suspend both need a confirmation step before an irreversible-
+  // feeling action (a new password immediately kills the old one; a
+  // suspension kicks the person out mid-session) - ConfirmDialog is an
+  // in-app modal, not window.confirm(), which is a native browser popup
+  // outside the app's own theme and impossible to style or automate.
+  const requestReset = (member) => setPendingAction({ type: 'reset', member })
+  const requestSuspend = (member) => setPendingAction({ type: 'suspend', member })
 
-  const handleSuspend = async (member) => {
-    if (!confirm(`Suspendre l'acces de ${member.fullName} ? Cette personne sera immediatement deconnectee et ne pourra plus se reconnecter tant que l'acces n'est pas restaure.`)) return
+  const cancelPendingAction = () => setPendingAction(null)
+
+  const confirmPendingAction = async () => {
+    if (!pendingAction) return
+    const { type, member } = pendingAction
+    setPendingAction(null)
     setStaffActionBusyId(member.id)
-    setStaffActionError(null)
     try {
-      await api.post(`/api/auth/staff-accounts/${member.id}/suspend/`, {})
-      staff.refetch()
+      if (type === 'reset') {
+        const result = await api.post(`/api/auth/staff-accounts/${member.id}/reset-password/`, {})
+        setResetResult({ fullName: member.fullName, ...result })
+      } else {
+        await api.post(`/api/auth/staff-accounts/${member.id}/suspend/`, {})
+        setToast({ message: `Acces suspendu pour ${member.fullName}.`, tone: 'success' })
+        staff.refetch()
+      }
     } catch (err) {
-      setStaffActionError(err instanceof ApiError ? err.message : 'Erreur inattendue.')
+      setToast({ message: err instanceof ApiError ? err.message : 'Erreur inattendue.', tone: 'danger' })
     } finally {
       setStaffActionBusyId(null)
     }
@@ -106,12 +112,12 @@ export default function CyclesPanel() {
 
   const handleRestore = async (member) => {
     setStaffActionBusyId(member.id)
-    setStaffActionError(null)
     try {
       await api.post(`/api/auth/staff-accounts/${member.id}/restore/`, {})
+      setToast({ message: `Acces restaure pour ${member.fullName}.`, tone: 'success' })
       staff.refetch()
     } catch (err) {
-      setStaffActionError(err instanceof ApiError ? err.message : 'Erreur inattendue.')
+      setToast({ message: err instanceof ApiError ? err.message : 'Erreur inattendue.', tone: 'danger' })
     } finally {
       setStaffActionBusyId(null)
     }
@@ -132,7 +138,21 @@ export default function CyclesPanel() {
         </p>
       </div>
 
-      {staffActionError && <p className="text-sm text-danger-600">{staffActionError}</p>}
+      <Toast message={toast?.message} tone={toast?.tone} onClose={() => setToast(null)} />
+
+      <ConfirmDialog
+        open={!!pendingAction}
+        title={pendingAction?.type === 'reset' ? 'Reinitialiser le mot de passe ?' : "Suspendre l'acces ?"}
+        message={
+          pendingAction?.type === 'reset'
+            ? `Un nouveau mot de passe sera genere pour ${pendingAction?.member.fullName}. L'ancien cessera immediatement de fonctionner.`
+            : `${pendingAction?.member.fullName} sera immediatement deconnecte(e) et ne pourra plus se reconnecter tant que l'acces n'est pas restaure.`
+        }
+        confirmLabel={pendingAction?.type === 'reset' ? 'Reinitialiser' : 'Suspendre'}
+        danger={pendingAction?.type === 'suspend'}
+        onConfirm={confirmPendingAction}
+        onCancel={cancelPendingAction}
+      />
 
       {resetResult && (
         <div className="rounded-control border border-success-200 bg-success-50 p-4">
@@ -152,8 +172,8 @@ export default function CyclesPanel() {
       <StaffRoster
         staff={staff}
         busyId={staffActionBusyId}
-        onReset={handleResetPassword}
-        onSuspend={handleSuspend}
+        onReset={requestReset}
+        onSuspend={requestSuspend}
         onRestore={handleRestore}
       />
 

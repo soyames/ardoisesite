@@ -12,13 +12,26 @@ import ActivityList from '../../shared/ui/ActivityList.jsx'
 import QuickActionButton from '../../shared/ui/QuickActionButton.jsx'
 import PortalTabs from '../../shared/ui/PortalTabs.jsx'
 import Encaissement from '../../shared/components/Encaissement.jsx'
+import { StaffTab, ContractsTab } from '../../shared/components/StaffManagement.jsx'
 
 const INPUT_CLASS =
   'block w-full rounded-control border-0 py-2 px-3 bg-surface-raised text-ink ring-1 ring-inset ring-border focus:ring-2 focus:ring-primary-500 sm:text-sm'
 
+// Comptable cumulates the HR function at this school (small school, one
+// person does both - see core/permissions.py's Role.COMPTABLE grant,
+// which mirrors Role.HR's staffprofile/contract permissions), but NOT
+// recruitment itself - Founder/Director decide who's hired (Censeur
+// consulted for teaching roles), and accepting a candidate is what
+// creates the StaffProfile (see MarketplaceApplicationAcceptView).
+// Comptable's job starts there: Personnel/Contrats let them see the
+// staff record recruitment just created and fill in what's still
+// missing (bank/momo account, salary, contract) - not run the hiring
+// pipeline, which is why there's no "Recrutement" tab here.
 const TABS = [
   { key: 'dashboard', label: 'Tableau de bord' },
   { key: 'encaissement', label: 'Encaissement' },
+  { key: 'personnel', label: 'Personnel' },
+  { key: 'contracts', label: 'Contrats' },
   { key: 'reports', label: 'Rapports' },
   { key: 'batch-invoices', label: 'Facturation groupee' },
   { key: 'expenses', label: 'Depenses & Budgets' },
@@ -35,13 +48,15 @@ export default function ComptablePortal() {
     <div className="space-y-4">
       <div>
         <h1 className="text-xl font-semibold text-ink">Comptabilite</h1>
-        <p className="mt-1 text-sm text-ink-muted">Grand livre, validation de paie, approbations financieres.</p>
+        <p className="mt-1 text-sm text-ink-muted">Grand livre, personnel, validation de paie, approbations financieres.</p>
       </div>
 
       <PortalTabs tabs={TABS} active={tab} onChange={setTab} />
 
       {tab === 'dashboard' && <DashboardTab onNavigate={setTab} />}
       {tab === 'encaissement' && <Encaissement />}
+      {tab === 'personnel' && <StaffTab />}
+      {tab === 'contracts' && <ContractsTab />}
       {tab === 'reports' && <ReportsTab />}
       {tab === 'batch-invoices' && <BatchInvoicesTab />}
       {tab === 'expenses' && <ExpensesTab />}
