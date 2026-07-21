@@ -1,6 +1,8 @@
 import { useState } from 'react'
+import { useAuth } from '../auth/AuthContext.jsx'
 import ProfileTab from './ProfileTab.jsx'
 import SessionsTab from './SessionsTab.jsx'
+import MarketplaceAccountSettings from './MarketplaceAccountSettings.jsx'
 
 const TABS = [
   { key: 'profile', label: 'Profil' },
@@ -11,13 +13,28 @@ const TABS = [
  * Settings for a logged-in school-ERP account (Founder, Teacher,
  * Secretary, Parent, ...) - profile fields + password, and the
  * "who's logged in, from where" security list. Firestore-side
- * marketplace users (browsing schools/jobs before or without a school
- * account) get the separate MarketplaceSettingsPage - this one is
- * Django-backed, scoped to whichever school's ERP the user is
- * currently inside (see shared/api/client.js's per-school base URL).
+ * marketplace users (browsing schools/jobs, or a parent/teacher with
+ * no school attached) have no Django backend to call at all - api.*
+ * falls back to the platform Worker, which has no /api/auth/me/
+ * route, so every request here 404'd/failed silently as "Failed to
+ * fetch". Route those users to MarketplaceAccountSettings instead,
+ * which writes straight to Firestore like RegisterPage.jsx does.
  */
 export default function SettingsPage() {
+  const { user } = useAuth()
   const [tab, setTab] = useState('profile')
+
+  if (!user?.schoolId) {
+    return (
+      <div className="space-y-4">
+        <div>
+          <h1 className="text-xl font-semibold text-ink">Parametres</h1>
+          <p className="mt-1 text-sm text-ink-muted">Votre profil et votre session.</p>
+        </div>
+        <MarketplaceAccountSettings />
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-4">

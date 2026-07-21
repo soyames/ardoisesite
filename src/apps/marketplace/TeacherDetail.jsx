@@ -1,15 +1,44 @@
+import { useEffect, useState } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
+import { doc, getDoc } from 'firebase/firestore'
+import { db } from '../../shared/api/firebase.js'
 import EmptyState from '../../shared/ui/EmptyState.jsx'
-
-export const TEACHER_DB = {
-  1: { id: 1, name: 'Dr. Jean Dupont', subject: 'Mathématiques & Physique', city: 'Cotonou', rating: 4.9, defaultPrice: 15000, image: 'https://images.unsplash.com/photo-1568602471122-7832951cc4c5?w=800&q=80', description: 'Docteur en mathématiques appliquées, 10 ans d\'expérience dans l\'enseignement secondaire et supérieur. Spécialiste de la préparation aux concours et examens nationaux.', reviewsCount: 42, availability: 'Disponibilité soirs et week-ends' },
-  2: { id: 2, name: 'Marie Mensah', subject: 'SVT & Chimie', city: 'Abomey-Calavi', rating: 4.8, defaultPrice: 12000, image: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=800&q=80', description: 'Professeur certifiée, excellente approche pédagogique basée sur la compréhension pratique des sciences de la vie.', reviewsCount: 28, availability: 'Mercredi après-midi et week-ends' },
-}
+import Spinner from '../../shared/ui/Spinner.jsx'
 
 export default function TeacherDetail() {
   const { id } = useParams()
   const navigate = useNavigate()
-  const teacher = TEACHER_DB[id]
+  const [teacher, setTeacher] = useState(undefined) // undefined = loading, null = not found
+
+  useEffect(() => {
+    let cancelled = false
+    getDoc(doc(db, 'users', id)).then((snap) => {
+      if (cancelled) return
+      if (!snap.exists() || snap.data().role !== 'teacher') {
+        setTeacher(null)
+        return
+      }
+      const data = snap.data()
+      setTeacher({
+        id: snap.id,
+        name: `${data.firstName || ''} ${data.lastName || ''}`.trim() || data.email,
+        subject: data.subject || '',
+        city: data.city || '',
+        price: data.price || null,
+        description: data.bio || '',
+        image: data.image || null,
+      })
+    }).catch(() => { if (!cancelled) setTeacher(null) })
+    return () => { cancelled = true }
+  }, [id])
+
+  if (teacher === undefined) {
+    return (
+      <div className="flex justify-center py-32">
+        <Spinner />
+      </div>
+    )
+  }
 
   if (!teacher) {
     return (
@@ -25,22 +54,25 @@ export default function TeacherDetail() {
       <div className="bg-primary-950 pb-24 pt-16 sm:pb-32 sm:pt-24 lg:pb-40">
         <div className="mx-auto max-w-[1600px] px-6 lg:px-12">
           <div className="flex flex-col md:flex-row gap-8 items-center md:items-start">
-            <img src={teacher.image} alt={teacher.name} className="h-48 w-48 rounded-full object-cover ring-4 ring-accent-500/30 shadow-elevated" />
+            {teacher.image ? (
+              <img src={teacher.image} alt={teacher.name} className="h-48 w-48 rounded-full object-cover ring-4 ring-accent-500/30 shadow-elevated" />
+            ) : (
+              <div className="flex h-48 w-48 items-center justify-center rounded-full bg-primary-900 text-6xl ring-4 ring-accent-500/30 shadow-elevated">👤</div>
+            )}
             <div className="text-center md:text-left flex-1 mt-4 md:mt-0">
               <div className="flex flex-wrap items-center justify-center md:justify-start gap-3 mb-4">
-                <span className="rounded-full bg-white/10 px-3 py-1 text-sm font-semibold text-white">{teacher.subject}</span>
-                <span className="rounded-full bg-white/10 px-3 py-1 text-sm font-semibold text-white">{teacher.city}</span>
-                <span className="flex items-center gap-1 rounded-full bg-accent-500/20 px-3 py-1 text-sm font-semibold text-accent-300">
-                  ★ {teacher.rating} ({teacher.reviewsCount} avis)
-                </span>
+                {teacher.subject && <span className="rounded-full bg-white/10 px-3 py-1 text-sm font-semibold text-white">{teacher.subject}</span>}
+                {teacher.city && <span className="rounded-full bg-white/10 px-3 py-1 text-sm font-semibold text-white">{teacher.city}</span>}
               </div>
               <h1 className="text-4xl font-extrabold tracking-tight text-white sm:text-5xl">{teacher.name}</h1>
-              <p className="mt-4 text-lg text-primary-300 max-w-2xl">{teacher.description}</p>
+              {teacher.description && <p className="mt-4 text-lg text-primary-300 max-w-2xl">{teacher.description}</p>}
             </div>
 
             <div className="bg-surface-raised rounded-card p-6 shadow-elevated text-center md:text-left min-w-[280px]">
               <p className="text-sm font-medium text-ink-muted">Tarif indicatif</p>
-              <p className="mt-1 text-3xl font-bold text-ink">{teacher.defaultPrice.toLocaleString()} F <span className="text-lg font-normal text-ink-muted">/ mois</span></p>
+              <p className="mt-1 text-3xl font-bold text-ink">
+                {teacher.price ? <>{Number(teacher.price).toLocaleString()} F <span className="text-lg font-normal text-ink-muted">/ mois</span></> : 'Sur demande'}
+              </p>
               <div className="mt-6">
                 <button
                   onClick={() => navigate(`/teachers/${teacher.id}/book`)}
@@ -56,19 +88,13 @@ export default function TeacherDetail() {
       </div>
 
       <div className="mx-auto max-w-[1600px] px-6 lg:px-12 -mt-16 sm:-mt-24">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          <div className="bg-surface-raised rounded-card shadow-card ring-1 ring-border p-8">
-             <h3 className="text-xl font-bold text-ink mb-4">Disponibilité</h3>
-             <p className="text-ink-muted">{teacher.availability}</p>
-          </div>
-          <div className="bg-surface-raised rounded-card shadow-card ring-1 ring-border p-8">
-             <h3 className="text-xl font-bold text-ink mb-4">Modalités d'engagement</h3>
-             <ul className="list-disc pl-5 text-ink-muted space-y-2">
-               <li>Engagement minimum de 6 mois pour garantir le suivi de l'élève.</li>
-               <li>Le paiement s'effectue via la plateforme (protection des deux parties).</li>
-               <li>Prix négociable selon le volume horaire convenu.</li>
-             </ul>
-          </div>
+        <div className="rounded-card border border-border bg-surface-raised p-8">
+          <h3 className="text-xl font-bold text-ink mb-4">Modalités d'engagement</h3>
+          <ul className="list-disc pl-5 text-ink-muted space-y-2">
+            <li>Engagement minimum de 6 mois pour garantir le suivi de l'élève.</li>
+            <li>Le paiement s'effectue via la plateforme (protection des deux parties).</li>
+            <li>Prix négociable selon le volume horaire convenu.</li>
+          </ul>
         </div>
       </div>
     </div>

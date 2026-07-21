@@ -1,40 +1,60 @@
-import { useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
+import { collection, onSnapshot, query, where } from 'firebase/firestore'
+import { db } from '../../shared/api/firebase.js'
 import EmptyState from '../../shared/ui/EmptyState.jsx'
+import Spinner from '../../shared/ui/Spinner.jsx'
 import CountryMapWrapper from '../../shared/ui/CountryMapWrapper.jsx'
 import { OHADA_COUNTRIES } from '../../shared/constants/locations.js'
 import { SUBJECTS } from '../../shared/constants/subjects.js'
 import { COUNTRY_CITIES } from '../../shared/constants/cities.js'
 
-export const TEACHERS_DATA = [
-  { id: 1, name: 'Dr. Jean Dupont', subject: 'Mathématiques', country: 'Benin', city: 'Cotonou', rating: 4.9, price: '15 000 F / mois', image: 'https://images.unsplash.com/photo-1568602471122-7832951cc4c5?w=400&q=80', description: 'Docteur en mathématiques appliquées, 10 ans d\'expérience.' },
-  { id: 2, name: 'Marie Mensah', subject: 'SVT', country: 'Benin', city: 'Abomey-Calavi', rating: 4.8, price: '12 000 F / mois', image: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400&q=80', description: 'Professeur certifiée, excellente approche pédagogique.' },
-  { id: 3, name: 'Paul Kossi', subject: 'Philosophie', country: 'Benin', city: 'Porto-Novo', rating: 5.0, price: '10 000 F / mois', image: 'https://images.unsplash.com/photo-1531427186611-ecfd6d936c79?w=400&q=80', description: 'Spécialiste de la préparation au Baccalauréat.' },
-  { id: 4, name: 'Amina Diallo', subject: 'Physique-Chimie', country: 'Benin', city: 'Cotonou', rating: 4.7, price: '13 000 F / mois', image: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=400&q=80', description: 'Rend les sciences accessibles avec des exemples concrets.' },
-]
-
 export default function TeacherList() {
   const [searchParams, setSearchParams] = useSearchParams()
+  const [teachers, setTeachers] = useState([])
+  const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [cityFilter, setCityFilter] = useState('Toutes')
   const [subjectFilter, setSubjectFilter] = useState('Toutes')
   const [communeDepartmentMap, setCommuneDepartmentMap] = useState({})
-  
+
   const country = searchParams.get('country') || 'BEN'
   const department = searchParams.get('department')
   const commune = searchParams.get('commune')
 
+  useEffect(() => {
+    const q = query(collection(db, 'users'), where('role', '==', 'teacher'))
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const rows = []
+      snapshot.forEach((d) => {
+        const data = d.data()
+        rows.push({
+          id: d.id,
+          name: `${data.firstName || ''} ${data.lastName || ''}`.trim() || data.email,
+          subject: data.subject || '',
+          city: data.city || '',
+          price: data.price != null ? `${data.price} F / mois` : null,
+          description: data.bio || '',
+          image: data.image || null,
+        })
+      })
+      setTeachers(rows)
+      setLoading(false)
+    }, () => setLoading(false))
+    return () => unsubscribe()
+  }, [])
+
   const cityCounts = useMemo(() => {
     const counts = {}
-    TEACHERS_DATA.forEach((teacher) => {
+    teachers.forEach((teacher) => {
       if (teacher.city && communeDepartmentMap[teacher.city] !== undefined) {
         counts[teacher.city] = (counts[teacher.city] || 0) + 1
       }
     })
     return counts
-  }, [communeDepartmentMap])
+  }, [teachers, communeDepartmentMap])
 
-  const filteredTeachers = TEACHERS_DATA.filter(teacher => {
+  const filteredTeachers = teachers.filter(teacher => {
     const matchesCountry = communeDepartmentMap[teacher.city] !== undefined
     const matchesSearch = teacher.name.toLowerCase().includes(search.toLowerCase())
     const matchesCity = cityFilter === 'Toutes' || teacher.city === cityFilter
@@ -137,44 +157,51 @@ export default function TeacherList() {
               </select>
             </div>
             
-            <div className="mt-12 grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
-              {filteredTeachers.map((teacher) => (
-                <Link key={teacher.id} to={`/teachers/${teacher.id}`} className="group relative flex flex-col overflow-hidden rounded-card bg-surface-raised shadow-card ring-1 ring-border transition-all hover:shadow-elevated hover:-translate-y-1 hover:ring-primary-200">
-                  <div className="aspect-[4/3] w-full overflow-hidden bg-primary-100">
-                    <img src={teacher.image} alt={teacher.name} className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
-                  </div>
-                  <div className="flex flex-1 flex-col justify-between p-6">
-                    <div>
-                      <div className="flex items-center justify-between">
-                        <p className="text-sm font-medium text-primary-600">{teacher.subject}</p>
-                        <div className="flex items-center gap-1 text-sm font-semibold text-ink">
-                          <span className="text-accent-400">★</span> {teacher.rating}
-                        </div>
-                      </div>
-                      <h3 className="mt-2 text-xl font-bold text-ink group-hover:text-primary-600 transition-colors">
-                        {teacher.name}
-                      </h3>
-                      <p className="mt-1 text-xs text-ink-muted">{teacher.city}</p>
-                      <p className="mt-3 text-sm text-ink-muted line-clamp-2">{teacher.description}</p>
-                    </div>
-                    <div className="mt-6 flex items-center justify-between border-t border-border pt-4">
-                      <div className="text-sm font-bold text-ink">
-                        {teacher.price}
-                      </div>
-                      <span className="text-sm font-semibold text-primary-600 group-hover:text-primary-500">Profil &rarr;</span>
-                    </div>
-                  </div>
-                </Link>
-              ))}
-            </div>
+            {loading && (
+              <div className="flex justify-center py-20">
+                <Spinner />
+              </div>
+            )}
 
-            {filteredTeachers.length === 0 && (
+            {!loading && (
+              <div className="mt-12 grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
+                {filteredTeachers.map((teacher) => (
+                  <Link key={teacher.id} to={`/teachers/${teacher.id}`} className="group relative flex flex-col overflow-hidden rounded-card bg-surface-raised shadow-card ring-1 ring-border transition-all hover:shadow-elevated hover:-translate-y-1 hover:ring-primary-200">
+                    <div className="aspect-[4/3] w-full overflow-hidden bg-primary-100">
+                      {teacher.image ? (
+                        <img src={teacher.image} alt={teacher.name} className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                      ) : (
+                        <div className="flex h-full w-full items-center justify-center text-4xl">👤</div>
+                      )}
+                    </div>
+                    <div className="flex flex-1 flex-col justify-between p-6">
+                      <div>
+                        <p className="text-sm font-medium text-primary-600">{teacher.subject || 'Matière non renseignée'}</p>
+                        <h3 className="mt-2 text-xl font-bold text-ink group-hover:text-primary-600 transition-colors">
+                          {teacher.name}
+                        </h3>
+                        <p className="mt-1 text-xs text-ink-muted">{teacher.city || 'Ville non renseignée'}</p>
+                        <p className="mt-3 text-sm text-ink-muted line-clamp-2">{teacher.description}</p>
+                      </div>
+                      <div className="mt-6 flex items-center justify-between border-t border-border pt-4">
+                        <div className="text-sm font-bold text-ink">
+                          {teacher.price || 'Tarif sur demande'}
+                        </div>
+                        <span className="text-sm font-semibold text-primary-600 group-hover:text-primary-500">Profil &rarr;</span>
+                      </div>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            )}
+
+            {!loading && filteredTeachers.length === 0 && (
               <div className="mt-12">
                 <EmptyState
                   icon="person"
                   title="Aucun tuteur ne correspond à vos critères"
                   description={
-                    Object.keys(communeDepartmentMap).length === 0 || !TEACHERS_DATA.some(t => communeDepartmentMap[t.city] !== undefined)
+                    Object.keys(communeDepartmentMap).length === 0 || !teachers.some(t => communeDepartmentMap[t.city] !== undefined)
                       ? "Aucun tuteur enregistré dans ce pays pour le moment."
                       : "Essayez une autre région, une autre ville, ou un autre terme de recherche."
                   }
