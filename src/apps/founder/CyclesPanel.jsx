@@ -121,8 +121,24 @@ export default function CyclesPanel() {
 
       {!staff.loading && scopableStaff.length > 0 && (
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-          <CycleCard title="Section Primaire" icon="child_care" staffList={primaryStaff} />
-          <CycleCard title="Section Secondaire" icon="history_edu" staffList={secondaryStaff} />
+          <CycleCard
+            title="Section Primaire"
+            icon="child_care"
+            cycleValue="primary"
+            staffList={primaryStaff}
+            allStaff={scopableStaff}
+            setCycle={setCycle}
+            busyId={busyId}
+          />
+          <CycleCard
+            title="Section Secondaire"
+            icon="history_edu"
+            cycleValue="secondary"
+            staffList={secondaryStaff}
+            allStaff={scopableStaff}
+            setCycle={setCycle}
+            busyId={busyId}
+          />
         </div>
       )}
 
@@ -204,7 +220,7 @@ function StatusChip({ ok, okLabel, badLabel }) {
   )
 }
 
-function CycleCard({ title, icon, staffList }) {
+function CycleCard({ title, icon, cycleValue, staffList, allStaff, setCycle, busyId }) {
   const director = staffList.find((s) => s.role === 'director')
   const censeur = staffList.find((s) => s.role === 'censeur')
 
@@ -218,24 +234,85 @@ function CycleCard({ title, icon, staffList }) {
           <h4 className="text-base font-semibold text-ink">{title}</h4>
         </div>
         <div className="space-y-2">
-          <CycleRow label="Directeur" person={director} />
-          <CycleRow label="Censeur" person={censeur} />
+          <CycleRow
+            label="Directeur"
+            role="director"
+            person={director}
+            cycleValue={cycleValue}
+            candidates={allStaff.filter((s) => s.role === 'director')}
+            setCycle={setCycle}
+            busyId={busyId}
+          />
+          <CycleRow
+            label="Censeur"
+            role="censeur"
+            person={censeur}
+            cycleValue={cycleValue}
+            candidates={allStaff.filter((s) => s.role === 'censeur')}
+            setCycle={setCycle}
+            busyId={busyId}
+          />
         </div>
       </CardBody>
     </Card>
   )
 }
 
-function CycleRow({ label, person }) {
+/**
+ * "A affecter" used to be a plain Badge <span> with no onClick -
+ * founder clicked it expecting a picker (reasonable, it's styled like
+ * a button) and nothing happened. Now it actually opens the assignment:
+ * a <select> of role-matching candidates that calls the same setCycle
+ * (PATCH /api/auth/users/{id}/cycle-scope/) the registry list below
+ * uses, so both stay in sync via the same staff.refetch().
+ */
+function CycleRow({ label, role, person, cycleValue, candidates, setCycle, busyId }) {
+  const [picking, setPicking] = useState(false)
+
+  if (person) {
+    return (
+      <div className="flex items-center justify-between rounded-control border border-border bg-surface p-3">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-wide text-accent-700">{label}</p>
+          <p className="text-sm font-medium text-ink">{person.fullName}</p>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="flex items-center justify-between rounded-control border border-border bg-surface p-3">
-      <div>
+      <div className="flex-1">
         <p className="text-xs font-semibold uppercase tracking-wide text-accent-700">{label}</p>
-        <p className={`text-sm font-medium ${person ? 'text-ink' : 'italic text-ink-muted'}`}>
-          {person ? person.fullName : 'Non assigne'}
-        </p>
+        {picking ? (
+          <select
+            autoFocus
+            className="mt-1 block w-full rounded-control border-0 py-1 px-2 bg-surface-raised text-ink ring-1 ring-inset ring-border focus:ring-2 focus:ring-primary-500 text-sm"
+            disabled={busyId != null}
+            defaultValue=""
+            onChange={(e) => {
+              if (e.target.value) setCycle(e.target.value, cycleValue)
+              setPicking(false)
+            }}
+            onBlur={() => setPicking(false)}
+          >
+            <option value="" disabled>Choisir...</option>
+            {candidates.length === 0 && <option value="" disabled>Aucun {label.toLowerCase()} cree</option>}
+            {candidates.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.fullName} {c.cycleScope ? `(actuellement ${CYCLE_LABELS[c.cycleScope]})` : '(actuellement les deux cycles)'}
+              </option>
+            ))}
+          </select>
+        ) : (
+          <p className="text-sm italic text-ink-muted">Non assigne</p>
+        )}
       </div>
-      {!person && <Badge tone="warning">A affecter</Badge>}
+      {!picking && (
+        <button type="button" onClick={() => setPicking(true)} className="ml-2">
+          <Badge tone="warning">A affecter</Badge>
+        </button>
+      )}
     </div>
   )
 }
