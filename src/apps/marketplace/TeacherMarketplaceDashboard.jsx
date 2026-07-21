@@ -1,20 +1,71 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { doc, updateDoc, arrayUnion } from 'firebase/firestore'
+import { doc, updateDoc, arrayUnion, collection, query, where, onSnapshot } from 'firebase/firestore'
 import { db } from '../../shared/api/firebase.js'
 import { useAuth } from '../../shared/auth/AuthContext.jsx'
 import Badge from '../../shared/ui/Badge.jsx'
+import Spinner from '../../shared/ui/Spinner.jsx'
 import MarketplaceAccountSettings from '../../shared/settings/MarketplaceAccountSettings.jsx'
 
 export default function TeacherMarketplaceDashboard() {
   const { user, refreshUser } = useAuth()
   const [activeTab, setActiveTab] = useState('profile')
-  const [price, setPrice] = useState('15000')
+  const [subject, setSubject] = useState('')
+  const [city, setCity] = useState('')
+  const [bio, setBio] = useState('')
+  const [price, setPrice] = useState('')
+  const [savingProfile, setSavingProfile] = useState(false)
+  const [profileMsg, setProfileMsg] = useState('')
+
+  const [contracts, setContracts] = useState([])
+  const [contractsLoading, setContractsLoading] = useState(true)
 
   const [newExp, setNewExp] = useState({ employer: '', start: '', end: '', description: '' })
   const [newEdu, setNewEdu] = useState({ school: '', degree: '', year: '' })
   const [newSession, setNewSession] = useState({ date: '', hours: '2', notes: '' })
   const [showSessionForm, setShowSessionForm] = useState(false)
+  const [activeContractId, setActiveContractId] = useState(null)
+
+  useEffect(() => {
+    if (!user) return
+    setSubject(user.subject || '')
+    setCity(user.city || '')
+    setBio(user.bio || '')
+    setPrice(user.price != null ? String(user.price) : '')
+  }, [user])
+
+  useEffect(() => {
+    if (!user) return
+    const q = query(collection(db, 'tutoring_contracts'), where('teacherId', '==', user.uid))
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const rows = []
+      snapshot.forEach((d) => rows.push({ id: d.id, ...d.data() }))
+      setContracts(rows)
+      setContractsLoading(false)
+    }, () => setContractsLoading(false))
+    return () => unsubscribe()
+  }, [user])
+
+  const handleSaveProfile = async (e) => {
+    e.preventDefault()
+    setSavingProfile(true)
+    setProfileMsg('')
+    try {
+      await updateDoc(doc(db, 'users', user.uid), {
+        subject,
+        city,
+        bio,
+        price: price ? Number(price) : null,
+      })
+      await refreshUser()
+      setProfileMsg('success:Profil mis a jour avec succes !')
+    } catch (err) {
+      console.error(err)
+      setProfileMsg("error:Erreur lors de l'enregistrement.")
+    } finally {
+      setSavingProfile(false)
+    }
+  }
 
   const handleAddExperience = async (e) => {
     e.preventDefault()
@@ -97,7 +148,7 @@ export default function TeacherMarketplaceDashboard() {
               onClick={() => setActiveTab('contracts')}
               className={`w-full text-left px-4 py-3 rounded-control text-sm font-semibold transition ${activeTab === 'contracts' ? 'bg-primary-50 text-primary-700 ring-1 ring-primary-200' : 'text-ink-muted hover:bg-primary-50'}`}
             >
-              Mes Contrats (2)
+              Mes Contrats ({contracts.length})
             </button>
             <button
               onClick={() => setActiveTab('account')}
@@ -113,38 +164,45 @@ export default function TeacherMarketplaceDashboard() {
               <div className="bg-surface-raised rounded-card shadow-card ring-1 ring-border p-8 space-y-6">
                 <h2 className="text-xl font-bold text-ink border-b border-border pb-4">Informations Publiques</h2>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                  <div>
-                    <label className="block text-sm font-medium text-ink">Matières enseignées</label>
-                    <input type="text" defaultValue="Mathématiques & Physique" className="mt-2 block w-full rounded-control border-0 py-2 px-3 text-ink ring-1 ring-inset ring-border focus:ring-2 focus:ring-primary-500 sm:text-sm" />
+                <form onSubmit={handleSaveProfile} className="space-y-6">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                    <div>
+                      <label className="block text-sm font-medium text-ink">Matières enseignées</label>
+                      <input type="text" value={subject} onChange={(e) => setSubject(e.target.value)} placeholder="Ex: Mathématiques & Physique" className="mt-2 block w-full rounded-control border-0 py-2 px-3 text-ink ring-1 ring-inset ring-border focus:ring-2 focus:ring-primary-500 sm:text-sm" />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-ink">Ville / Zone d'intervention</label>
+                      <input type="text" value={city} onChange={(e) => setCity(e.target.value)} placeholder="Ex: Cotonou" className="mt-2 block w-full rounded-control border-0 py-2 px-3 text-ink ring-1 ring-inset ring-border focus:ring-2 focus:ring-primary-500 sm:text-sm" />
+                    </div>
                   </div>
+
                   <div>
-                    <label className="block text-sm font-medium text-ink">Ville / Zone d'intervention</label>
-                    <input type="text" defaultValue="Cotonou" className="mt-2 block w-full rounded-control border-0 py-2 px-3 text-ink ring-1 ring-inset ring-border focus:ring-2 focus:ring-primary-500 sm:text-sm" />
+                    <label className="block text-sm font-medium text-ink">Description / Bio</label>
+                    <textarea rows="4" value={bio} onChange={(e) => setBio(e.target.value)} placeholder="Presentez votre parcours et votre approche pedagogique..." className="mt-2 block w-full rounded-control border-0 py-2 px-3 text-ink ring-1 ring-inset ring-border focus:ring-2 focus:ring-primary-500 sm:text-sm"></textarea>
                   </div>
-                </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-ink">Description / Bio</label>
-                  <textarea rows="4" defaultValue="Docteur en mathématiques appliquées, 10 ans d'expérience..." className="mt-2 block w-full rounded-control border-0 py-2 px-3 text-ink ring-1 ring-inset ring-border focus:ring-2 focus:ring-primary-500 sm:text-sm"></textarea>
-                </div>
+                  <div>
+                    <label className="block text-sm font-medium text-ink">Tarif Mensuel Indicatif (FCFA)</label>
+                    <p className="text-xs text-ink-muted mb-2">Ce tarif sera affiché sur votre profil. Vous pourrez le négocier avant signature du contrat.</p>
+                    <input
+                      type="number"
+                      value={price}
+                      onChange={(e) => setPrice(e.target.value)}
+                      className="block w-full sm:max-w-xs rounded-control border-0 py-2 px-3 text-ink ring-1 ring-inset ring-border focus:ring-2 focus:ring-primary-500 sm:text-sm"
+                    />
+                  </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-ink">Tarif Mensuel Indicatif (FCFA)</label>
-                  <p className="text-xs text-ink-muted mb-2">Ce tarif sera affiché sur votre profil. Vous pourrez le négocier avant signature du contrat.</p>
-                  <input
-                    type="number"
-                    value={price}
-                    onChange={(e) => setPrice(e.target.value)}
-                    className="block w-full sm:max-w-xs rounded-control border-0 py-2 px-3 text-ink ring-1 ring-inset ring-border focus:ring-2 focus:ring-primary-500 sm:text-sm"
-                  />
-                </div>
-
-                <div className="pt-4">
-                  <button className="rounded-control bg-primary-600 px-6 py-2.5 text-sm font-bold text-white shadow-card hover:bg-primary-700">
-                    Enregistrer les modifications
-                  </button>
-                </div>
+                  <div className="pt-4 flex items-center gap-4">
+                    <button type="submit" disabled={savingProfile} className="rounded-control bg-primary-600 px-6 py-2.5 text-sm font-bold text-white shadow-card hover:bg-primary-700 disabled:opacity-60">
+                      {savingProfile ? 'Enregistrement...' : 'Enregistrer les modifications'}
+                    </button>
+                    {profileMsg && (
+                      <p className={`text-sm ${profileMsg.startsWith('error:') ? 'text-danger-600' : 'text-success-600'}`}>
+                        {profileMsg.slice(profileMsg.indexOf(':') + 1)}
+                      </p>
+                    )}
+                  </div>
+                </form>
               </div>
             )}
 
@@ -236,50 +294,59 @@ export default function TeacherMarketplaceDashboard() {
 
             {activeTab === 'contracts' && (
               <div className="space-y-6">
-                <div className="bg-surface-raised rounded-card shadow-card ring-1 ring-border p-6">
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <h3 className="text-lg font-bold text-ink">M. Tossou (Parent) - Eleve : Kevin</h3>
-                      <p className="text-sm text-ink-muted mt-1">Soutien en Mathematiques &bull; 4h / semaine</p>
-                    </div>
-                    <Badge tone="success">Actif (Mois 2 / 6)</Badge>
+                {contractsLoading && (
+                  <div className="flex justify-center py-8"><Spinner /></div>
+                )}
+                {!contractsLoading && contracts.length === 0 && (
+                  <div className="bg-surface-raised rounded-card shadow-card ring-1 ring-border p-6 text-center text-sm text-ink-muted">
+                    Aucun contrat pour le moment. Les contrats apparaissent ici une fois qu'un parent reserve vos services.
                   </div>
-                  
-                  {showSessionForm ? (
-                    <form onSubmit={handleLogSession} className="mt-6 border-t border-border pt-6 space-y-4">
-                      <h4 className="font-bold text-ink">Nouvelle seance</h4>
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <label className="block text-sm font-medium text-ink mb-1">Date</label>
-                          <input required type="date" value={newSession.date} onChange={e => setNewSession({...newSession, date: e.target.value})} className="w-full rounded-control border-0 py-2 px-3 text-ink ring-1 ring-inset ring-border focus:ring-2 focus:ring-primary-500 sm:text-sm" />
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium text-ink mb-1">Duree (heures)</label>
-                          <select value={newSession.hours} onChange={e => setNewSession({...newSession, hours: e.target.value})} className="w-full rounded-control border-0 py-2 px-3 text-ink ring-1 ring-inset ring-border focus:ring-2 focus:ring-primary-500 sm:text-sm">
-                            <option value="1">1 heure</option>
-                            <option value="2">2 heures</option>
-                            <option value="3">3 heures</option>
-                          </select>
-                        </div>
-                      </div>
+                )}
+                {contracts.map((contract) => (
+                  <div key={contract.id} className="bg-surface-raised rounded-card shadow-card ring-1 ring-border p-6">
+                    <div className="flex justify-between items-start">
                       <div>
-                        <label className="block text-sm font-medium text-ink mb-1">Compte-rendu (visible par le parent)</label>
-                        <textarea required rows="2" value={newSession.notes} onChange={e => setNewSession({...newSession, notes: e.target.value})} className="w-full rounded-control border-0 py-2 px-3 text-ink ring-1 ring-inset ring-border focus:ring-2 focus:ring-primary-500 sm:text-sm"></textarea>
+                        <h3 className="text-lg font-bold text-ink">{contract.parentName || contract.parentEmail} (Parent)</h3>
+                        <p className="text-sm text-ink-muted mt-1">{contract.hoursPerWeek}h / semaine &bull; {Number(contract.proposedPrice).toLocaleString()} F / mois</p>
                       </div>
-                      <div className="flex gap-2">
-                        <button type="submit" className="rounded-control bg-primary-600 px-4 py-2 text-sm font-bold text-white hover:bg-primary-700">Enregistrer</button>
-                        <button type="button" onClick={() => setShowSessionForm(false)} className="rounded-control bg-surface px-4 py-2 text-sm font-bold text-ink hover:bg-surface-raised border border-border">Annuler</button>
-                      </div>
-                    </form>
-                  ) : (
-                    <div className="mt-4 pt-4 border-t border-border flex justify-between items-center text-sm">
-                      <button onClick={() => setShowSessionForm(true)} className="rounded-control bg-accent-500 px-4 py-2 font-bold text-primary-950 shadow-sm hover:bg-accent-400">
-                        + Saisir une seance
-                      </button>
-                      <button className="text-primary-600 hover:underline font-medium">Voir le contrat</button>
+                      <Badge tone={contract.status === 'active' ? 'success' : 'neutral'}>{contract.status === 'active' ? 'Actif' : contract.status}</Badge>
                     </div>
-                  )}
-                </div>
+
+                    {showSessionForm && activeContractId === contract.id ? (
+                      <form onSubmit={handleLogSession} className="mt-6 border-t border-border pt-6 space-y-4">
+                        <h4 className="font-bold text-ink">Nouvelle seance</h4>
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <label className="block text-sm font-medium text-ink mb-1">Date</label>
+                            <input required type="date" value={newSession.date} onChange={e => setNewSession({...newSession, date: e.target.value})} className="w-full rounded-control border-0 py-2 px-3 text-ink ring-1 ring-inset ring-border focus:ring-2 focus:ring-primary-500 sm:text-sm" />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-ink mb-1">Duree (heures)</label>
+                            <select value={newSession.hours} onChange={e => setNewSession({...newSession, hours: e.target.value})} className="w-full rounded-control border-0 py-2 px-3 text-ink ring-1 ring-inset ring-border focus:ring-2 focus:ring-primary-500 sm:text-sm">
+                              <option value="1">1 heure</option>
+                              <option value="2">2 heures</option>
+                              <option value="3">3 heures</option>
+                            </select>
+                          </div>
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-ink mb-1">Compte-rendu (visible par le parent)</label>
+                          <textarea required rows="2" value={newSession.notes} onChange={e => setNewSession({...newSession, notes: e.target.value})} className="w-full rounded-control border-0 py-2 px-3 text-ink ring-1 ring-inset ring-border focus:ring-2 focus:ring-primary-500 sm:text-sm"></textarea>
+                        </div>
+                        <div className="flex gap-2">
+                          <button type="submit" className="rounded-control bg-primary-600 px-4 py-2 text-sm font-bold text-white hover:bg-primary-700">Enregistrer</button>
+                          <button type="button" onClick={() => setShowSessionForm(false)} className="rounded-control bg-surface px-4 py-2 text-sm font-bold text-ink hover:bg-surface-raised border border-border">Annuler</button>
+                        </div>
+                      </form>
+                    ) : (
+                      <div className="mt-4 pt-4 border-t border-border flex justify-between items-center text-sm">
+                        <button onClick={() => { setActiveContractId(contract.id); setShowSessionForm(true) }} className="rounded-control bg-accent-500 px-4 py-2 font-bold text-primary-950 shadow-sm hover:bg-accent-400">
+                          + Saisir une seance
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                ))}
               </div>
             )}
 

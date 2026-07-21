@@ -1,24 +1,14 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
-import { collection, onSnapshot } from 'firebase/firestore'
+import { collection, onSnapshot, query, where } from 'firebase/firestore'
 import { db } from '../../shared/api/firebase.js'
 import Badge from '../../shared/ui/Badge.jsx'
 import CountryMapWrapper from '../../shared/ui/CountryMapWrapper.jsx'
 import { OHADA_COUNTRIES } from '../../shared/constants/locations.js'
-import { TEACHERS_DATA } from './TeacherList.jsx'
-
-// Tutors aren't wired to Firestore yet - TeacherList/TeacherDetail still
-// resolve profiles from TeacherDetail.jsx's TEACHER_DB mock, so pointing
-// this teaser at real `users` docs would produce "Voir le profil" links
-// that 404. Keeping this mock until that surface is rewired together.
-const FEATURED_TUTORS = [
-  { id: 1, name: 'Dr. Jean Dupont', subject: 'Mathématiques & Physique', rating: 4.9, price: '15 000 F', image: 'https://images.unsplash.com/photo-1568602471122-7832951cc4c5?w=400&q=80' },
-  { id: 2, name: 'Marie Mensah', subject: 'SVT & Chimie', rating: 4.8, price: '12 000 F', image: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400&q=80' },
-  { id: 3, name: 'Paul Kossi', subject: 'Philosophie & Français', rating: 5.0, price: '10 000 F', image: 'https://images.unsplash.com/photo-1531427186611-ecfd6d936c79?w=400&q=80' },
-]
 
 export default function Home() {
   const [schools, setSchools] = useState([])
+  const [teachers, setTeachers] = useState([])
   const [selectedDepartment, setSelectedDepartment] = useState(null)
   const [selectedCommune, setSelectedCommune] = useState(null)
   const [searchParams, setSearchParams] = useSearchParams()
@@ -36,6 +26,26 @@ export default function Home() {
       const rows = []
       snapshot.forEach((d) => rows.push({ id: d.id, ...d.data() }))
       setSchools(rows)
+    })
+    return () => unsubscribe()
+  }, [])
+
+  useEffect(() => {
+    const q = query(collection(db, 'users'), where('role', '==', 'teacher'))
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const rows = []
+      snapshot.forEach((d) => {
+        const data = d.data()
+        rows.push({
+          id: d.id,
+          name: `${data.firstName || ''} ${data.lastName || ''}`.trim() || data.email,
+          subject: data.subject || '',
+          city: data.city || '',
+          price: data.price != null ? `${data.price} F` : null,
+          image: data.image || null,
+        })
+      })
+      setTeachers(rows)
     })
     return () => unsubscribe()
   }, [])
@@ -79,8 +89,8 @@ export default function Home() {
   }, [activeSchools, selectedCommune, selectedDepartment, regionLabel, communeDepartmentMap])
 
   const activeTeachers = useMemo(() => {
-    return TEACHERS_DATA.filter((t) => communeDepartmentMap[t.city] !== undefined)
-  }, [communeDepartmentMap])
+    return teachers.filter((t) => communeDepartmentMap[t.city] !== undefined)
+  }, [teachers, communeDepartmentMap])
 
   const regionTeachers = useMemo(() => {
     if (!regionLabel) return []
@@ -183,9 +193,6 @@ export default function Home() {
                         <p className="truncate text-sm font-medium text-ink">{teacher.name}</p>
                         <p className="text-xs text-ink-muted">{teacher.subject} - {teacher.city}</p>
                       </div>
-                      <div className="flex items-center gap-1 text-xs font-semibold text-ink">
-                        <span className="text-accent-500">★</span> {teacher.rating}
-                      </div>
                     </Link>
                   )}
                 />
@@ -249,18 +256,19 @@ export default function Home() {
               {displayFeaturedTutors.map(tutor => (
                 <div key={tutor.id} className="group relative flex flex-col rounded-card bg-primary-900 p-6 shadow-elevated ring-1 ring-white/10 transition-all hover:bg-primary-800">
                   <div className="flex items-center gap-4">
-                    <img src={tutor.image} alt={tutor.name} className="h-16 w-16 rounded-full object-cover ring-2 ring-accent-500/30" />
+                    {tutor.image ? (
+                      <img src={tutor.image} alt={tutor.name} className="h-16 w-16 rounded-full object-cover ring-2 ring-accent-500/30" />
+                    ) : (
+                      <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary-800 text-2xl ring-2 ring-accent-500/30">👤</div>
+                    )}
                     <div>
                       <h3 className="text-lg font-bold text-white">{tutor.name}</h3>
-                      <p className="text-sm font-medium text-accent-400">{tutor.subject}</p>
+                      <p className="text-sm font-medium text-accent-400">{tutor.subject || 'Matière non renseignée'}</p>
                     </div>
                   </div>
-                  <div className="mt-6 flex items-center justify-between border-t border-white/10 pt-6">
-                    <div className="flex items-center gap-1 text-sm text-primary-200">
-                      <span className="text-accent-400">★</span> {tutor.rating}/5
-                    </div>
+                  <div className="mt-6 flex items-center justify-end border-t border-white/10 pt-6">
                     <div className="text-sm font-semibold text-white">
-                      {tutor.price} <span className="text-primary-300 font-normal">/ mois</span>
+                      {tutor.price || 'Tarif sur demande'} {tutor.price && <span className="text-primary-300 font-normal">/ mois</span>}
                     </div>
                   </div>
                   <Link to={`/teachers/${tutor.id}`} className="mt-6 flex w-full items-center justify-center rounded-control bg-white/10 px-3 py-2.5 text-sm font-semibold text-white transition hover:bg-white/20">

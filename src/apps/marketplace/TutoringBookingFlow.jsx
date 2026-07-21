@@ -1,29 +1,58 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../../shared/auth/AuthContext.jsx'
-import { TEACHER_DB } from './TeacherDetail.jsx'
+import { doc, getDoc } from 'firebase/firestore'
 import { FedaPayButton } from '../../shared/components/FedaPayButton.jsx'
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore'
 import { db } from '../../shared/api/firebase.js'
+import Spinner from '../../shared/ui/Spinner.jsx'
 
 export default function TutoringBookingFlow() {
   const { id } = useParams()
   const navigate = useNavigate()
   const { user, status } = useAuth()
-  const teacher = TEACHER_DB[id]
+  const [teacher, setTeacher] = useState(undefined) // undefined = loading, null = not found
 
   const [step, setStep] = useState(1)
-  const [proposedPrice, setProposedPrice] = useState(teacher?.defaultPrice || '')
+  const [proposedPrice, setProposedPrice] = useState('')
   const [startDate, setStartDate] = useState('')
   const [hoursPerWeek, setHoursPerWeek] = useState('4')
-  
+
   // New State for Payment
   const [paymentDate, setPaymentDate] = useState('5') // default 5th of the month
   const [agreedToTerms, setAgreedToTerms] = useState(false)
 
-  if (!teacher) return <div className="py-20 text-center">Teacher not found</div>
+  useEffect(() => {
+    let cancelled = false
+    getDoc(doc(db, 'users', id)).then((snap) => {
+      if (cancelled) return
+      if (!snap.exists() || snap.data().role !== 'teacher') {
+        setTeacher(null)
+        return
+      }
+      const data = snap.data()
+      const loaded = {
+        id: snap.id,
+        name: `${data.firstName || ''} ${data.lastName || ''}`.trim() || data.email,
+        subject: data.subject || '',
+        image: data.image || null,
+        defaultPrice: data.price || 0,
+      }
+      setTeacher(loaded)
+      setProposedPrice(loaded.defaultPrice || '')
+    }).catch(() => { if (!cancelled) setTeacher(null) })
+    return () => { cancelled = true }
+  }, [id])
 
-  if (status === 'loading') return null
+  if (teacher === undefined || status === 'loading') {
+    return (
+      <div className="flex justify-center py-32">
+        <Spinner />
+      </div>
+    )
+  }
+
+  if (!teacher) return <div className="py-20 text-center">Teacher not found</div>
 
   if (status === 'anonymous' || !user || user.role !== 'parent') {
     return (
@@ -42,9 +71,6 @@ export default function TutoringBookingFlow() {
     )
   }
 
-
-  if (!teacher) return <div className="py-20 text-center">Teacher not found</div>
-
   const commission = Math.round(Number(proposedPrice) * 0.1)
   const total = Number(proposedPrice) + commission
 
@@ -59,7 +85,11 @@ export default function TutoringBookingFlow() {
       <div className="mx-auto max-w-3xl px-6 lg:px-8">
 
         <div className="mb-8 flex items-center gap-4">
-          <img src={teacher.image} alt={teacher.name} className="h-16 w-16 rounded-full object-cover ring-2 ring-accent-500/20" />
+          {teacher.image ? (
+            <img src={teacher.image} alt={teacher.name} className="h-16 w-16 rounded-full object-cover ring-2 ring-accent-500/20" />
+          ) : (
+            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary-100 text-2xl ring-2 ring-accent-500/20">👤</div>
+          )}
           <div>
             <h1 className="text-2xl font-bold text-ink">Réservation : {teacher.name}</h1>
             <p className="text-ink-muted">{teacher.subject}</p>

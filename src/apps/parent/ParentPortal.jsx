@@ -1,7 +1,7 @@
 import { useMemo, useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../../shared/auth/AuthContext.jsx'
-import { doc, getDoc, collection, query, where, onSnapshot } from 'firebase/firestore'
+import { doc, getDoc, updateDoc, collection, query, where, onSnapshot } from 'firebase/firestore'
 import { db } from '../../shared/api/firebase.js'
 import { FedaPayButton } from '../../shared/components/FedaPayButton.jsx'
 import { useApiGet } from '../../shared/hooks/useApi.js'
@@ -161,8 +161,11 @@ function EnrollmentRequests({ parentId }) {
                 </Badge>
               </div>
               {req.status === 'pending_payment' && (
-                <div className="mt-3 text-sm text-warning-700 bg-warning-50 p-2 rounded">
-                  Le paiement a échoué ou n'a pas été terminé. Veuillez contacter le support.
+                <div className="mt-3 border-t border-border pt-3">
+                  <p className="text-sm text-warning-700 bg-warning-50 p-2 rounded mb-2">
+                    Le paiement n'a pas été terminé. Réessayez ci-dessous.
+                  </p>
+                  <RetryEnrollmentPaymentButton request={req} />
                 </div>
               )}
             </CardBody>
@@ -170,6 +173,57 @@ function EnrollmentRequests({ parentId }) {
         ))}
       </div>
     </div>
+  )
+}
+
+/**
+ * The enrollment request's payment card used to be a dead end -
+ * "contact support" with no way to actually pay - if the first
+ * FedaPay attempt failed or was closed before completing (see
+ * SchoolEnrollment.jsx's handleStartPayment, which creates this doc
+ * BEFORE payment succeeds). Retrying just re-runs the same
+ * onComplete write SchoolEnrollment.jsx does on success.
+ */
+function RetryEnrollmentPaymentButton({ request }) {
+  const { user } = useAuth()
+  const [pubKey, setPubKey] = useState(null)
+
+  useEffect(() => {
+    let cancelled = false
+    getDoc(doc(db, 'schools', String(request.schoolId))).then((snap) => {
+      if (cancelled) return
+      const key = snap.exists() && snap.data().fedaPayPublicKey
+      setPubKey(key || import.meta.env.VITE_FEDAPAY_PUBLIC_KEY)
+    }).catch(() => { if (!cancelled) setPubKey(import.meta.env.VITE_FEDAPAY_PUBLIC_KEY) })
+    return () => { cancelled = true }
+  }, [request.schoolId])
+
+  if (!pubKey) return <span className="text-xs text-ink-muted">Chargement du paiement...</span>
+
+  return (
+    <FedaPayButton
+      publicKey={pubKey}
+      amount={request.registrationFee}
+      description={`Frais d'inscription pour ${request.childName} en ${request.childClassName}`}
+      customerEmail={user?.email}
+      customerName={request.parentName}
+      customMetadata={{ enrollment_request_id: request.id, schoolId: request.schoolId }}
+      onComplete={async (transaction) => {
+        try {
+          await updateDoc(doc(db, 'school_enrollment_requests', request.id), {
+            status: 'pending',
+            paymentStatus: 'paid_on_ardoise',
+            transactionId: transaction.id,
+          })
+        } catch (err) {
+          console.error(err)
+          alert("Le paiement a réussi, mais la mise à jour de la demande a échoué. Contactez le support.")
+        }
+      }}
+      className="rounded-control bg-accent-500 px-4 py-2 text-sm font-bold text-primary-950 shadow-sm hover:bg-accent-400"
+    >
+      Réessayer le paiement ({request.registrationFee} FCFA)
+    </FedaPayButton>
   )
 }
 
