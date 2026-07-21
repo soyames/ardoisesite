@@ -6,6 +6,7 @@ import Badge from '../../shared/ui/Badge.jsx'
 import Spinner from '../../shared/ui/Spinner.jsx'
 import EmptyState from '../../shared/ui/EmptyState.jsx'
 import Icon from '../../shared/ui/Icon.jsx'
+import InfoTooltip from '../../shared/ui/InfoTooltip.jsx'
 
 const INPUT_CLASS =
   'block w-full rounded-control border-0 py-2 px-3 bg-surface-raised text-ink ring-1 ring-inset ring-border focus:ring-2 focus:ring-primary-500 sm:text-sm'
@@ -47,9 +48,12 @@ const ROLE_LABELS = {
 export default function CyclesPanel() {
   const staff = useApiGet('/api/collab/staff-directory/')
   const [busyId, setBusyId] = useState(null)
+  const [staffActionBusyId, setStaffActionBusyId] = useState(null)
   const [error, setError] = useState(null)
   const [showCreateForm, setShowCreateForm] = useState(false)
   const [createdAccount, setCreatedAccount] = useState(null)
+  const [resetResult, setResetResult] = useState(null)
+  const [staffActionError, setStaffActionError] = useState(null)
 
   const scopableStaff = (staff.data || []).filter((s) => s.role === 'director' || s.role === 'censeur')
 
@@ -72,6 +76,47 @@ export default function CyclesPanel() {
     staff.refetch()
   }
 
+  const handleResetPassword = async (member) => {
+    if (!confirm(`Generer un nouveau mot de passe pour ${member.fullName} ? L'ancien cessera immediatement de fonctionner.`)) return
+    setStaffActionBusyId(member.id)
+    setStaffActionError(null)
+    try {
+      const result = await api.post(`/api/auth/staff-accounts/${member.id}/reset-password/`, {})
+      setResetResult({ fullName: member.fullName, ...result })
+    } catch (err) {
+      setStaffActionError(err instanceof ApiError ? err.message : 'Erreur inattendue.')
+    } finally {
+      setStaffActionBusyId(null)
+    }
+  }
+
+  const handleSuspend = async (member) => {
+    if (!confirm(`Suspendre l'acces de ${member.fullName} ? Cette personne sera immediatement deconnectee et ne pourra plus se reconnecter tant que l'acces n'est pas restaure.`)) return
+    setStaffActionBusyId(member.id)
+    setStaffActionError(null)
+    try {
+      await api.post(`/api/auth/staff-accounts/${member.id}/suspend/`, {})
+      staff.refetch()
+    } catch (err) {
+      setStaffActionError(err instanceof ApiError ? err.message : 'Erreur inattendue.')
+    } finally {
+      setStaffActionBusyId(null)
+    }
+  }
+
+  const handleRestore = async (member) => {
+    setStaffActionBusyId(member.id)
+    setStaffActionError(null)
+    try {
+      await api.post(`/api/auth/staff-accounts/${member.id}/restore/`, {})
+      staff.refetch()
+    } catch (err) {
+      setStaffActionError(err instanceof ApiError ? err.message : 'Erreur inattendue.')
+    } finally {
+      setStaffActionBusyId(null)
+    }
+  }
+
   const primaryStaff = scopableStaff.filter((s) => s.cycleScope === 'primary')
   const secondaryStaff = scopableStaff.filter((s) => s.cycleScope === 'secondary')
   const primaryCoverage = primaryStaff.length
@@ -87,7 +132,30 @@ export default function CyclesPanel() {
         </p>
       </div>
 
-      <StaffRoster staff={staff} />
+      {staffActionError && <p className="text-sm text-danger-600">{staffActionError}</p>}
+
+      {resetResult && (
+        <div className="rounded-control border border-success-200 bg-success-50 p-4">
+          <p className="text-sm font-medium text-success-700">
+            Nouveau mot de passe genere pour {resetResult.fullName} ({resetResult.email}).
+          </p>
+          <p className="mt-1 text-sm text-success-700">
+            Mot de passe temporaire : <span className="font-mono font-semibold">{resetResult.temporaryPassword}</span>
+            {' '}- a transmettre a la personne concernee (WhatsApp, en personne...). Il ne sera plus jamais affiche.
+          </p>
+          <button type="button" className="mt-2 text-xs font-semibold text-success-700 underline" onClick={() => setResetResult(null)}>
+            Fermer
+          </button>
+        </div>
+      )}
+
+      <StaffRoster
+        staff={staff}
+        busyId={staffActionBusyId}
+        onReset={handleResetPassword}
+        onSuspend={handleSuspend}
+        onRestore={handleRestore}
+      />
 
       {!staff.loading && scopableStaff.length > 0 && (
         <div className="flex flex-wrap gap-3">
@@ -221,12 +289,14 @@ export default function CyclesPanel() {
 /**
  * The rest of this page only ever showed Director/Censeur (the only
  * roles cycleScope applies to) - a founder had no single place to see
- * every employee and what they actually do at the school. staff-directory
- * already returns everyone (StaffDirectoryView excludes only Parent/
- * Student), so this is a read-only grouping of data already being
- * fetched, not a new endpoint.
+ * every employee, reset a forgotten password, or suspend access when
+ * someone leaves. staff-directory already returns everyone
+ * (StaffDirectoryView excludes only Parent/Student), so listing is not
+ * a new endpoint - only the two action buttons below hit new ones
+ * (StaffAccountResetPasswordView/StaffAccountSuspendView/
+ * StaffAccountRestoreView in apps/core/api_views.py).
  */
-function StaffRoster({ staff }) {
+function StaffRoster({ staff, busyId, onReset, onSuspend, onRestore }) {
   if (staff.loading) return <div className="flex justify-center py-6"><Spinner /></div>
   if (!staff.data || staff.data.length === 0) return null
 
@@ -240,22 +310,62 @@ function StaffRoster({ staff }) {
 
   return (
     <Card>
-      <CardHeader title="Tout le personnel" subtitle={`${staff.data.length} compte(s) actif(s), par fonction`} />
-      <CardBody className="space-y-4">
+      <CardHeader
+        title="Tout le personnel"
+        subtitle={`${staff.data.length} compte(s), par fonction`}
+        action={
+          <InfoTooltip text="Un compte oublie son mot de passe : cliquez « Reinitialiser » pour en generer un nouveau a lui transmettre vous-meme. Une personne quitte l'ecole ou ne doit plus y avoir acces : cliquez « Suspendre » - elle sera deconnectee immediatement et ne pourra plus se reconnecter tant que vous n'avez pas restaure l'acces." />
+        }
+      />
+      <CardBody className="space-y-5">
         {roleOrder.map((role) => (
           <div key={role}>
             <p className="text-xs font-semibold uppercase tracking-wide text-accent-700">
               {ROLE_LABELS[role] || role} ({byRole[role].length})
             </p>
-            <ul className="mt-1 flex flex-wrap gap-2">
+            <ul className="mt-2 divide-y divide-border rounded-control border border-border">
               {byRole[role].map((s) => (
-                <li
-                  key={s.id}
-                  className="inline-flex items-center gap-1.5 rounded-control border border-border bg-surface px-2.5 py-1 text-sm text-ink"
-                >
-                  {s.fullName}
-                  {(role === 'director' || role === 'censeur') && (
-                    <span className="text-xs text-ink-muted">- {CYCLE_LABELS[s.cycleScope || '']}</span>
+                <li key={s.id} className="flex flex-col gap-2 p-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <p className="flex flex-wrap items-center gap-2 text-sm font-medium text-ink">
+                      {s.fullName}
+                      {(role === 'director' || role === 'censeur') && (
+                        <span className="text-xs font-normal text-ink-muted">- {CYCLE_LABELS[s.cycleScope || '']}</span>
+                      )}
+                      {s.isActive === false && <Badge tone="danger">Suspendu</Badge>}
+                    </p>
+                    {s.email && <p className="text-xs text-ink-muted">{s.email}</p>}
+                  </div>
+                  {role !== 'founder' && (
+                    <div className="flex flex-wrap items-center gap-2">
+                      <button
+                        type="button"
+                        disabled={busyId === s.id}
+                        onClick={() => onReset(s)}
+                        className="rounded-control border border-border px-2.5 py-1.5 text-xs font-semibold text-ink hover:bg-surface-raised disabled:opacity-50"
+                      >
+                        Reinitialiser le mot de passe
+                      </button>
+                      {s.isActive === false ? (
+                        <button
+                          type="button"
+                          disabled={busyId === s.id}
+                          onClick={() => onRestore(s)}
+                          className="rounded-control border border-success-200 px-2.5 py-1.5 text-xs font-semibold text-success-700 hover:bg-success-50 disabled:opacity-50"
+                        >
+                          Restaurer l'acces
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          disabled={busyId === s.id}
+                          onClick={() => onSuspend(s)}
+                          className="rounded-control border border-danger-200 px-2.5 py-1.5 text-xs font-semibold text-danger-600 hover:bg-danger-50 disabled:opacity-50"
+                        >
+                          Suspendre l'acces
+                        </button>
+                      )}
+                    </div>
                   )}
                 </li>
               ))}
