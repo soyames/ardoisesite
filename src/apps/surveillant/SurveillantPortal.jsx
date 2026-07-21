@@ -12,6 +12,7 @@ import PortalTabs from '../../shared/ui/PortalTabs.jsx'
 import StatCard from '../../shared/ui/StatCard.jsx'
 import ActivityList from '../../shared/ui/ActivityList.jsx'
 import QuickActionButton from '../../shared/ui/QuickActionButton.jsx'
+import WeeklyTimetableGrid from '../../shared/ui/WeeklyTimetableGrid.jsx'
 
 const INPUT_CLASS =
   'block w-full rounded-control border-0 py-2 px-3 bg-surface-raised text-ink ring-1 ring-inset ring-border focus:ring-2 focus:ring-primary-500 sm:text-sm'
@@ -41,6 +42,7 @@ const TABS = [
   { key: 'attendance', label: 'Appel' },
   { key: 'discipline', label: 'Discipline' },
   { key: 'incidents', label: 'Incidents' },
+  { key: 'structure', label: 'Classes & Personnel' },
   { key: 'timelogs', label: 'Heures vacataires' },
 ]
 
@@ -60,6 +62,7 @@ export default function SurveillantPortal() {
       {tab === 'attendance' && <AttendanceTab />}
       {tab === 'discipline' && <DisciplineTab />}
       {tab === 'incidents' && <IncidentsTab />}
+      {tab === 'structure' && <StructureReadOnlyTab />}
       {tab === 'timelogs' && <TimeLogsTab />}
     </div>
   )
@@ -396,6 +399,72 @@ function DisciplineTab() {
         </form>
       </CardBody>
     </Card>
+  )
+}
+
+// Read-only: Surveillant needs to see the school's classes, who
+// teaches them and when (for planning study hall/supervision around
+// real class hours), and which students are in a class - but doesn't
+// decide any of it, so no create/edit forms here (unlike
+// CenseurPortal.jsx's StructureTab/CalendrierTab, which build this
+// data). classroomName/subjectName/teacherName all come back already
+// resolved on the TimetableSlot itself (see academics/serializers.py's
+// TimetableSlotSerializer), so this needs no extra permission beyond
+// what Surveillant already has (classroom + timetableslot view).
+function StructureReadOnlyTab() {
+  const classrooms = useApiGet('/api/students/classrooms/')
+  const slots = useApiGet('/api/academics/timetable-slots/')
+  const [rosterClassroomId, setRosterClassroomId] = useState('')
+  const roster = useApiGet(`/api/students/roster/?classroom=${rosterClassroomId}`, { skip: !rosterClassroomId })
+
+  return (
+    <div className="space-y-4">
+      <Card>
+        <CardHeader title="Classes" subtitle={`${classrooms.data?.length || 0} classe(s)`} />
+        <CardBody className="p-0">
+          {classrooms.loading && <div className="flex justify-center py-8"><Spinner /></div>}
+          {!classrooms.loading && classrooms.data?.length === 0 && <div className="p-4"><EmptyState title="Aucune classe" /></div>}
+          <ul className="divide-y divide-border">
+            {classrooms.data?.map((c) => (
+              <li key={c.id} className="flex items-center justify-between p-3">
+                <p className="text-sm text-ink">{c.name}</p>
+                <p className="text-xs text-ink-muted">{c.level} - {c.capacity} places</p>
+              </li>
+            ))}
+          </ul>
+        </CardBody>
+      </Card>
+
+      <Card>
+        <CardHeader title="Emploi du temps" subtitle="Qui enseigne quelle classe, et a quelle heure" />
+        <CardBody className="p-0">
+          {slots.loading && <div className="flex justify-center py-8"><Spinner /></div>}
+          {!slots.loading && <WeeklyTimetableGrid slots={slots.data || []} />}
+        </CardBody>
+      </Card>
+
+      <Card>
+        <CardHeader title="Eleves par classe" />
+        <CardBody className="space-y-3">
+          <select className={INPUT_CLASS} value={rosterClassroomId} onChange={(e) => setRosterClassroomId(e.target.value)}>
+            <option value="">Choisir la classe...</option>
+            {classrooms.data?.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+          </select>
+          {rosterClassroomId && roster.loading && <div className="flex justify-center py-6"><Spinner /></div>}
+          {rosterClassroomId && !roster.loading && roster.data?.length === 0 && <EmptyState title="Aucun eleve dans cette classe" />}
+          {rosterClassroomId && !roster.loading && roster.data?.length > 0 && (
+            <ul className="divide-y divide-border rounded-control border border-border">
+              {roster.data.map((r) => (
+                <li key={r.id} className="flex items-center justify-between p-3">
+                  <p className="text-sm text-ink">{r.studentName}</p>
+                  <p className="text-xs text-ink-muted">{r.matricule}</p>
+                </li>
+              ))}
+            </ul>
+          )}
+        </CardBody>
+      </Card>
+    </div>
   )
 }
 
