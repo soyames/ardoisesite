@@ -5,6 +5,7 @@ import { useAuth } from '../../shared/auth/AuthContext.jsx'
 import { api, ApiError } from '../../shared/api/client.js'
 import { Card, CardHeader, CardBody } from '../../shared/ui/Card.jsx'
 import Button from '../../shared/ui/Button.jsx'
+import InfoTooltip from '../../shared/ui/InfoTooltip.jsx'
 
 const INPUT_CLASS = "mt-1 block w-full rounded-control border-0 py-2 px-3 bg-surface-raised text-ink ring-1 ring-inset ring-border focus:ring-2 focus:ring-primary-500 sm:text-sm"
 
@@ -124,7 +125,10 @@ export default function ApiIntegrations() {
       <CardBody>
         <form onSubmit={handleSaveBackendUrl} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-ink">Adresse de votre serveur</label>
+            <label className="flex items-center gap-1.5 text-sm font-medium text-ink">
+              Adresse de votre serveur
+              <InfoTooltip text="C'est l'adresse à laquelle l'application vous connecte, sur tous vos appareils, à votre propre installation Ardoise plutôt qu'au site public. Sans elle, aucune des fonctionnalités de gestion de votre école (élèves, paiements, personnel...) ne peut fonctionner." />
+            </label>
             <input
               type="url"
               value={backendUrlInput}
@@ -143,21 +147,21 @@ export default function ApiIntegrations() {
       </CardBody>
     </Card>
     <Card>
-      <CardHeader title="Paramètres Système & APIs" subtitle="Configurez vos clés WhatsApp et FedaPay pour votre école." />
+      <CardHeader title="Paramètres Système & APIs" subtitle="Configurez votre passerelle de paiement et WhatsApp pour votre école." />
       <CardBody>
         <form onSubmit={handleSave} className="space-y-6">
 
           <div className="bg-surface p-4 rounded-card ring-1 ring-border">
-            <h3 className="font-bold text-ink mb-4">Configuration FedaPay</h3>
-            <p className="text-sm text-ink-muted mb-4">
-              C'est votre propre compte FedaPay : les frais de scolarité que les parents paient ici
-              sont votre argent, versé directement sur votre compte. Ardoise ne les touche jamais.
-              Ardoise encaisse uniquement les frais d'inscription lors d'une demande sur le marketplace
-              (avec sa propre clé, séparée de celle-ci) et vous en reverse le montant.
-            </p>
+            <h3 className="flex items-center gap-1.5 font-bold text-ink mb-4">
+              Passerelle de paiement
+              <InfoTooltip text="Le service qui encaisse les paiements en ligne (Mobile Money, carte...) pour votre école. C'est votre propre compte : les frais de scolarité que les parents paient ici sont votre argent, versé directement sur votre compte - Ardoise ne les touche jamais. Ardoise encaisse uniquement les frais d'inscription lors d'une demande sur le marketplace, avec sa propre clé séparée de celle-ci, et vous en reverse le montant." />
+            </h3>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-ink">Clé Publique FedaPay (pk_live_... ou pk_sandbox_...)</label>
+                <label className="flex items-center gap-1.5 text-sm font-medium text-ink">
+                  Clé publique
+                  <InfoTooltip text="Fournie par votre passerelle de paiement lors de la création de votre compte marchand. Elle permet d'afficher la page de paiement - elle n'est pas secrète et peut être partagée sans risque." />
+                </label>
                 <input
                   type="text"
                   name="fedaPayPublicKey"
@@ -168,7 +172,10 @@ export default function ApiIntegrations() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-ink">Clé Secrète FedaPay (sk_live_... ou sk_sandbox_...)</label>
+                <label className="flex items-center gap-1.5 text-sm font-medium text-ink">
+                  Clé secrète
+                  <InfoTooltip text="Fournie par votre passerelle de paiement, elle aussi. Contrairement à la clé publique, celle-ci doit rester confidentielle : quiconque la possède peut agir sur votre compte marchand." />
+                </label>
                 <input
                   type="password"
                   name="fedaPaySecretKey"
@@ -179,41 +186,45 @@ export default function ApiIntegrations() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-ink">URL de webhook à configurer sur FedaPay</label>
+                <label className="flex items-center gap-1.5 text-sm font-medium text-ink">
+                  URL de webhook à configurer sur votre passerelle
+                  <InfoTooltip text="Copiez cette adresse dans les réglages de webhooks de votre passerelle de paiement. C'est ce qui permet à votre serveur d'être notifié automatiquement dès qu'un parent a réellement payé, sans que personne n'ait à le confirmer à la main." />
+                </label>
                 <input
                   type="text"
                   readOnly
                   value={backendUrlInput ? `${backendUrlInput.replace(/\/+$/, '')}/api/finance/webhooks/fedapay/` : "Connectez d'abord votre installation ci-dessus"}
                   className={`${INPUT_CLASS} cursor-not-allowed opacity-70`}
                 />
-                <p className="mt-1 text-xs text-ink-muted">
-                  Collez cette adresse dans le tableau de bord FedaPay (Réglages → Webhooks) pour que vos
-                  paiements de scolarité soient confirmés automatiquement.
-                </p>
               </div>
               <div>
-                <label className="block text-sm font-medium text-ink">Secret de signature du webhook</label>
+                <label className="flex items-center gap-1.5 text-sm font-medium text-ink">
+                  Secret de signature du webhook
+                  <InfoTooltip text="Fourni par votre passerelle de paiement au moment où vous créez le webhook ci-dessus. Sans ce secret, votre serveur ne peut pas vérifier qu'un paiement confirmé vient vraiment de votre passerelle, et refusera le webhook - aucun paiement ne sera alors validé automatiquement." />
+                </label>
                 <input
                   type="password"
                   name="fedaPayWebhookSecret"
                   value={config.fedaPayWebhookSecret}
                   onChange={handleChange}
                   className={INPUT_CLASS}
-                  placeholder="Fourni par FedaPay lors de la création du webhook"
+                  placeholder="Fourni lors de la création du webhook"
                 />
-                <p className="mt-1 text-xs text-ink-muted">
-                  Sans ce secret, votre serveur ne peut pas vérifier qu'un paiement confirmé vient
-                  vraiment de FedaPay, et refusera le webhook.
-                </p>
               </div>
             </div>
           </div>
 
           <div className="bg-surface p-4 rounded-card ring-1 ring-border">
-            <h3 className="font-bold text-ink mb-4">Configuration WhatsApp Business API</h3>
+            <h3 className="flex items-center gap-1.5 font-bold text-ink mb-4">
+              Configuration WhatsApp Business API
+              <InfoTooltip text="Permet à votre école d'envoyer automatiquement des reçus de paiement et des rappels aux parents par WhatsApp, plutôt que de le faire manuellement un par un." />
+            </h3>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-ink">Jeton d'accès (Access Token)</label>
+                <label className="flex items-center gap-1.5 text-sm font-medium text-ink">
+                  Jeton d'accès (Access Token)
+                  <InfoTooltip text="Généré depuis votre compte Meta for Developers pour votre application WhatsApp Business. Il doit rester confidentiel - quiconque le possède peut envoyer des messages au nom de votre école." />
+                </label>
                 <input
                   type="password"
                   name="whatsappToken"
@@ -224,7 +235,10 @@ export default function ApiIntegrations() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-ink">ID du Numéro de Téléphone (Phone Number ID)</label>
+                <label className="flex items-center gap-1.5 text-sm font-medium text-ink">
+                  ID du Numéro de Téléphone (Phone Number ID)
+                  <InfoTooltip text="L'identifiant du numéro WhatsApp que votre école utilise pour envoyer ces messages, disponible dans les réglages de votre application Meta for Developers." />
+                </label>
                 <input
                   type="text"
                   name="whatsappPhoneNumberId"
