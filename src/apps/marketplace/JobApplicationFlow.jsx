@@ -76,7 +76,14 @@ export default function JobApplicationFlow() {
         createdAt: serverTimestamp(),
       })
       alert('Candidature envoyée avec succès ! L\'école vous contactera bientôt.')
-      navigate('/portal') // Redirect teacher to their portal/dashboard
+      // /portal resolves to the SaaS TeacherPortal (App.jsx's role->component
+      // map has no employment check) - fine for an already-hired teacher, but
+      // this applicant has no schoolId yet and would land on an empty "0
+      // classes assigned" staff dashboard. /teacher-dashboard is the
+      // marketplace-side dashboard (same place LoginPage.jsx already sends an
+      // unemployed teacher) - discovered live while testing this flow
+      // end-to-end as a real applicant.
+      navigate('/teacher-dashboard')
     } catch (err) {
       console.error(err)
       alert('Une erreur est survenue lors de l\'envoi de la candidature. Réessayez.')
