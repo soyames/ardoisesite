@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { doc, getDoc } from 'firebase/firestore'
 import { db } from '../../shared/api/firebase'
+import { useAuth } from '../../shared/auth/AuthContext.jsx'
 import { FedaPayButton } from '../../shared/components/FedaPayButton.jsx'
 import { Card, CardHeader, CardBody } from '../../shared/ui/Card.jsx'
 
@@ -13,6 +14,7 @@ const CONFIRM_POLL_ATTEMPTS = 6
 const CONFIRM_POLL_DELAY_MS = 2000
 
 export default function SubscriptionPanel({ schoolId }) {
+  const { user } = useAuth()
   const [loading, setLoading] = useState(true)
   const [schoolData, setSchoolData] = useState(null)
   const [error, setError] = useState(null)
@@ -96,7 +98,10 @@ export default function SubscriptionPanel({ schoolId }) {
                     publicKey={import.meta.env.VITE_FEDAPAY_PUBLIC_KEY}
                     amount={PRICE_FCFA}
                     description={`Abonnement SaaS ERP pour l'école ${schoolData?.name || schoolId}`}
-                    customerEmail={schoolData?.email || 'ecole@example.com'}
+                    customerEmail={user?.email}
+                    customerFirstname={user?.firstName}
+                    customerLastname={user?.lastName}
+                    customerPhoneNumber={user?.phone || schoolData?.phone}
                     customMetadata={{ type: 'school_subscription_payment', schoolId: String(schoolId) }}
                     onComplete={handlePaymentComplete}
                     className="w-full rounded-control bg-primary-600 px-4 py-2 text-sm font-bold text-white transition hover:bg-primary-500 disabled:opacity-60"

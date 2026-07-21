@@ -225,12 +225,14 @@ export default function TutoringBookingFlow() {
                     <FedaPayButton
                       amount={total}
                       description={`Réservation Tuteur: ${teacher.name}`}
-                      customerEmail={user?.email || "parent@ardoise.com"}
-                      customerName={user?.name || "Parent Ardoise"}
+                      customerEmail={user?.email}
+                      customerFirstname={user?.firstName}
+                      customerLastname={user?.lastName}
+                      customerPhoneNumber={user?.phone}
                       customMetadata={{
                         type: 'tutoring_subscription',
                         teacherId: teacher.id,
-                        parentId: user?.id || 'unknown',
+                        parentId: user?.uid || 'unknown',
                         duration: 6
                       }}
                       onComplete={async (tx) => {
@@ -240,7 +242,7 @@ export default function TutoringBookingFlow() {
                           await addDoc(collection(db, 'tutoring_contracts'), {
                             teacherId: teacher.id,
                             teacherName: teacher.name,
-                            parentId: user.id,
+                            parentId: user.uid,
                             parentEmail: user.email,
                             parentName: `${user.firstName || ''} ${user.lastName || ''}`.trim(),
                             startDate,

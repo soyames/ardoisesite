@@ -71,7 +71,7 @@ export default function ParentPortal() {
           </div>
 
           {selectedChild && (
-            <ChildDetail key={selectedChild.id} child={selectedChild} parentId={user?.parentId} />
+            <ChildDetail key={selectedChild.id} child={selectedChild} parentId={user?.parentId} parent={user} />
           )}
         </>
       )}
@@ -80,7 +80,7 @@ export default function ParentPortal() {
       <EnrollmentRequests parentId={user?.uid} />
 
       {/* Tutoring Contracts Section */}
-      <TutoringContracts parentId={user?.id} />
+      <TutoringContracts parentId={user?.uid} />
 
       {/* Explore Marketplace Section */}
       <div className="mt-12 pt-8 border-t border-border">
@@ -206,7 +206,9 @@ function RetryEnrollmentPaymentButton({ request }) {
       amount={request.registrationFee}
       description={`Frais d'inscription pour ${request.childName} en ${request.childClassName}`}
       customerEmail={user?.email}
-      customerName={request.parentName}
+      customerFirstname={user?.firstName}
+      customerLastname={user?.lastName}
+      customerPhoneNumber={user?.phone || request.parentPhone}
       customMetadata={{ enrollment_request_id: request.id, schoolId: request.schoolId }}
       onComplete={async (transaction) => {
         try {
@@ -275,7 +277,7 @@ function TutoringContracts({ parentId }) {
   )
 }
 
-function ChildDetail({ child, parentId }) {
+function ChildDetail({ child, parentId, parent }) {
   const enrollmentId = child.currentEnrollment?.id
   const bulletins = useApiGet(enrollmentId ? `/api/academics/bulletins/?enrollment=${enrollmentId}` : null, {
     skip: !enrollmentId,
@@ -394,7 +396,8 @@ function ChildDetail({ child, parentId }) {
                       <SchoolPaymentButton
                         schoolId={child.currentEnrollment?.schoolId || 1}
                         invoice={inv}
-                        parent={child}
+                        parent={parent}
+                        studentMatricule={child.matricule}
                       />
                     </div>
                   )}
@@ -511,7 +514,7 @@ function InvoiceDetailModal({ invoiceId, onClose }) {
 }
 
 // Composant interne qui va chercher la clé de l'école avant d'afficher le bouton FedaPay
-function SchoolPaymentButton({ schoolId, invoice, parent }) {
+function SchoolPaymentButton({ schoolId, invoice, parent, studentMatricule }) {
   const [pubKey, setPubKey] = useState(null)
   
   useEffect(() => {
@@ -538,12 +541,15 @@ function SchoolPaymentButton({ schoolId, invoice, parent }) {
       publicKey={pubKey}
       amount={Number(invoice.amountDue) - Number(invoice.amountPaid || 0)}
       description={`Scolarité: ${invoice.trancheLabel || 'Facture'}`}
-      customerName={`${parent.firstName} ${parent.lastName}`}
+      customerEmail={parent?.email}
+      customerFirstname={parent?.firstName}
+      customerLastname={parent?.lastName}
+      customerPhoneNumber={parent?.phone}
       customMetadata={{
         type: 'tuition_payment',
         invoiceId: invoice.id,
         schoolId: schoolId,
-        studentMatricule: parent.matricule
+        studentMatricule
       }}
       className="inline-flex items-center justify-center gap-2 rounded-control px-4 py-2 text-sm font-medium transition-all duration-200 ease-out active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 disabled:cursor-not-allowed disabled:opacity-50 disabled:active:scale-100 bg-primary-600 text-white hover:bg-primary-700 hover:shadow-md shadow-sm border border-transparent focus-visible:ring-primary-500/30"
       onComplete={async (tx) => {
