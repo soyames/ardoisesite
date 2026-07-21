@@ -61,7 +61,19 @@ service cloud.firestore {
 
     // Utilisateurs
     match /users/{userId} {
-      allow read: if isSignedIn();
+      // TeacherList.jsx/TeacherDetail.jsx sont l'annuaire PUBLIC de
+      // tuteurs du marketplace (meme logique que schools/jobs
+      // ci-dessus - visitable sans compte) et interrogent cette
+      // collection avec where('role','==','teacher'). Une requete par
+      // collection doit satisfaire la regle sur CHAQUE document
+      // potentiellement concerne - `isSignedIn()` seul refusait donc
+      // silencieusement tout visiteur anonyme (aucun teacher n'a
+      // jamais pu s'afficher pour un visiteur non connecte), sans
+      // jamais remonter d'erreur cote client (onSnapshot avale
+      // l'erreur dans son callback d'echec). Le profil PARENT/staff/
+      // fondateur reste prive - seul role == 'teacher' est ouvert en
+      // lecture publique.
+      allow read: if isSignedIn() || resource.data.role == 'teacher';
 
       // La création (inscription - RegisterPage.jsx) est le tout premier
       // write sur ce document : resource n'existe pas encore, donc
