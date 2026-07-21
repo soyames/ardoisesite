@@ -6,6 +6,9 @@ export function FedaPayButton({
   customMetadata,
   customerEmail,
   customerName,
+  customerFirstname,
+  customerLastname,
+  customerPhoneNumber,
   publicKey,
   onComplete,
   onBeforeOpen,
@@ -50,6 +53,16 @@ export function FedaPayButton({
       return
     }
 
+    // FedaPay's checkout.js customer object takes firstname/lastname/
+    // phone_number, not a combined `name` field - that mismatch is why
+    // the Nom/Prenom/telephone fields on the FedaPay payment page never
+    // pre-filled, confirmed live: the widget rendered them blank even
+    // though callers were passing real values. Split customerName as a
+    // fallback for call sites that only have one combined string.
+    const [fallbackFirstname, ...fallbackLastnameParts] = (customerName || '').split(' ')
+    const firstname = customerFirstname || fallbackFirstname || undefined
+    const lastname = customerLastname || (fallbackLastnameParts.length ? fallbackLastnameParts.join(' ') : undefined)
+
     const widget = window.FedaPay.init({
       public_key: effectivePublicKey,
       environment: import.meta.env.VITE_FEDAPAY_ENVIRONMENT || 'sandbox',
@@ -60,7 +73,9 @@ export function FedaPayButton({
       },
       customer: {
         email: customerEmail,
-        name: customerName,
+        firstname,
+        lastname,
+        phone_number: customerPhoneNumber || undefined,
       },
       onComplete: (resp) => {
         setIsProcessing(false)
