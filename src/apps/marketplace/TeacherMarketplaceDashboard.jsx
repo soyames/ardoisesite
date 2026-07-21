@@ -42,7 +42,7 @@ export default function TeacherMarketplaceDashboard() {
       snapshot.forEach((d) => rows.push({ id: d.id, ...d.data() }))
       setContracts(rows)
       setContractsLoading(false)
-    }, () => setContractsLoading(false))
+    }, (err) => { console.error('tutoring_contracts read failed:', err); setContractsLoading(false) })
     return () => unsubscribe()
   }, [user])
 

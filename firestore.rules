@@ -119,6 +119,27 @@ service cloud.firestore {
       );
     }
 
+    // Contrats de tutorat -- un parent cree le sien juste apres paiement
+    // FedaPay reussi (TutoringBookingFlow.jsx) ; seuls le parent et le
+    // tuteur concerne peuvent le lire (ParentPortal "Mes Cours de
+    // Soutien", TeacherMarketplaceDashboard "Mes Contrats"). Cette
+    // collection n'avait AUCUNE regle du tout avant ce fix -- Firestore
+    // refuse par defaut tout chemin non couvert, donc chaque lecture/
+    // ecriture echouait silencieusement (aucune erreur visible cote
+    // client sans gestionnaire d'erreur explicite sur onSnapshot) :
+    // un parent payait reellement via FedaPay mais le contrat
+    // n'atteignait jamais Firestore, et personne ne pouvait le voir
+    // meme quand l'ecriture passait.
+    match /tutoring_contracts/{contractId} {
+      allow create: if isSignedIn()
+                    && getUserData().role == 'parent'
+                    && request.resource.data.parentId == request.auth.uid;
+      allow read, update: if isSignedIn() && (
+        request.auth.uid == resource.data.parentId ||
+        request.auth.uid == resource.data.teacherId
+      );
+    }
+
     // Tickets de support -- n'importe qui (y compris un visiteur anonyme)
     // peut créer un ticket via le formulaire de contact public
     // (ContactForm.jsx) ; les agents de la plateforme peuvent les lire
