@@ -1,5 +1,22 @@
 import { useState } from 'react'
 
+// FedaPay's customer.phone_number is an object ({number, country}), not
+// a plain string - confirmed against docs.fedapay.com/integration-api/fr/
+// customer-management-fr. Passing a bare string (the earlier fix) left
+// the phone field on their payment page still blank. The marketplace is
+// Benin-only today (see FRANCOPHONE_AFRICA_DATA/BENIN_CITIES in
+// SchoolList.jsx), so default the country to 'bj' and strip a leading
+// +229 if present - a phone stored some other way isn't a real case
+// yet, not worth a full libphonenumber dependency for one country.
+function toFedaPayPhoneNumber(raw) {
+  if (!raw) return undefined
+  const digitsOnly = raw.replace(/[^\d+]/g, '')
+  const withoutCountryCode = digitsOnly.startsWith('+229')
+    ? digitsOnly.slice(4)
+    : digitsOnly.replace(/^\+/, '')
+  return { number: withoutCountryCode, country: 'bj' }
+}
+
 export function FedaPayButton({
   amount,
   description,
@@ -75,7 +92,7 @@ export function FedaPayButton({
         email: customerEmail,
         firstname,
         lastname,
-        phone_number: customerPhoneNumber || undefined,
+        phone_number: toFedaPayPhoneNumber(customerPhoneNumber),
       },
       onComplete: (resp) => {
         setIsProcessing(false)

@@ -3,7 +3,6 @@ import { useParams, useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../../shared/auth/AuthContext.jsx'
 import { doc, getDoc } from 'firebase/firestore'
 import { FedaPayButton } from '../../shared/components/FedaPayButton.jsx'
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore'
 import { db } from '../../shared/api/firebase.js'
 import Spinner from '../../shared/ui/Spinner.jsx'
 
@@ -232,32 +231,19 @@ export default function TutoringBookingFlow() {
                       customMetadata={{
                         type: 'tutoring_subscription',
                         teacherId: teacher.id,
+                        teacherName: teacher.name,
                         parentId: user?.uid || 'unknown',
-                        duration: 6
+                        parentEmail: user?.email || '',
+                        parentName: `${user?.firstName || ''} ${user?.lastName || ''}`.trim(),
+                        startDate,
+                        hoursPerWeek: String(hoursPerWeek),
+                        paymentDate: String(paymentDate),
                       }}
-                      onComplete={async (tx) => {
-                        console.log("Paiement FedaPay complété !", tx)
-                        
-                        try {
-                          await addDoc(collection(db, 'tutoring_contracts'), {
-                            teacherId: teacher.id,
-                            teacherName: teacher.name,
-                            parentId: user.uid,
-                            parentEmail: user.email,
-                            parentName: `${user.firstName || ''} ${user.lastName || ''}`.trim(),
-                            startDate,
-                            hoursPerWeek: Number(hoursPerWeek),
-                            proposedPrice: Number(proposedPrice),
-                            commission,
-                            total,
-                            paymentDate: Number(paymentDate),
-                            status: 'active',
-                            createdAt: serverTimestamp()
-                          })
-                        } catch (err) {
-                          console.error("Erreur lors de la sauvegarde du contrat", err)
-                        }
-
+                      onComplete={() => {
+                        // The signed FedaPay webhook (ardoise-api) creates the
+                        // tutoring_contracts document now - see firestore.rules,
+                        // which no longer lets the client create one directly.
+                        // It'll show up in "Mes Cours de Soutien" within seconds.
                         setStep(3)
                       }}
                       className={`w-2/3 rounded-control px-4 py-3 text-sm font-bold shadow-card ${agreedToTerms ? 'bg-accent-500 text-primary-950 hover:bg-accent-400' : 'bg-primary-400 text-white cursor-not-allowed'}`}

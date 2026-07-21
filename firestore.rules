@@ -105,39 +105,65 @@ service cloud.firestore {
       );
     }
 
-    // Demandes d'inscription -- un parent crée la sienne
-    // (SchoolEnrollment.jsx) ; seuls le parent demandeur et le fondateur
-    // de l'école concernée peuvent la lire/la mettre à jour
-    // (FounderDashboard.jsx).
+    // Demandes d'inscription -- un parent crée la sienne, encore non
+    // payee (status: 'pending_payment', SchoolEnrollment.jsx). Le
+    // passage a status: 'pending'/paymentStatus: 'paid_on_ardoise' est
+    // desormais reserve au webhook FedaPay signe (ardoise-api) -- avant
+    // ce fix, le client lui-meme (onComplete du bouton de paiement)
+    // ecrivait directement ce changement de statut, donc une ecole
+    // pouvait voir/traiter une demande jamais reellement payee, et un
+    // parent aurait pu forcer "paye" depuis les devtools sans payer.
+    // Le fondateur garde le droit de faire avancer une demande DEJA
+    // payee (accepted/rejected/docs/...) via EnrollmentPanel.jsx, mais
+    // ne peut plus toucher aux champs de paiement.
     match /school_enrollment_requests/{requestId} {
       allow create: if isSignedIn()
                     && getUserData().role == 'parent'
-                    && request.resource.data.parentId == request.auth.uid;
-      allow read, update: if isSignedIn() && (
+                    && request.resource.data.parentId == request.auth.uid
+                    && request.resource.data.status == 'pending_payment';
+      allow read: if isSignedIn() && (
         request.auth.uid == resource.data.parentId ||
         (getUserData().role == 'founder' && getUserData().schoolId == resource.data.schoolId)
       );
+      allow update: if isSignedIn()
+                    && getUserData().role == 'founder'
+                    && getUserData().schoolId == resource.data.schoolId
+                    && resource.data.status != 'pending_payment'
+                    && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status']);
     }
 
-    // Contrats de tutorat -- un parent cree le sien juste apres paiement
-    // FedaPay reussi (TutoringBookingFlow.jsx) ; seuls le parent et le
-    // tuteur concerne peuvent le lire (ParentPortal "Mes Cours de
-    // Soutien", TeacherMarketplaceDashboard "Mes Contrats"). Cette
-    // collection n'avait AUCUNE regle du tout avant ce fix -- Firestore
-    // refuse par defaut tout chemin non couvert, donc chaque lecture/
-    // ecriture echouait silencieusement (aucune erreur visible cote
-    // client sans gestionnaire d'erreur explicite sur onSnapshot) :
-    // un parent payait reellement via FedaPay mais le contrat
-    // n'atteignait jamais Firestore, et personne ne pouvait le voir
-    // meme quand l'ecriture passait.
+    // Contrats de tutorat -- crees UNIQUEMENT par le webhook FedaPay
+    // signe (ardoise-api) apres confirmation reelle du paiement, jamais
+    // par le client (TutoringBookingFlow.jsx faisait avant un addDoc()
+    // direct sur son propre onComplete, non verifie serveur). Seuls le
+    // parent et le tuteur concerne peuvent le lire (ParentPortal "Mes
+    // Cours de Soutien", TeacherMarketplaceDashboard "Mes Contrats").
+    // Cette collection n'avait AUCUNE regle du tout avant ce fix --
+    // Firestore refuse par defaut tout chemin non couvert, donc chaque
+    // lecture/ecriture echouait silencieusement (aucun gestionnaire
+    // d'erreur sur les onSnapshot) : un parent payait reellement via
+    // FedaPay mais le contrat n'atteignait jamais Firestore, et
+    // personne ne pouvait le voir meme quand l'ecriture passait par le
+    // client (rare, car elle aussi refusee).
     match /tutoring_contracts/{contractId} {
-      allow create: if isSignedIn()
-                    && getUserData().role == 'parent'
-                    && request.resource.data.parentId == request.auth.uid;
-      allow read, update: if isSignedIn() && (
+      allow create, update: if false;
+      allow read: if isSignedIn() && (
         request.auth.uid == resource.data.parentId ||
         request.auth.uid == resource.data.teacherId
       );
+    }
+
+    // Montants dus a l'ecole par Ardoise (frais d'inscription collectes
+    // pour le compte de l'ecole -- voir le webhook FedaPay : Ardoise
+    // encaisse via sa propre cle FedaPay, l'ecole redemande ensuite ces
+    // montants). Ecrit uniquement par le webhook signe (Admin SDK,
+    // ignore ces regles) ; seul le fondateur de l'ecole concernee peut
+    // consulter ce qui lui est du.
+    match /school_payouts_owed/{payoutId} {
+      allow read: if isSignedIn()
+                  && getUserData().role == 'founder'
+                  && getUserData().schoolId == resource.data.schoolId;
+      allow create, update, delete: if false;
     }
 
     // Tickets de support -- n'importe qui (y compris un visiteur anonyme)
