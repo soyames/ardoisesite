@@ -76,6 +76,9 @@ export default function ParentPortal() {
         </>
       )}
 
+      {/* Payment History Section - the one place that answers "everything I've paid Ardoise" */}
+      <PaymentHistory parentId={user?.uid} djangoParentId={user?.parentId} />
+
       {/* Enrollment Requests Section */}
       <EnrollmentRequests parentId={user?.uid} />
 
@@ -117,6 +120,124 @@ export default function ParentPortal() {
   )
 }
 
+const PAYMENT_TYPE_ICON = { tuition: 'school', tutoring: 'menu_book', enrollment: 'how_to_reg' }
+
+/**
+ * Parents had no single place to see everything they've paid Ardoise
+ * for - tuition (Django, per-child), tutoring subscriptions and
+ * enrollment fees (Firestore) each lived in their own section with no
+ * shared view. This merges all three into one reverse-chronological
+ * list. Tuition needs the Django-side numeric guardian id (only set
+ * once a school has actually accepted an enrollment and created a
+ * Django user for this parent) - skipped entirely until that exists,
+ * same gating ChildDetail already uses for invoices.
+ */
+function PaymentHistory({ parentId, djangoParentId }) {
+  const invoices = useApiGet(djangoParentId ? `/api/finance/invoices/?parent=${djangoParentId}` : null, {
+    skip: !djangoParentId,
+  })
+  const [contracts, setContracts] = useState([])
+  const [enrollments, setEnrollments] = useState([])
+  const [loadingFirestore, setLoadingFirestore] = useState(true)
+
+  useEffect(() => {
+    if (!parentId) return
+    const unsubContracts = onSnapshot(
+      query(collection(db, 'tutoring_contracts'), where('parentId', '==', parentId)),
+      (snap) => {
+        const rows = []
+        snap.forEach((d) => rows.push({ id: d.id, ...d.data() }))
+        setContracts(rows)
+        setLoadingFirestore(false)
+      },
+      (err) => { console.error('tutoring_contracts read failed:', err); setLoadingFirestore(false) }
+    )
+    const unsubEnrollments = onSnapshot(
+      query(collection(db, 'school_enrollment_requests'), where('parentId', '==', parentId), where('paymentStatus', '==', 'paid_on_ardoise')),
+      (snap) => {
+        const rows = []
+        snap.forEach((d) => rows.push({ id: d.id, ...d.data() }))
+        setEnrollments(rows)
+      },
+      (err) => console.error('school_enrollment_requests (paid) read failed:', err)
+    )
+    return () => { unsubContracts(); unsubEnrollments() }
+  }, [parentId])
+
+  const rows = useMemo(() => {
+    const tuitionRows = (invoices.data || [])
+      .filter((inv) => Number(inv.amountPaid) > 0)
+      .map((inv) => ({
+        id: `inv-${inv.id}`,
+        type: 'tuition',
+        label: inv.trancheLabel || `Facture #${inv.id}`,
+        amount: inv.amountPaid,
+        dateMs: inv.dueDate ? new Date(inv.dueDate).getTime() : 0,
+        dateLabel: inv.dueDate ? new Date(inv.dueDate).toLocaleDateString('fr-FR') : '-',
+        badge: inv.status === 'paid' ? { tone: 'success', label: 'Payé' } : { tone: 'warning', label: 'Partiel' },
+      }))
+    const tutoringRows = contracts.map((c) => ({
+      id: `contract-${c.id}`,
+      type: 'tutoring',
+      label: `Tutorat - ${c.teacherName || 'Tuteur'}`,
+      amount: c.total,
+      dateMs: c.createdAt?.toMillis?.() || 0,
+      dateLabel: c.createdAt?.toDate?.().toLocaleDateString('fr-FR') || '-',
+      badge: { tone: c.status === 'active' ? 'success' : 'neutral', label: c.status === 'active' ? 'Abonnement actif (mensuel)' : c.status },
+    }))
+    const enrollmentRows = enrollments.map((e) => ({
+      id: `enroll-${e.id}`,
+      type: 'enrollment',
+      label: `Inscription - ${e.childName}`,
+      amount: e.registrationFee,
+      dateMs: e.createdAt?.toMillis?.() || 0,
+      dateLabel: e.createdAt?.toDate?.().toLocaleDateString('fr-FR') || '-',
+      badge: { tone: 'success', label: 'Payé' },
+    }))
+    return [...tuitionRows, ...tutoringRows, ...enrollmentRows].sort((a, b) => b.dateMs - a.dateMs)
+  }, [invoices.data, contracts, enrollments])
+
+  const loading = invoices.loading || loadingFirestore
+  const total = rows.reduce((sum, r) => sum + (Number(r.amount) || 0), 0)
+
+  if (!loading && rows.length === 0) return null
+
+  return (
+    <div className="mt-8">
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-lg font-bold text-ink">Mes Paiements</h2>
+        {!loading && rows.length > 0 && (
+          <span className="text-sm font-semibold text-ink-muted">Total : {total.toLocaleString('fr-FR')} FCFA</span>
+        )}
+      </div>
+      <Card>
+        <CardBody className="p-0">
+          {loading && <div className="flex justify-center py-8"><Spinner /></div>}
+          {!loading && (
+            <ul className="divide-y divide-border">
+              {rows.map((r) => (
+                <li key={r.id} className="flex items-center gap-3 p-4">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary-50 text-primary-700">
+                    <Icon name={PAYMENT_TYPE_ICON[r.type]} className="text-[20px]" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-medium text-ink">{r.label}</p>
+                    <p className="text-xs text-ink-muted">{r.dateLabel}</p>
+                  </div>
+                  <div className="flex flex-col items-end gap-1">
+                    <span className="text-sm font-semibold text-ink">{Number(r.amount).toLocaleString('fr-FR')} FCFA</span>
+                    <Badge tone={r.badge.tone}>{r.badge.label}</Badge>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </CardBody>
+      </Card>
+    </div>
+  )
+}
+
 function EnrollmentRequests({ parentId }) {
   const [requests, setRequests] = useState([])
   const [loading, setLoading] = useState(true)
@@ -131,7 +252,7 @@ function EnrollmentRequests({ parentId }) {
       data.sort((a, b) => (b.createdAt?.toMillis() || 0) - (a.createdAt?.toMillis() || 0))
       setRequests(data)
       setLoading(false)
-    })
+    }, (err) => { console.error('school_enrollment_requests read failed:', err); setLoading(false) })
     return () => unsub()
   }, [parentId])
 
@@ -242,7 +363,7 @@ function TutoringContracts({ parentId }) {
       data.sort((a, b) => (b.createdAt?.toMillis() || 0) - (a.createdAt?.toMillis() || 0))
       setContracts(data)
       setLoading(false)
-    })
+    }, (err) => { console.error('tutoring_contracts read failed:', err); setLoading(false) })
     return () => unsub()
   }, [parentId])
 
