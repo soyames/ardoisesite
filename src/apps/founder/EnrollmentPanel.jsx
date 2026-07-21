@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { api } from '../../shared/api/client.js'
+import { api, ApiError } from '../../shared/api/client.js'
 import { Card, CardHeader, CardBody } from '../../shared/ui/Card.jsx'
 import Button from '../../shared/ui/Button.jsx'
 import Badge from '../../shared/ui/Badge.jsx'
@@ -73,7 +73,14 @@ export default function EnrollmentPanel() {
       setEnrollments(prev => prev.map(e => e.id === id ? { ...e, status: newStatus } : e))
       if (newStatus === 'accepted' || newStatus === 'rejected') setSelectedId(null)
     } catch (err) {
-      alert("Une erreur est survenue.")
+      // Surfaces the real reason (e.g. "Aucune classe... trouvee.
+      // Creez-la d'abord." from MarketplaceEnrollmentAcceptView when
+      // the requested class doesn't exist yet) instead of a generic
+      // message that gave no path forward - a Secretary hitting this
+      // needs to know to ask the Fondateur/Directeur/Censeur to create
+      // the class, the same guidance the manual enrollment form
+      // already gives (see SecretaryPortal.jsx).
+      alert(err instanceof ApiError ? err.message : "Une erreur est survenue.")
       console.error(err)
     }
   }
