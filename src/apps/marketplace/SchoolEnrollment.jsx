@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
-import { doc, getDoc, collection, addDoc, updateDoc, serverTimestamp } from 'firebase/firestore'
+import { doc, getDoc, collection, addDoc, serverTimestamp } from 'firebase/firestore'
 import { db } from '../../shared/api/firebase.js'
 import { useAuth } from '../../shared/auth/AuthContext.jsx'
 import { FedaPayButton } from '../../shared/components/FedaPayButton.jsx'
@@ -126,7 +126,7 @@ export default function SchoolEnrollment() {
       })
       setRequestDocId(docRef.id)
       requestDocIdRef.current = docRef.id
-      return { enrollment_request_id: docRef.id, schoolId: school.id }
+      return { enrollmentRequestId: docRef.id, schoolId: school.id, type: 'enrollment_registration_fee' }
     } catch (err) {
       console.error(err)
       alert("Une erreur est survenue lors de la préparation de la demande. Réessayez.")
@@ -135,29 +135,23 @@ export default function SchoolEnrollment() {
     }
   }
 
-  const handlePaymentComplete = async (transaction) => {
+  const handlePaymentComplete = async () => {
     const currentReqId = requestDocIdRef.current
     if (!currentReqId) return
-    
+
     // Upload documents directly to the school's server if they provided a backendUrl
     if (school.backendUrl) {
       if (birthCertificate) await uploadToSchoolBackend(birthCertificate, 'birth_certificate', currentReqId);
       if (previousRecords) await uploadToSchoolBackend(previousRecords, 'previous_records', currentReqId);
       if (additionalDocuments) await uploadToSchoolBackend(additionalDocuments, 'additional_documents', currentReqId);
     }
-    
-    try {
-      await updateDoc(doc(db, 'school_enrollment_requests', currentReqId), {
-        status: 'pending', // paid, now pending school approval
-        paymentStatus: 'paid_on_ardoise',
-        transactionId: transaction.id
-      })
-      alert("Paiement réussi ! Votre demande et vos documents ont été envoyés à l'école.")
-      navigate('/portal')
-    } catch (err) {
-      console.error(err)
-      alert('Erreur lors de la mise à jour de la demande après paiement.')
-    }
+
+    // The signed FedaPay webhook (ardoise-api) is the only writer of
+    // status/paymentStatus on this doc now - see firestore.rules. The
+    // school only ever sees this request once that webhook confirms
+    // the payment, not on the client's own (spoofable) say-so.
+    alert("Paiement envoyé ! Votre demande sera visible par l'école dès la confirmation du paiement (quelques secondes).")
+    navigate('/portal')
   }
 
   return (
@@ -257,7 +251,6 @@ export default function SchoolEnrollment() {
               customerFirstname={user.firstName || 'Parent'}
               customerLastname={user.lastName || ''}
               customerPhoneNumber={user.phone}
-              customMetadata={{ enrollment_request_id: requestDocId, schoolId: school.id }}
               onBeforeOpen={handleStartPayment}
               onComplete={handlePaymentComplete}
               className="w-full rounded-control bg-accent-500 px-4 py-3 text-sm font-bold text-primary-950 hover:bg-accent-400"

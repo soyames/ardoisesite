@@ -17,6 +17,7 @@ export default function ApiIntegrations() {
   const [config, setConfig] = useState({
     fedaPayPublicKey: '',
     fedaPaySecretKey: '',
+    fedaPayWebhookSecret: '',
     whatsappToken: '',
     whatsappPhoneNumberId: ''
   })
@@ -74,6 +75,7 @@ export default function ApiIntegrations() {
         setConfig({
           fedaPayPublicKey: data.fedapayPublicKey || '',
           fedaPaySecretKey: data.fedapaySecretKey || '',
+          fedaPayWebhookSecret: data.fedapayWebhookSecret || '',
           whatsappToken: data.whatsappToken || '',
           whatsappPhoneNumberId: data.whatsappPhoneNumberId || ''
         })
@@ -96,6 +98,7 @@ export default function ApiIntegrations() {
       await api.patch('/api/system/settings/', {
         fedapayPublicKey: config.fedaPayPublicKey,
         fedapaySecretKey: config.fedaPaySecretKey,
+        fedapayWebhookSecret: config.fedaPayWebhookSecret,
         whatsappToken: config.whatsappToken,
         whatsappPhoneNumberId: config.whatsappPhoneNumberId
       })
@@ -146,6 +149,12 @@ export default function ApiIntegrations() {
 
           <div className="bg-surface p-4 rounded-card ring-1 ring-border">
             <h3 className="font-bold text-ink mb-4">Configuration FedaPay</h3>
+            <p className="text-sm text-ink-muted mb-4">
+              C'est votre propre compte FedaPay : les frais de scolarité que les parents paient ici
+              sont votre argent, versé directement sur votre compte. Ardoise ne les touche jamais.
+              Ardoise encaisse uniquement les frais d'inscription lors d'une demande sur le marketplace
+              (avec sa propre clé, séparée de celle-ci) et vous en reverse le montant.
+            </p>
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-ink">Clé Publique FedaPay (pk_live_... ou pk_sandbox_...)</label>
@@ -168,6 +177,34 @@ export default function ApiIntegrations() {
                   className={INPUT_CLASS}
                   placeholder="sk_..."
                 />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-ink">URL de webhook à configurer sur FedaPay</label>
+                <input
+                  type="text"
+                  readOnly
+                  value={backendUrlInput ? `${backendUrlInput.replace(/\/+$/, '')}/api/finance/webhooks/fedapay/` : "Connectez d'abord votre installation ci-dessus"}
+                  className={`${INPUT_CLASS} cursor-not-allowed opacity-70`}
+                />
+                <p className="mt-1 text-xs text-ink-muted">
+                  Collez cette adresse dans le tableau de bord FedaPay (Réglages → Webhooks) pour que vos
+                  paiements de scolarité soient confirmés automatiquement.
+                </p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-ink">Secret de signature du webhook</label>
+                <input
+                  type="password"
+                  name="fedaPayWebhookSecret"
+                  value={config.fedaPayWebhookSecret}
+                  onChange={handleChange}
+                  className={INPUT_CLASS}
+                  placeholder="Fourni par FedaPay lors de la création du webhook"
+                />
+                <p className="mt-1 text-xs text-ink-muted">
+                  Sans ce secret, votre serveur ne peut pas vérifier qu'un paiement confirmé vient
+                  vraiment de FedaPay, et refusera le webhook.
+                </p>
               </div>
             </div>
           </div>

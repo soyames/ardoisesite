@@ -307,41 +307,28 @@ function EnrollmentRequests({ parentId }) {
  */
 function RetryEnrollmentPaymentButton({ request }) {
   const { user } = useAuth()
-  const [pubKey, setPubKey] = useState(null)
-
-  useEffect(() => {
-    let cancelled = false
-    getDoc(doc(db, 'schools', String(request.schoolId))).then((snap) => {
-      if (cancelled) return
-      const key = snap.exists() && snap.data().fedaPayPublicKey
-      setPubKey(key || import.meta.env.VITE_FEDAPAY_PUBLIC_KEY)
-    }).catch(() => { if (!cancelled) setPubKey(import.meta.env.VITE_FEDAPAY_PUBLIC_KEY) })
-    return () => { cancelled = true }
-  }, [request.schoolId])
-
-  if (!pubKey) return <span className="text-xs text-ink-muted">Chargement du paiement...</span>
 
   return (
     <FedaPayButton
-      publicKey={pubKey}
+      // Ardoise collects the registration fee on the school's behalf
+      // (the school sets the amount, the school is owed it later - see
+      // the ardoise-api webhook's school_payouts_owed ledger) - always
+      // the platform key, same as the original SchoolEnrollment.jsx
+      // payment. A school's own fedaPayPublicKey is only ever used for
+      // tuition (SchoolPaymentButton below), which is the school's own
+      // money that never touches Ardoise at all.
       amount={request.registrationFee}
       description={`Frais d'inscription pour ${request.childName} en ${request.childClassName}`}
       customerEmail={user?.email}
       customerFirstname={user?.firstName}
       customerLastname={user?.lastName}
       customerPhoneNumber={user?.phone || request.parentPhone}
-      customMetadata={{ enrollment_request_id: request.id, schoolId: request.schoolId }}
-      onComplete={async (transaction) => {
-        try {
-          await updateDoc(doc(db, 'school_enrollment_requests', request.id), {
-            status: 'pending',
-            paymentStatus: 'paid_on_ardoise',
-            transactionId: transaction.id,
-          })
-        } catch (err) {
-          console.error(err)
-          alert("Le paiement a réussi, mais la mise à jour de la demande a échoué. Contactez le support.")
-        }
+      customMetadata={{ type: 'enrollment_registration_fee', enrollmentRequestId: request.id, schoolId: request.schoolId }}
+      onComplete={() => {
+        // The signed FedaPay webhook (ardoise-api) is now the only
+        // writer of status/paymentStatus on this doc - see firestore.rules.
+        // This listener's own onSnapshot picks up that update within a
+        // second or two; nothing to write client-side any more.
       }}
       className="rounded-control bg-accent-500 px-4 py-2 text-sm font-bold text-primary-950 shadow-sm hover:bg-accent-400"
     >
@@ -673,21 +660,14 @@ function SchoolPaymentButton({ schoolId, invoice, parent, studentMatricule }) {
         studentMatricule
       }}
       className="inline-flex items-center justify-center gap-2 rounded-control px-4 py-2 text-sm font-medium transition-all duration-200 ease-out active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 disabled:cursor-not-allowed disabled:opacity-50 disabled:active:scale-100 bg-primary-600 text-white hover:bg-primary-700 hover:shadow-md shadow-sm border border-transparent focus-visible:ring-primary-500/30"
-      onComplete={async (tx) => {
-        try {
-          // Import api here to avoid circular dependency if any, or use the global one if imported
-          const { api, primeCsrf } = await import('../../shared/api/client.js')
-          await primeCsrf()
-          await api.post('/api/finance/sandbox-payment/', {
-            transactionId: String(tx.id || tx.transaction_id || Date.now()),
-            invoiceId: invoice.id
-          })
-          alert("Paiement effectué avec succès ! Le reçu a été envoyé par WhatsApp.")
-          window.location.reload()
-        } catch (err) {
-          console.error(err)
-          alert("Le paiement FedaPay a réussi, mais l'enregistrement côté école a échoué.")
-        }
+      onComplete={() => {
+        // The school's own signed FedaPay webhook (apps/finance/webhooks.py)
+        // is now the only writer of the Payment/Invoice record - the client
+        // used to self-report success straight to /api/finance/sandbox-payment/,
+        // an insecure endpoint that trusted whatever the browser POSTed with
+        // no server-to-server verification at all.
+        alert("Paiement envoyé ! Le reçu sera visible ici dès la confirmation du paiement (quelques secondes).")
+        window.location.reload()
       }}
     >
       Payer en ligne
