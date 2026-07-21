@@ -15,6 +15,7 @@ import CalendarGrid from '../../shared/ui/CalendarGrid.jsx'
 import WeeklyTimetableGrid from '../../shared/ui/WeeklyTimetableGrid.jsx'
 import StructureTab from './StructureTab.jsx'
 import LetterheadSettings from '../../shared/components/LetterheadSettings.jsx'
+import RecruitmentPanel from '../founder/RecruitmentPanel.jsx'
 
 const INPUT_CLASS =
   'block w-full rounded-control border-0 py-2 px-3 bg-surface-raised text-ink ring-1 ring-inset ring-border focus:ring-2 focus:ring-primary-500 sm:text-sm'
@@ -28,6 +29,11 @@ const TABS = [
   { key: 'planification', label: 'Planification' },
   { key: 'timelogs', label: 'Heures vacataires' },
   { key: 'exams', label: 'Epreuves' },
+  // Read-only for Censeur - RecruitmentPanel itself hides the job-post
+  // form and Accepter button for anyone who isn't Founder/Director
+  // (see that component's own role check). Censeur can be consulted on
+  // a teaching hire but the final call stays with Founder/Directeur.
+  { key: 'candidatures', label: 'Candidatures' },
   { key: 'letterhead', label: 'Lettre a en-tete' },
 ]
 
@@ -66,6 +72,7 @@ export default function CenseurPortal() {
       {tab === 'planification' && <PlanificationTab />}
       {tab === 'timelogs' && <TimeLogsTab />}
       {tab === 'exams' && <ExamsTab />}
+      {tab === 'candidatures' && <RecruitmentPanel />}
       {tab === 'letterhead' && <LetterheadSettings />}
     </div>
   )
