@@ -25,6 +25,15 @@ const CREATABLE_ROLES = [
   { value: 'auditor', label: 'Auditeur' },
 ]
 
+// staff-directory returns every non-Parent/Student account (see
+// StaffDirectoryView), so roles beyond what CREATABLE_ROLES covers
+// (Teacher isn't created from this panel) still need a label here.
+const ROLE_LABELS = {
+  ...Object.fromEntries(CREATABLE_ROLES.map((r) => [r.value, r.label])),
+  teacher: 'Enseignant',
+  founder: 'Fondateur',
+}
+
 /**
  * Founder assigns which cycle (Primaire/Secondaire) each Director/
  * Censeur oversees - see the 2026-07-17-cycle-scope-wiring CEO plan.
@@ -77,6 +86,8 @@ export default function CyclesPanel() {
           approbations et demandes en attente ne concernent que ce cycle.
         </p>
       </div>
+
+      <StaffRoster staff={staff} />
 
       {!staff.loading && scopableStaff.length > 0 && (
         <div className="flex flex-wrap gap-3">
@@ -204,6 +215,55 @@ export default function CyclesPanel() {
         </CardBody>
       </Card>
     </div>
+  )
+}
+
+/**
+ * The rest of this page only ever showed Director/Censeur (the only
+ * roles cycleScope applies to) - a founder had no single place to see
+ * every employee and what they actually do at the school. staff-directory
+ * already returns everyone (StaffDirectoryView excludes only Parent/
+ * Student), so this is a read-only grouping of data already being
+ * fetched, not a new endpoint.
+ */
+function StaffRoster({ staff }) {
+  if (staff.loading) return <div className="flex justify-center py-6"><Spinner /></div>
+  if (!staff.data || staff.data.length === 0) return null
+
+  const byRole = {}
+  for (const s of staff.data) {
+    const key = s.role || 'autre'
+    if (!byRole[key]) byRole[key] = []
+    byRole[key].push(s)
+  }
+  const roleOrder = Object.keys(byRole).sort((a, b) => (ROLE_LABELS[a] || a).localeCompare(ROLE_LABELS[b] || b))
+
+  return (
+    <Card>
+      <CardHeader title="Tout le personnel" subtitle={`${staff.data.length} compte(s) actif(s), par fonction`} />
+      <CardBody className="space-y-4">
+        {roleOrder.map((role) => (
+          <div key={role}>
+            <p className="text-xs font-semibold uppercase tracking-wide text-accent-700">
+              {ROLE_LABELS[role] || role} ({byRole[role].length})
+            </p>
+            <ul className="mt-1 flex flex-wrap gap-2">
+              {byRole[role].map((s) => (
+                <li
+                  key={s.id}
+                  className="inline-flex items-center gap-1.5 rounded-control border border-border bg-surface px-2.5 py-1 text-sm text-ink"
+                >
+                  {s.fullName}
+                  {(role === 'director' || role === 'censeur') && (
+                    <span className="text-xs text-ink-muted">- {CYCLE_LABELS[s.cycleScope || '']}</span>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </div>
+        ))}
+      </CardBody>
+    </Card>
   )
 }
 
