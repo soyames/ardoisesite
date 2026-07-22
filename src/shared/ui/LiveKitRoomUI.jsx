@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useParams } from 'react-router-dom'
+import { useParams, useNavigate } from 'react-router-dom'
 import {
   LiveKitRoom,
   VideoConference,
@@ -8,6 +8,8 @@ import {
 import '@livekit/components-styles'
 import { useAuth } from '../auth/AuthContext.jsx'
 import Spinner from './Spinner.jsx'
+import CustomLiveKitControls from './CustomLiveKitControls.jsx'
+import PulseSurveyModal from './PulseSurveyModal.jsx'
 
 /**
  * Renders the LiveKit Video Conference room.
@@ -16,9 +18,11 @@ import Spinner from './Spinner.jsx'
 export default function LiveKitRoomUI() {
   const { roomId } = useParams()
   const { user } = useAuth()
+  const navigate = useNavigate()
   const [token, setToken] = useState(null)
   const [livekitUrl, setLivekitUrl] = useState(null)
   const [error, setError] = useState(null)
+  const [showSurvey, setShowSurvey] = useState(false)
 
   useEffect(() => {
     if (!roomId) return
@@ -49,6 +53,15 @@ export default function LiveKitRoomUI() {
     fetchToken()
   }, [roomId])
 
+  const handleDisconnected = () => {
+    setShowSurvey(true)
+  }
+
+  const handleCloseSurvey = () => {
+    setShowSurvey(false)
+    navigate(-1) // Go back to the previous page
+  }
+
   if (error) {
     return (
       <div className="flex h-screen items-center justify-center p-4 text-center">
@@ -70,6 +83,13 @@ export default function LiveKitRoomUI() {
     )
   }
 
+  if (showSurvey) {
+    // Determine if the user is a student or parent to show the teacher rating
+    // and extract the teacherId from the room context if available (assuming it could be passed via backend).
+    // For now, we will just show a general school rating survey since we don't have the teacherId readily available.
+    return <PulseSurveyModal onClose={handleCloseSurvey} schoolId={user?.school?.id} />
+  }
+
   return (
     <div className="h-screen w-full bg-ink">
       <LiveKitRoom
@@ -77,9 +97,11 @@ export default function LiveKitRoomUI() {
         audio={true}
         token={token}
         serverUrl={livekitUrl}
+        onDisconnected={handleDisconnected}
         data-lk-theme="default"
-        style={{ height: '100vh' }}
+        style={{ height: '100vh', position: 'relative' }}
       >
+        <CustomLiveKitControls />
         {/* The built-in pre-styled video conference grid */}
         <VideoConference />
         {/* The RoomAudioRenderer takes care of track-bound audio */}

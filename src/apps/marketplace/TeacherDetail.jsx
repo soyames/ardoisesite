@@ -4,11 +4,13 @@ import { doc, getDoc } from 'firebase/firestore'
 import { db } from '../../shared/api/firebase.js'
 import EmptyState from '../../shared/ui/EmptyState.jsx'
 import Spinner from '../../shared/ui/Spinner.jsx'
+import { api } from '../../shared/api/client.js'
 
 export default function TeacherDetail() {
   const { id } = useParams()
   const navigate = useNavigate()
   const [teacher, setTeacher] = useState(undefined) // undefined = loading, null = not found
+  const [rating, setRating] = useState(null)
 
   useEffect(() => {
     let cancelled = false
@@ -28,6 +30,16 @@ export default function TeacherDetail() {
         description: data.bio || '',
         image: data.image || null,
       })
+
+      // Fetch rating from backend
+      api.get(`/api/hr/teacher-ratings/${snap.id}/`)
+        .then(res => {
+          if (!cancelled && res?.average_rating !== undefined) {
+            setRating(res.average_rating)
+          }
+        })
+        .catch(err => console.error("Failed to fetch rating", err))
+        
     }).catch(() => { if (!cancelled) setTeacher(null) })
     return () => { cancelled = true }
   }, [id])
@@ -65,6 +77,13 @@ export default function TeacherDetail() {
                 {teacher.city && <span className="rounded-full bg-white/10 px-3 py-1 text-sm font-semibold text-white">{teacher.city}</span>}
               </div>
               <h1 className="text-4xl font-extrabold tracking-tight text-white sm:text-5xl">{teacher.name}</h1>
+              {rating !== null && (
+                <div className="mt-3 flex items-center justify-center md:justify-start gap-1 text-warning-400">
+                  <span className="material-symbols-outlined font-variation-fill text-xl">star</span>
+                  <span className="text-lg font-bold">{Number(rating).toFixed(1)}</span>
+                  <span className="text-sm text-primary-300 ml-1">/ 5.0</span>
+                </div>
+              )}
               {teacher.description && <p className="mt-4 text-lg text-primary-300 max-w-2xl">{teacher.description}</p>}
             </div>
 

@@ -16,6 +16,19 @@ export default function SchoolDetail() {
     getDoc(doc(db, 'schools', id)).then((snap) => {
       if (cancelled) return
       setSchool(snap.exists() ? { id: snap.id, ...snap.data() } : null)
+      
+      // Fetch rating from backend
+      if (snap.exists()) {
+        import('../../shared/api/client.js').then(({ api }) => {
+          api.get(`/api/core/school-ratings/${snap.id}/`)
+            .then(res => {
+              if (!cancelled && res?.average_rating !== undefined) {
+                setSchool(prev => prev ? { ...prev, rating: res.average_rating } : prev)
+              }
+            })
+            .catch(err => console.error("Failed to fetch rating", err))
+        })
+      }
     }).catch(() => { if (!cancelled) setSchool(null) })
     return () => { cancelled = true }
   }, [id])
@@ -71,6 +84,13 @@ export default function SchoolDetail() {
                 {cycle && <span className="rounded-full bg-white/20 px-3 py-1 text-xs font-semibold text-white backdrop-blur-md">{cycle}</span>}
               </div>
               <h1 className="text-4xl font-extrabold text-white sm:text-5xl">{school.name}</h1>
+              {school.rating != null && (
+                <div className="mt-3 flex items-center justify-start gap-1 text-warning-400">
+                  <span className="material-symbols-outlined font-variation-fill text-xl">star</span>
+                  <span className="text-lg font-bold">{Number(school.rating).toFixed(1)}</span>
+                  <span className="text-sm text-primary-300 ml-1">/ 5.0</span>
+                </div>
+              )}
             </div>
             <button
               onClick={() => navigate(`/schools/${school.id}/enroll`)}
