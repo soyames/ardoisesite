@@ -158,30 +158,31 @@ service cloud.firestore {
     }
 
     // Demandes d'inscription -- un parent crée la sienne, encore non
-    // payee (status: 'pending_payment', SchoolEnrollment.jsx). Le
-    // passage a status: 'pending'/paymentStatus: 'paid_on_ardoise' est
-    // desormais reserve au webhook FedaPay signe (ardoise-api) -- avant
-    // ce fix, le client lui-meme (onComplete du bouton de paiement)
-    // ecrivait directement ce changement de statut, donc une ecole
-    // pouvait voir/traiter une demande jamais reellement payee, et un
-    // parent aurait pu forcer "paye" depuis les devtools sans payer.
-    // Le fondateur garde le droit de faire avancer une demande DEJA
-    // payee (accepted/rejected/docs/...) via EnrollmentPanel.jsx, mais
-    // ne peut plus toucher aux champs de paiement.
+    // examinee (status: 'pending_review', SchoolEnrollment.jsx). L'école
+    // accepte/refuse via le pont signe (apps/core/api_views.py's
+    // MarketplaceEnrollmentStatusUpdateView -> ardoise-api's PATCH
+    // .../status route, Admin SDK - ces ecritures serveur ignorent ces
+    // regles, elles ne s'appliquent qu'au SDK client). Le passage a
+    // paymentStatus: 'paid_on_ardoise' est reserve au webhook FedaPay
+    // signe (ardoise-api) -- avant ce fix, le client lui-meme (onComplete
+    // du bouton de paiement) ecrivait directement ce changement de
+    // statut, donc une ecole pouvait voir/traiter une demande jamais
+    // reellement payee, et un parent aurait pu forcer "paye" depuis les
+    // devtools sans payer. Ni le parent ni le fondateur n'ont plus besoin
+    // d'ecrire directement sur ce document cote client - EnrollmentPanel.jsx
+    // et la prise de rendez-vous passent toutes deux par ces routes
+    // signees maintenant, donc `allow update` ci-dessous ne sert plus
+    // qu'a bloquer une ecriture client qui tenterait de contourner ce pont.
     match /school_enrollment_requests/{requestId} {
       allow create: if isSignedIn()
                     && getUserData().role == 'parent'
                     && request.resource.data.parentId == request.auth.uid
-                    && request.resource.data.status == 'pending_payment';
+                    && request.resource.data.status == 'pending_review';
       allow read: if isSignedIn() && (
         request.auth.uid == resource.data.parentId ||
-        (getUserData().role == 'founder' && getUserData().schoolId == resource.data.schoolId)
+        ((getUserData().role == 'founder' || getUserData().role == 'secretary') && getUserData().schoolId == resource.data.schoolId)
       );
-      allow update: if isSignedIn()
-                    && getUserData().role == 'founder'
-                    && getUserData().schoolId == resource.data.schoolId
-                    && resource.data.status != 'pending_payment'
-                    && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status']);
+      allow update: if false;
     }
 
     // Contrats de tutorat -- crees UNIQUEMENT par le webhook FedaPay
