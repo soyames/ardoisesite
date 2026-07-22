@@ -10,7 +10,7 @@ test.describe('School E2E Flow', () => {
     await page.goto('/login');
     
     // Login as Secretary
-    await page.fill('input[type="email"]', 'secretaire@ardoise.com');
+    await page.fill('input[id="username"]', 'secretaire@ardoise.com');
     await page.fill('input[type="password"]', 'Ardoise2026!');
     await page.click('button[type="submit"]');
 

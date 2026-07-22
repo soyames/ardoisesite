@@ -36,7 +36,13 @@ export default function SchoolEnrollment() {
         const data = snap.data()
         setSchool({ id: snap.id, ...data })
         if (data.classrooms && data.classrooms.length > 0) {
-          setChildClassId(data.classrooms[0].id)
+          // Auto-select first non-full class if possible
+          const firstAvailable = data.classrooms.find(c => (c.capacity || 50) > (c.acceptedCount || 0))
+          if (firstAvailable) {
+            setChildClassId(firstAvailable.id)
+          } else {
+            setChildClassId(data.classrooms[0].id)
+          }
         } else {
           // Fallback for E2E testing
           data.classrooms = [{ id: '1', name: 'CP', registrationFee: 10000 }]
@@ -109,7 +115,6 @@ export default function SchoolEnrollment() {
     }
     setSubmitting(true)
     try {
-      // Create document in Firestore as pending payment
       const docRef = await addDoc(collection(db, 'school_enrollment_requests'), {
         schoolId: school.id,
         parentId: user.uid,
@@ -126,6 +131,7 @@ export default function SchoolEnrollment() {
         paymentStatus: 'pending',
         createdAt: serverTimestamp(),
       })
+
       setRequestDocId(docRef.id)
       requestDocIdRef.current = docRef.id
       return { enrollmentRequestId: docRef.id, schoolId: school.id, type: 'enrollment_registration_fee' }
@@ -205,9 +211,14 @@ export default function SchoolEnrollment() {
             <div>
               <label className="block text-sm font-medium text-ink mb-1">Classe souhaitée *</label>
               <select value={childClassId} onChange={e => setChildClassId(e.target.value)} className="w-full rounded-control border border-border px-4 py-2 text-sm focus:border-primary-500">
-                {fallbackClassrooms.map(c => (
-                  <option key={c.id} value={c.id}>{c.name}</option>
-                ))}
+                {fallbackClassrooms.map(c => {
+                  const isFull = (c.acceptedCount || 0) >= (c.capacity || 50)
+                  return (
+                    <option key={c.id} value={c.id} disabled={isFull}>
+                      {c.name} {isFull ? '(Complet)' : ''}
+                    </option>
+                  )
+                })}
               </select>
             </div>
           </div>
@@ -255,6 +266,56 @@ export default function SchoolEnrollment() {
                 <label className="block text-sm font-medium text-ink mb-1">Autres documents requis</label>
                 <input type="file" onChange={e => setAdditionalDocuments(e.target.files[0])} className="w-full text-sm text-ink-muted file:mr-4 file:rounded-control file:border-0 file:bg-primary-50 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-primary-700 hover:file:bg-primary-100" />
               </div>
+            </div>
+          )}
+
+          {school.backendUrl && (
+            <div className="bg-surface p-4 rounded-control border border-border space-y-4 mt-6">
+              <h3 className="text-sm font-semibold text-ink">Prise de rendez-vous pour dépôt physique</h3>
+              <p className="text-xs text-ink-muted">
+                Choisissez une date et un créneau pour déposer physiquement les dossiers si l'école l'exige.
+              </p>
+              
+              <div>
+                <label className="block text-sm font-medium text-ink mb-1">Date du rendez-vous</label>
+                <input 
+                  type="date" 
+                  value={appointmentDate} 
+                  onChange={e => {
+                    setAppointmentDate(e.target.value)
+                    setSelectedSlotId('')
+                  }} 
+                  className="w-full rounded-control border border-border px-4 py-2 text-sm focus:border-primary-500" 
+                />
+              </div>
+
+              {appointmentDate && (
+                <div>
+                  <label className="block text-sm font-medium text-ink mb-2">Créneaux disponibles</label>
+                  {loadingSlots ? (
+                    <div className="flex justify-center py-4"><Spinner /></div>
+                  ) : availableSlots.length === 0 ? (
+                    <div className="text-sm text-ink-muted py-2 bg-surface-raised rounded p-3 text-center border border-border">Aucun créneau disponible pour cette date.</div>
+                  ) : (
+                    <div className="grid grid-cols-3 gap-2">
+                      {availableSlots.map(slot => (
+                        <button
+                          key={slot.id}
+                          type="button"
+                          onClick={() => setSelectedSlotId(slot.id)}
+                          className={`py-2 px-3 text-sm rounded-control border text-center transition-colors ${
+                            selectedSlotId === slot.id 
+                              ? 'bg-primary-600 text-white border-primary-600 font-semibold' 
+                              : 'bg-surface hover:bg-primary-50 border-border text-ink'
+                          }`}
+                        >
+                          {slot.startTime} - {slot.endTime}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           )}
 

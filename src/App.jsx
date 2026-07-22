@@ -25,6 +25,7 @@ import DeveloperPortal from './apps/developer/DeveloperPortal.jsx'
 import CollabHub from './shared/collab/CollabHub.jsx'
 import SettingsPage from './shared/settings/SettingsPage.jsx'
 import LiveKitRoomUI from './shared/ui/LiveKitRoomUI.jsx'
+import { LiveRoom } from './apps/shared/LiveRoom.jsx'
 
 // Public Marketplace Layout & Pages
 import PublicLayout from './shared/layout/PublicLayout.jsx'
@@ -39,6 +40,7 @@ import TeacherDetail from './apps/marketplace/TeacherDetail.jsx'
 import TutoringBookingFlow from './apps/marketplace/TutoringBookingFlow.jsx'
 import Recruitment from './apps/marketplace/Recruitment.jsx'
 import TeacherMarketplaceDashboard from './apps/marketplace/TeacherMarketplaceDashboard.jsx'
+import MarketplaceStudentPortal from './apps/marketplace/MarketplaceStudentPortal.jsx'
 import Privacy from './apps/marketplace/Privacy.jsx'
 import CookiesPolicy from './apps/marketplace/CookiesPolicy.jsx'
 import Terms from './apps/marketplace/Terms.jsx'
@@ -74,7 +76,6 @@ const NAV_BY_ROLE = {
   surveillant: [{ to: '/portal', label: 'Surveillance', end: true, icon: 'shield' }, collabItem('forum'), SETTINGS_NAV_ITEM],
   canteen: [{ to: '/portal', label: 'Cantine', end: true, icon: 'restaurant' }, collabItem('forum'), SETTINGS_NAV_ITEM],
   librarian: [{ to: '/portal', label: 'Librairie', end: true, icon: 'menu_book' }, collabItem('forum'), SETTINGS_NAV_ITEM],
-  student: [{ to: '/portal', label: 'Mon espace', end: true, icon: 'person' }, SETTINGS_NAV_ITEM],
   auditor: [{ to: '/portal', label: 'Audit', end: true, icon: 'fact_check' }, SETTINGS_NAV_ITEM],
   superadmin: [{ to: '/portal', label: 'Administration', end: true, icon: 'admin_panel_settings' }, collabItem('forum')],
   support_agent: [{ to: '/portal', label: 'Support Tickets', end: true, icon: 'support_agent' }, collabItem('forum')],
@@ -83,6 +84,7 @@ const NAV_BY_ROLE = {
   billing_agent: [{ to: '/portal', label: 'Paiements & Abonnements', end: true, icon: 'payments' }, collabItem('forum')],
   marketing_agent: [{ to: '/portal', label: 'Marketing & Analytiques', end: true, icon: 'campaign' }, collabItem('forum')],
   developer: [{ to: '/portal', label: 'Espace Developpeur', end: true, icon: 'code' }, SETTINGS_NAV_ITEM],
+  marketplace_student: [{ to: '/portal', label: 'Espace Devoirs & Visio', end: true, icon: 'school' }],
 }
 
 const PORTAL_BY_ROLE = {
@@ -99,8 +101,8 @@ const PORTAL_BY_ROLE = {
   surveillant: SurveillantPortal,
   canteen: CanteenPortal,
   librarian: LibrarianPortal,
-  student: StudentPortal,
   auditor: AuditorPortal,
+  marketplace_student: MarketplaceStudentPortal,
   superadmin: SuperadminDashboard,
   support_agent: SuperadminDashboard,
   school_onboarding: SuperadminDashboard,
@@ -164,6 +166,7 @@ export default function App() {
           <Route path="install" element={<InstallGuide />} />
           <Route path="contact" element={<ContactForm />} />
           <Route path="how-it-works" element={<HowItWorks />} />
+          <Route path="/live-room/:roomId" element={<LiveRoom />} />
         </Route>
 
         {/* Private School Portal Routes */}

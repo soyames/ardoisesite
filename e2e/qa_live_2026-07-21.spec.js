@@ -13,7 +13,7 @@ test.describe('Forgot password flow', () => {
     page.on('pageerror', (err) => consoleErrors.push(err.message));
 
     await page.goto('/forgot-password');
-    await page.fill('input[type="email"]', 'amina.toffa.qa@ardoise-test.com');
+    await page.fill('input[id="username"]', 'amina.toffa.qa@ardoise-test.com');
     await page.click('button[type="submit"]');
 
     // Button should show the submitting state briefly, then resolve to
@@ -34,7 +34,7 @@ test.describe('Forgot password flow', () => {
 test.describe('Founder login (SaaS)', () => {
   test('founder@ardoise.com can log in with real credentials', async ({ page }) => {
     await page.goto('/login?saas=1');
-    await page.fill('input[type="email"], input[id="username"]', 'founder@ardoise.com');
+    await page.fill('input[id="username"]', 'founder@ardoise.com');
     await page.fill('input[type="password"]', 'Ardoise2026!');
     await page.click('button[type="submit"]');
     await page.waitForTimeout(2000);
@@ -52,7 +52,7 @@ test.describe('Founder login (SaaS)', () => {
 test.describe('Parent profile update', () => {
   test('amina can update her profile', async ({ page }) => {
     await page.goto('/login');
-    await page.fill('input[type="email"]', 'amina.toffa.qa@ardoise-test.com');
+    await page.fill('input[id="username"]', 'amina.toffa.qa@ardoise-test.com');
     await page.fill('input[type="password"]', 'ArdoiseTest2026!');
     await page.click('button[type="submit"]');
     await page.waitForTimeout(2000);

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { Link } from 'react-router-dom'
 import { api, ApiError } from '../../shared/api/client.js'
 import { Card, CardHeader, CardBody } from '../../shared/ui/Card.jsx'
 import Button from '../../shared/ui/Button.jsx'
@@ -192,7 +193,15 @@ export default function EnrollmentPanel() {
                   </select>
                 </div>
 
-                <div className="flex gap-2 border-t border-border pt-3">
+                <div className="flex flex-wrap gap-2 border-t border-border pt-3">
+                  <Link
+                    to={`/live-room/enrollment-${selected.id}`}
+                    className="inline-flex items-center justify-center gap-1 rounded-control bg-primary-100 px-3 py-1.5 text-sm font-semibold text-primary-800 transition hover:bg-primary-200"
+                  >
+                    <span className="material-symbols-outlined text-[18px]">video_call</span>
+                    Visio-conférence
+                  </Link>
+                  <div className="flex-1"></div>
                   <Button size="sm" variant="secondary" onClick={() => handleStatusUpdate(selected.id, 'rejected')} disabled={!isPremium}>
                     Refuser
                   </Button>

@@ -105,6 +105,13 @@ export default function TeacherDetail() {
                   Réserver et proposer un contrat
                 </button>
                 <button
+                  onClick={() => navigate(`/live-room/teacher-${teacher.id}`)}
+                  className="w-full flex justify-center items-center rounded-control bg-primary-100 px-4 py-3 text-sm font-bold text-primary-800 shadow-card transition hover:bg-primary-200 hover:scale-[1.02]"
+                >
+                  <span className="material-symbols-outlined align-middle mr-2 text-[18px]">video_call</span>
+                  Appel Vidéo
+                </button>
+                <button
                   onClick={() => setShowEvaluationForm(true)}
                   className="w-full rounded-control bg-white/10 px-4 py-3 text-sm font-bold text-ink border border-border shadow-card transition hover:bg-white hover:scale-[1.02]"
                 >
