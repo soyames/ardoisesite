@@ -25,14 +25,19 @@ service cloud.firestore {
       // quel utilisateur connecte pouvait creer sa propre ecole avec
       // subscriptionActive: true des la creation, contournant
       // entierement le webhook FedaPay signe (meme classe de faille
-      // que celle deja corrigee sur update()). activationCode reste
-      // autorise ici : RegisterPage.jsx en genere un a l'inscription
-      // (compte gratuit inclus) pour que report_backend_url ait un
-      // identifiant a utiliser, distinct du statut d'abonnement.
+      // que celle deja corrigee sur update()). activationCode est
+      // desormais aussi interdit ici : ce champ vivait avant sur ce
+      // document PUBLIC (allow read: if true ci-dessus), alors que
+      // c'est le credential meme qui autorise reecrire le backendUrl
+      // d'une ecole - n'importe qui pouvait le lire et detourner
+      // n'importe quelle ecole. Il vit maintenant sous
+      // schools/{id}/secrets/config (regle plus bas, deja reservee au
+      // fondateur) - RegisterPage.jsx l'y ecrit juste apres avoir cree
+      // ce document et le document users/{uid} du fondateur.
       allow create: if isSignedIn()
                     && !request.resource.data.keys().hasAny(
                           ['subscriptionActive', 'subscriptionExpiresAt', 'subscriptionStatus',
-                           'lastPaymentDate', 'lastPaymentTx']);
+                           'activationCode', 'lastPaymentDate', 'lastPaymentTx']);
 
       // SEUL le fondateur lié à cette école a le droit de modifier les infos (comme le backendUrl) --
       // MAIS jamais les champs d'abonnement. Ces champs ne sont écrits que par
@@ -73,7 +78,13 @@ service cloud.firestore {
       // l'erreur dans son callback d'echec). Le profil PARENT/staff/
       // fondateur reste prive - seul role == 'teacher' est ouvert en
       // lecture publique.
-      allow read: if isSignedIn() || resource.data.role == 'teacher';
+      // Le commentaire ci-dessus disait deja l'intention (profil prive
+      // sauf teacher) mais isSignedIn() etait OR'd independamment du role
+      // -- n'importe quel compte connecte pouvait donc lire le profil
+      // (email/telephone/role/schoolId) de N'IMPORTE QUEL autre
+      // utilisateur en connaissant son uid, pas seulement les tuteurs
+      // publics. Trouve en revue de securite live.
+      allow read: if (isSignedIn() && request.auth.uid == userId) || resource.data.role == 'teacher';
 
       // La création (inscription - RegisterPage.jsx) est le tout premier
       // write sur ce document : resource n'existe pas encore, donc
@@ -84,7 +95,25 @@ service cloud.firestore {
       // tout premier write). Séparée de update, qui garde la vraie
       // restriction de sécurité : après création, role/schoolId/
       // subscriptionActive ne doivent plus jamais changer côté client.
-      allow create: if isSignedIn() && request.auth.uid == userId;
+      //
+      // MAIS la restriction sur update() ne protege que le DEUXIEME
+      // write - le tout premier (create) n'avait aucune contrainte sur
+      // les VALEURS de role/schoolId. N'importe quel compte pouvait donc
+      // s'auto-attribuer role:'superadmin' ou schoolId d'une ecole
+      // existante des la creation, et chaque autre regle de ce fichier
+      // fait confiance a getUserData() (qui lit ce document) - escalade
+      // de privileges complete (secrets FedaPay/WhatsApp de n'importe
+      // quelle ecole, tickets support toutes ecoles confondues, etc).
+      // Trouve en revue de securite live. RegisterPage.jsx ne definit
+      // schoolId QUE pour role=='founder' (juste apres avoir cree le
+      // document schools/{id} correspondant) - jamais pour
+      // parent/teacher/developer.
+      allow create: if isSignedIn() && request.auth.uid == userId
+                    && request.resource.data.role in ['parent', 'teacher', 'founder', 'developer']
+                    && (request.resource.data.role == 'founder'
+                          ? ('schoolId' in request.resource.data
+                              && exists(/databases/$(database)/documents/schools/$(request.resource.data.schoolId)))
+                          : !('schoolId' in request.resource.data));
       allow update: if isSignedIn()
                     && request.auth.uid == userId
                     && !request.resource.data.diff(resource.data).affectedKeys()

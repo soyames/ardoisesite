@@ -61,22 +61,23 @@ export default function RegisterPage() {
 
       if (role === 'founder') {
         const schoolName = formData.get('schoolName') || 'Mon École';
-        // Every school gets an activation code at registration, free
-        // tier included - it's the only credential a self-hosted
-        // install has to authenticate to the Platform at all (see
-        // ardoise-api's POST /api/marketplace/backend-url, which
-        // requires X-Activation-Code unconditionally). Distinct from
-        // subscriptionActive/planCode: this code identifies the
-        // install, it doesn't grant paid features by itself - those
-        // still only ever come from the signed FedaPay webhook.
-        const activationCode = crypto.randomUUID();
+        // No activationCode on this document - schools/{id} is publicly
+        // readable (the marketplace directory), and this is the one
+        // credential that authorizes rewriting a school's backendUrl
+        // (see ardoise-api's POST /api/marketplace/backend-url). It used
+        // to live here and anyone could read any school's code off the
+        // public directory and hijack their backend. Written to
+        // schools/{id}/secrets/config below instead, once the founder's
+        // own users/{uid} doc exists - that subcollection's Firestore
+        // rule already requires getUserData().role=='founder' &&
+        // schoolId match, which can't evaluate true until this same
+        // registration writes that user doc a few lines down.
         const schoolDocRef = await addDoc(collection(db, 'schools'), {
           name: schoolName,
           city,
           country,
           isFull: false,
           referrerId, // Store who referred this school for commissions
-          activationCode,
           createdAt: new Date().toISOString()
         });
         schoolId = schoolDocRef.id;
@@ -95,6 +96,20 @@ export default function RegisterPage() {
         ...(schoolId ? { schoolId } : {}),
         createdAt: new Date().toISOString()
       })
+
+      if (role === 'founder' && schoolId) {
+        // Every school gets an activation code at registration, free
+        // tier included - it's the only credential a self-hosted
+        // install has to authenticate to the Platform at all (see
+        // ardoise-api's POST /api/marketplace/backend-url, which
+        // requires X-Activation-Code unconditionally). Distinct from
+        // subscriptionActive/planCode: this code identifies the
+        // install, it doesn't grant paid features by itself - those
+        // still only ever come from the signed FedaPay webhook.
+        await setDoc(doc(db, 'schools', schoolId, 'secrets', 'config'), {
+          activationCode: crypto.randomUUID(),
+        })
+      }
 
       // 3. Send email verification (non-blocking)
       await sendEmailVerification(user).catch(err => {
