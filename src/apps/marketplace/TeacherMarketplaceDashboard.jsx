@@ -20,6 +20,9 @@ export default function TeacherMarketplaceDashboard() {
   const [contracts, setContracts] = useState([])
   const [contractsLoading, setContractsLoading] = useState(true)
 
+  const [applications, setApplications] = useState([])
+  const [applicationsLoading, setApplicationsLoading] = useState(true)
+
   const [newExp, setNewExp] = useState({ employer: '', start: '', end: '', description: '' })
   const [newEdu, setNewEdu] = useState({ school: '', degree: '', year: '' })
   const [newSession, setNewSession] = useState({ date: '', hours: '2', notes: '' })
@@ -45,6 +48,22 @@ export default function TeacherMarketplaceDashboard() {
     }, (err) => { console.error('tutoring_contracts read failed:', err); setContractsLoading(false) })
     return () => unsubscribe()
   }, [user])
+
+  useEffect(() => {
+    if (!user) return
+    const q = query(collection(db, 'job_applications'), where('teacherId', '==', user.uid))
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const rows = []
+      snapshot.forEach((d) => rows.push({ id: d.id, ...d.data() }))
+      rows.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0))
+      setApplications(rows)
+      setApplicationsLoading(false)
+    }, (err) => { console.error('job_applications read failed:', err); setApplicationsLoading(false) })
+    return () => unsubscribe()
+  }, [user])
+
+  const applicationStatusLabel = { pending: 'En attente', accepted: 'Acceptée', rejected: 'Refusée' }
+  const applicationStatusTone = { pending: 'neutral', accepted: 'success', rejected: 'danger' }
 
   const handleSaveProfile = async (e) => {
     e.preventDefault()
@@ -143,6 +162,12 @@ export default function TeacherMarketplaceDashboard() {
               className={`w-full text-left px-4 py-3 rounded-control text-sm font-semibold transition ${activeTab === 'education' ? 'bg-primary-50 text-primary-700 ring-1 ring-primary-200' : 'text-ink-muted hover:bg-primary-50'}`}
             >
               Formations & Diplômes
+            </button>
+            <button
+              onClick={() => setActiveTab('applications')}
+              className={`w-full text-left px-4 py-3 rounded-control text-sm font-semibold transition ${activeTab === 'applications' ? 'bg-primary-50 text-primary-700 ring-1 ring-primary-200' : 'text-ink-muted hover:bg-primary-50'}`}
+            >
+              Mes Candidatures ({applications.length})
             </button>
             <button
               onClick={() => setActiveTab('contracts')}
@@ -289,6 +314,41 @@ export default function TeacherMarketplaceDashboard() {
                     )}
                   </div>
                 </div>
+              </div>
+            )}
+
+            {activeTab === 'applications' && (
+              <div className="space-y-4">
+                {applicationsLoading && (
+                  <div className="flex justify-center py-8"><Spinner /></div>
+                )}
+                {!applicationsLoading && applications.length === 0 && (
+                  <div className="bg-surface-raised rounded-card shadow-card ring-1 ring-border p-6 text-center text-sm text-ink-muted">
+                    Aucune candidature envoyée pour le moment. Consultez la page <Link to="/jobs" className="text-primary-600 font-semibold hover:underline">Recrutement</Link> pour postuler à une offre.
+                  </div>
+                )}
+                {applications.map((application) => (
+                  <div key={application.id} className="bg-surface-raised rounded-card shadow-card ring-1 ring-border p-6">
+                    <div className="flex justify-between items-start gap-4">
+                      <div>
+                        <h3 className="text-lg font-bold text-ink">{application.jobTitle}</h3>
+                        <p className="text-sm text-ink-muted mt-1">
+                          {application.createdAt?.seconds
+                            ? new Date(application.createdAt.seconds * 1000).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })
+                            : ''}
+                        </p>
+                      </div>
+                      <Badge tone={applicationStatusTone[application.status] || 'neutral'}>
+                        {applicationStatusLabel[application.status] || application.status}
+                      </Badge>
+                    </div>
+                    {application.status === 'accepted' && (
+                      <p className="mt-4 pt-4 border-t border-border text-sm text-success-700">
+                        Félicitations ! L'école a accepté votre candidature et vous contactera pour la suite.
+                      </p>
+                    )}
+                  </div>
+                ))}
               </div>
             )}
 
