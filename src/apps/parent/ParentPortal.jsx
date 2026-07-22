@@ -484,7 +484,7 @@ function EnrollmentPaymentButton({ request }) {
       }}
       className="rounded-control bg-accent-500 px-4 py-2 text-sm font-bold text-primary-950 shadow-sm hover:bg-accent-400"
     >
-      Réessayer le paiement ({request.registrationFee} FCFA)
+      Payer les frais d'inscription ({request.registrationFee} FCFA)
     </FedaPayButton>
   )
 }
