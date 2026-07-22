@@ -14,6 +14,7 @@ export default function StructureTab() {
   const [newClass, setNewClass] = useState({ name: '', capacity: 50, registrationFee: 0, level: '6eme', academicYear: '' })
   const [newSubject, setNewSubject] = useState({ name: '' })
   const [newClassSubject, setNewClassSubject] = useState({ classroom: '', subject: '', teacher: '' })
+  const [editingClass, setEditingClass] = useState(null)
 
   const createClassroom = async (e) => {
     e.preventDefault()
@@ -21,6 +22,18 @@ export default function StructureTab() {
     try {
       await api.post('/api/students/classrooms/', newClass)
       setNewClass({ name: '', capacity: 50, registrationFee: 0, level: '6eme', academicYear: newClass.academicYear })
+      classrooms.refetch()
+    } catch (err) {
+      setFormError(err instanceof ApiError ? err.message : 'Erreur inattendue.')
+    }
+  }
+
+  const saveEditedClass = async (e) => {
+    e.preventDefault()
+    setFormError(null)
+    try {
+      await api.patch(`/api/students/classrooms/${editingClass.id}/`, editingClass)
+      setEditingClass(null)
       classrooms.refetch()
     } catch (err) {
       setFormError(err instanceof ApiError ? err.message : 'Erreur inattendue.')
@@ -105,8 +118,62 @@ export default function StructureTab() {
               </button>
             </div>
           </form>
-          <ul className="mt-4 space-y-1">
-            {classrooms.data?.map(c => <li key={c.id} className="text-sm text-ink-muted">{c.name} ({c.level}) - {c.capacity} places - {c.registrationFee} FCFA</li>)}
+          <ul className="mt-4 space-y-2">
+            {classrooms.data?.map(c => {
+              if (editingClass?.id === c.id) {
+                return (
+                  <li key={c.id} className="border border-border p-2 rounded-control bg-surface">
+                    <form onSubmit={saveEditedClass} className="flex flex-col gap-2">
+                      <input
+                        type="text"
+                        value={editingClass.name}
+                        onChange={e => setEditingClass({ ...editingClass, name: e.target.value })}
+                        className="w-full rounded-control border border-border p-1 text-sm focus:border-primary-500"
+                        required
+                      />
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          value={editingClass.level}
+                          onChange={e => setEditingClass({ ...editingClass, level: e.target.value })}
+                          className="w-1/3 rounded-control border border-border p-1 text-sm focus:border-primary-500"
+                          required
+                        />
+                        <input
+                          type="number"
+                          value={editingClass.capacity}
+                          onChange={e => setEditingClass({ ...editingClass, capacity: e.target.value })}
+                          className="w-1/3 rounded-control border border-border p-1 text-sm focus:border-primary-500"
+                          required
+                        />
+                        <input
+                          type="number"
+                          value={editingClass.registrationFee}
+                          onChange={e => setEditingClass({ ...editingClass, registrationFee: e.target.value })}
+                          className="w-1/3 rounded-control border border-border p-1 text-sm focus:border-primary-500"
+                        />
+                      </div>
+                      <div className="flex justify-end gap-2 mt-1">
+                        <button type="button" onClick={() => setEditingClass(null)} className="text-sm px-2 py-1 text-ink-muted hover:text-ink">Annuler</button>
+                        <button type="submit" className="text-sm px-2 py-1 bg-primary-600 text-white rounded hover:bg-primary-700">Sauver</button>
+                      </div>
+                    </form>
+                  </li>
+                )
+              }
+              return (
+                <li key={c.id} className="text-sm text-ink-muted flex justify-between items-center group">
+                  <span>{c.name} ({c.level}) - {c.capacity} places - {c.registrationFee} FCFA</span>
+                  <button 
+                    onClick={() => setEditingClass(c)}
+                    className="text-primary-600 opacity-0 group-hover:opacity-100 transition-opacity"
+                    title="Modifier"
+                  >
+                    <span className="material-symbols-outlined text-[18px]">edit</span>
+                  </button>
+                </li>
+              )
+            })}
           </ul>
         </section>
 

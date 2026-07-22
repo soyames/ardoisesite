@@ -29,7 +29,11 @@ export default function LoginPage() {
     setSubmitting(true)
 
     try {
-      await login(username, password)
+      let loginId = username.trim();
+      if (!loginId.includes('@')) {
+        loginId = `${loginId}@student.ardoise.local`;
+      }
+      await login(loginId, password)
     } catch (err) {
       // Firebase throws specific errors
       if (err.code === 'auth/invalid-credential') {

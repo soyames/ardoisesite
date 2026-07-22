@@ -76,6 +76,9 @@ export default function ParentPortal() {
         </>
       )}
 
+      {/* Child Profiles (Marketplace Accounts) */}
+      <ChildProfiles parentId={user?.uid} />
+
       {/* Payment History Section - the one place that answers "everything I've paid Ardoise" */}
       <PaymentHistory parentId={user?.uid} djangoParentId={user?.parentId} />
 
@@ -295,10 +298,133 @@ function EnrollmentRequests({ parentId }) {
                   <RetryEnrollmentPaymentButton request={req} />
                 </div>
               )}
+              {req.paymentStatus === 'paid_on_ardoise' && (
+                <EnrollmentAppointmentPicker request={req} />
+              )}
             </CardBody>
           </Card>
         ))}
       </div>
+    </div>
+  )
+}
+
+function EnrollmentAppointmentPicker({ request }) {
+  const [school, setSchool] = useState(null)
+  const [appointmentDate, setAppointmentDate] = useState('')
+  const [availableSlots, setAvailableSlots] = useState([])
+  const [selectedSlotId, setSelectedSlotId] = useState('')
+  const [loadingSlots, setLoadingSlots] = useState(false)
+  const [booking, setBooking] = useState(false)
+
+  useEffect(() => {
+    let cancelled = false
+    getDoc(doc(db, 'schools', request.schoolId)).then((snap) => {
+      if (cancelled) return
+      if (snap.exists()) {
+        setSchool({ id: snap.id, ...snap.data() })
+      }
+    })
+    return () => { cancelled = true }
+  }, [request.schoolId])
+
+  useEffect(() => {
+    if (!school?.backendUrl || !appointmentDate) {
+      setAvailableSlots([])
+      setSelectedSlotId('')
+      return
+    }
+    let cancelled = false
+    setLoadingSlots(true)
+    fetch(`${school.backendUrl}/api/students/appointments/public/available/?school_id=${school.id}&date=${appointmentDate}`)
+      .then(r => r.json())
+      .then(data => {
+        if (!cancelled) setAvailableSlots(Array.isArray(data) ? data : data.results || [])
+      })
+      .catch(e => console.error("Error fetching slots", e))
+      .finally(() => { if (!cancelled) setLoadingSlots(false) })
+    return () => { cancelled = true }
+  }, [school?.backendUrl, school?.id, appointmentDate])
+
+  const handleBook = async () => {
+    if (!school?.backendUrl || !selectedSlotId) return
+    setBooking(true)
+    try {
+      const res = await fetch(`${school.backendUrl}/api/students/appointments/public/${selectedSlotId}/book/`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          school_id: school.id,
+          marketplace_request_id: request.id,
+          candidate_name: request.childName
+        })
+      })
+      
+      if (!res.ok) {
+        alert("Ce créneau vient d'être réservé. Veuillez en choisir un autre.")
+        return
+      }
+      
+      // Update request to show it has an appointment
+      await updateDoc(doc(db, 'school_enrollment_requests', request.id), {
+        appointmentDate,
+        appointmentSlotId: selectedSlotId
+      })
+    } catch (e) {
+      console.error(e)
+      alert("Erreur de connexion.")
+    } finally {
+      setBooking(false)
+    }
+  }
+
+  if (request.appointmentSlotId) {
+    return (
+      <div className="mt-3 border-t border-border pt-3">
+        <p className="text-sm font-semibold text-success-700 bg-success-50 p-2 rounded">
+          Rendez-vous pris pour le {request.appointmentDate}
+        </p>
+      </div>
+    )
+  }
+
+  if (!school) return <div className="mt-3 border-t border-border pt-3 text-sm text-ink-muted">Chargement de l'école...</div>
+
+  return (
+    <div className="mt-3 border-t border-border pt-3">
+      <p className="text-sm font-semibold mb-2">Prendre rendez-vous pour le dépôt des dossiers :</p>
+      <div className="flex flex-col sm:flex-row gap-3 mb-3">
+        <input 
+          type="date" 
+          value={appointmentDate} 
+          onChange={e => setAppointmentDate(e.target.value)}
+          min={new Date().toISOString().split('T')[0]}
+          className="rounded-control border border-border p-2 text-sm focus:border-primary-500"
+        />
+        <select
+          value={selectedSlotId}
+          onChange={e => setSelectedSlotId(e.target.value)}
+          disabled={!appointmentDate || loadingSlots || availableSlots.length === 0}
+          className="flex-1 rounded-control border border-border p-2 text-sm focus:border-primary-500"
+        >
+          <option value="">
+            {!appointmentDate ? 'Choisissez une date' :
+             loadingSlots ? 'Chargement...' :
+             availableSlots.length === 0 ? 'Aucun créneau' : 'Sélectionnez un créneau'}
+          </option>
+          {availableSlots.map(slot => (
+            <option key={slot.id} value={slot.id}>{slot.time_start.substring(0,5)} - {slot.time_end.substring(0,5)}</option>
+          ))}
+        </select>
+      </div>
+      <Button 
+        onClick={handleBook} 
+        disabled={!selectedSlotId || booking}
+        size="sm"
+        className="w-full sm:w-auto"
+      >
+        {booking ? 'Réservation...' : 'Confirmer le rendez-vous'}
+      </Button>
     </div>
   )
 }
@@ -345,10 +471,13 @@ function RetryEnrollmentPaymentButton({ request }) {
 
 function TutoringContracts({ parentId }) {
   const [contracts, setContracts] = useState([])
+  const [children, setChildren] = useState([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     if (!parentId) return
+    
+    // Fetch contracts
     const q = query(collection(db, 'tutoring_contracts'), where('parentId', '==', parentId))
     const unsub = onSnapshot(q, (snap) => {
       const data = []
@@ -357,8 +486,26 @@ function TutoringContracts({ parentId }) {
       setContracts(data)
       setLoading(false)
     }, (err) => { console.error('tutoring_contracts read failed:', err); setLoading(false) })
-    return () => unsub()
+    
+    // Fetch child profiles
+    const qChildren = query(collection(db, 'users'), where('parentId', '==', parentId), where('role', '==', 'marketplace_student'))
+    const unsubChildren = onSnapshot(qChildren, (snap) => {
+      const data = []
+      snap.forEach(doc => data.push({ id: doc.id, ...doc.data() }))
+      setChildren(data)
+    })
+
+    return () => { unsub(); unsubChildren() }
   }, [parentId])
+
+  const handleAssignChild = async (contractId, childId) => {
+    try {
+      await updateDoc(doc(db, 'tutoring_contracts', contractId), { studentId: childId || null })
+    } catch (err) {
+      console.error('Error assigning child:', err)
+      alert('Erreur lors de l\'assignation.')
+    }
+  }
 
   if (loading) return null
   if (contracts.length === 0) return null
@@ -379,9 +526,30 @@ function TutoringContracts({ parentId }) {
                   {contract.status === 'active' ? 'Actif' : contract.status}
                 </Badge>
               </div>
-              <div className="mt-4 pt-4 border-t border-border text-sm flex justify-between">
-                <span className="text-ink-muted">Derniere seance : -</span>
-                <span className="font-semibold text-primary-600 cursor-pointer hover:underline">Voir les seances</span>
+              
+              <div className="mt-4 pt-4 border-t border-border flex items-center justify-between">
+                <div className="text-sm">
+                  <label className="text-ink-muted block text-xs mb-1">Assigner à :</label>
+                  <select 
+                    value={contract.studentId || ''} 
+                    onChange={(e) => handleAssignChild(contract.id, e.target.value)}
+                    className="rounded-control border-border py-1 px-2 text-sm max-w-[150px]"
+                  >
+                    <option value="">Non assigné</option>
+                    {children.map(c => (
+                      <option key={c.id} value={c.id}>{c.firstName} {c.lastName}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="flex gap-3 items-center">
+                  <Link
+                    to={`/live-room/contract-${contract.id}`}
+                    className="text-primary-700 hover:text-primary-800 font-semibold flex items-center gap-1 transition"
+                  >
+                    <span className="material-symbols-outlined text-[16px]">video_call</span>
+                    Rejoindre l'appel
+                  </Link>
+                </div>
               </div>
             </CardBody>
           </Card>
@@ -676,7 +844,115 @@ function SchoolPaymentButton({ schoolId, invoice, parent, studentMatricule }) {
         window.location.reload()
       }}
     >
-      Payer en ligne
     </FedaPayButton>
+  )
+}
+
+function ChildProfiles({ parentId }) {
+  const [children, setChildren] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [showModal, setShowModal] = useState(false)
+  const [form, setForm] = useState({ firstName: '', lastName: '', username: '', password: '' })
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState('')
+
+  useEffect(() => {
+    if (!parentId) return
+    const q = query(collection(db, 'users'), where('parentId', '==', parentId), where('role', '==', 'marketplace_student'))
+    const unsub = onSnapshot(q, (snap) => {
+      const data = []
+      snap.forEach(doc => data.push({ id: doc.id, ...doc.data() }))
+      setChildren(data)
+      setLoading(false)
+    }, (err) => { console.error('child profiles read failed:', err); setLoading(false) })
+    return () => unsub()
+  }, [parentId])
+
+  const handleCreate = async (e) => {
+    e.preventDefault()
+    setSaving(true)
+    setError('')
+    try {
+      const { getFunctions, httpsCallable } = await import('firebase/functions')
+      const functions = getFunctions()
+      const createChildProfile = httpsCallable(functions, 'createChildProfile')
+      await createChildProfile(form)
+      setShowModal(false)
+      setForm({ firstName: '', lastName: '', username: '', password: '' })
+    } catch (err) {
+      setError(err.message || 'Erreur lors de la création')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  if (loading) return null
+
+  return (
+    <div className="mt-8">
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-lg font-bold text-ink">Comptes Élèves (Soutien Scolaire)</h2>
+        <Button onClick={() => setShowModal(true)} size="sm">Créer un profil</Button>
+      </div>
+
+      {children.length === 0 ? (
+        <Card>
+          <CardBody className="text-center py-6 text-sm text-ink-muted">
+            Aucun compte élève. Créez-en un pour permettre à votre enfant de se connecter et rejoindre ses cours de tutorat.
+          </CardBody>
+        </Card>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+          {children.map(child => (
+            <Card key={child.id} className="border border-border">
+              <CardBody>
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-accent-100 text-accent-700 font-bold">
+                    {child.firstName[0]}
+                  </div>
+                  <div>
+                    <p className="font-bold text-ink">{child.firstName} {child.lastName}</p>
+                    <p className="text-xs text-ink-muted">Identifiant : {child.email?.split('@')[0]}</p>
+                  </div>
+                </div>
+              </CardBody>
+            </Card>
+          ))}
+        </div>
+      )}
+
+      {showModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-md rounded-card bg-surface p-6 shadow-xl ring-1 ring-border">
+            <h3 className="text-lg font-bold text-ink mb-4">Nouveau Profil Élève</h3>
+            {error && <div className="mb-4 rounded bg-danger-50 p-3 text-sm text-danger-700">{error}</div>}
+            <form onSubmit={handleCreate} className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="mb-1 block text-sm font-medium text-ink">Prénom</label>
+                  <input type="text" required value={form.firstName} onChange={e => setForm({...form, firstName: e.target.value})} className="w-full rounded-control border border-border px-3 py-2 text-sm" />
+                </div>
+                <div>
+                  <label className="mb-1 block text-sm font-medium text-ink">Nom</label>
+                  <input type="text" required value={form.lastName} onChange={e => setForm({...form, lastName: e.target.value})} className="w-full rounded-control border border-border px-3 py-2 text-sm" />
+                </div>
+              </div>
+              <div>
+                <label className="mb-1 block text-sm font-medium text-ink">Identifiant de connexion</label>
+                <input type="text" required value={form.username} onChange={e => setForm({...form, username: e.target.value})} placeholder="ex: marc.dupont" className="w-full rounded-control border border-border px-3 py-2 text-sm" />
+              </div>
+              <div>
+                <label className="mb-1 block text-sm font-medium text-ink">Mot de passe</label>
+                <input type="password" required value={form.password} onChange={e => setForm({...form, password: e.target.value})} minLength={6} className="w-full rounded-control border border-border px-3 py-2 text-sm" />
+              </div>
+              <div className="mt-6 flex justify-end gap-3">
+                <Button type="button" variant="secondary" onClick={() => setShowModal(false)}>Annuler</Button>
+                <Button type="submit" disabled={saving}>{saving ? 'Création...' : 'Créer le profil'}</Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+    </div>
   )
 }
