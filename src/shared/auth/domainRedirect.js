@@ -12,8 +12,8 @@
  * /portal (founder, director, and every provisioned staff/student
  * role in core.Role) belongs on the school's own SaaS domain.
  */
-const MARKETPLACE_HOST = 'ardoise.soyames.com'
-const SAAS_HOST = 'saas.ardoise.soyames.com'
+const MARKETPLACE_HOST = 'ardoiseeduc.com'
+const SAAS_HOST = 'saas.ardoiseeduc.com'
 
 const MARKETPLACE_ROLES = new Set(['parent', 'teacher'])
 // Platform-internal accounts (Ardoise's own team, not a school) have
