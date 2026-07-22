@@ -6,8 +6,8 @@ import {
   RoomAudioRenderer,
 } from '@livekit/components-react';
 import '@livekit/components-styles';
-import { auth, functions } from '../../shared/api/firebase.js';
-import { httpsCallable } from 'firebase/functions';
+import { auth } from '../../shared/api/firebase.js';
+import { getPlatformApiBaseUrl } from '../../config/env.js';
 import Spinner from '../../shared/ui/Spinner.jsx';
 
 export function LiveRoom() {
@@ -27,13 +27,19 @@ export function LiveRoom() {
           return;
         }
 
-        const generateLivekitToken = httpsCallable(functions, 'generateLivekitToken');
-        const response = await generateLivekitToken({ roomName: roomId });
-        
-        if (response.data && response.data.token) {
-          setToken(response.data.token);
+        const idToken = await auth.currentUser.getIdToken();
+        const res = await fetch(`${getPlatformApiBaseUrl()}/api/livekit/token`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${idToken}` },
+          body: JSON.stringify({ roomName: roomId }),
+        });
+        const data = await res.json().catch(() => ({}));
+
+        if (res.ok && data.token) {
+          setToken(data.token);
+          if (data.url) setServerUrl(data.url);
         } else {
-          setError("Impossible de générer le jeton d'accès.");
+          setError(data.error || "Impossible de générer le jeton d'accès.");
         }
       } catch (err) {
         console.error("Token fetch error:", err);
