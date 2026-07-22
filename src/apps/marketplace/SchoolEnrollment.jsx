@@ -19,6 +19,7 @@ export default function SchoolEnrollment() {
   const [childClassId, setChildClassId] = useState('')
   
   const [comingFromAnotherSchool, setComingFromAnotherSchool] = useState(false)
+  const [additionalComments, setAdditionalComments] = useState('')
   const [birthCertificate, setBirthCertificate] = useState(null)
   const [previousRecords, setPreviousRecords] = useState(null)
   const [additionalDocuments, setAdditionalDocuments] = useState(null)
@@ -119,6 +120,7 @@ export default function SchoolEnrollment() {
         childClassId,
         childClassName: selectedClass.name,
         comingFromAnotherSchool,
+        additionalComments,
         registrationFee,
         status: 'pending_payment',
         paymentStatus: 'pending',
@@ -201,18 +203,36 @@ export default function SchoolEnrollment() {
               <input type="number" required min="3" max="20" value={childAge} onChange={e => setChildAge(e.target.value)} className="w-full rounded-control border border-border px-4 py-2 text-sm focus:border-primary-500" />
             </div>
             <div>
-              <label className="block text-sm font-medium text-ink mb-1">Classe demandée *</label>
+              <label className="block text-sm font-medium text-ink mb-1">Classe souhaitée *</label>
               <select value={childClassId} onChange={e => setChildClassId(e.target.value)} className="w-full rounded-control border border-border px-4 py-2 text-sm focus:border-primary-500">
                 {fallbackClassrooms.map(c => (
-                  <option key={c.id} value={c.id}>{c.name} - Frais: {c.registrationFee} FCFA</option>
+                  <option key={c.id} value={c.id}>{c.name}</option>
                 ))}
               </select>
             </div>
           </div>
 
-          <div className="flex items-center">
-            <input type="checkbox" id="comingFromAnotherSchool" checked={comingFromAnotherSchool} onChange={e => setComingFromAnotherSchool(e.target.checked)} className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-border rounded" />
-            <label htmlFor="comingFromAnotherSchool" className="ml-2 block text-sm text-ink">L'enfant vient-il d'une autre école ?</label>
+          <div>
+            <label className="block text-sm font-medium text-ink mb-1">
+              L'enfant vient-il d'un autre établissement ?
+            </label>
+            <select value={comingFromAnotherSchool ? 'yes' : 'no'} onChange={e => setComingFromAnotherSchool(e.target.value === 'yes')} className="w-full rounded-control border border-border px-4 py-2 text-sm focus:border-primary-500">
+              <option value="no">Non (Nouvelle scolarisation)</option>
+              <option value="yes">Oui (Transfert)</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-ink mb-1">
+              Commentaires additionnels (Optionnel)
+            </label>
+            <textarea 
+              value={additionalComments} 
+              onChange={e => setAdditionalComments(e.target.value)} 
+              rows={3}
+              placeholder="Indiquez ici toute particularité, besoin spécifique, ou information utile concernant votre enfant..."
+              className="w-full rounded-control border border-border px-4 py-2 text-sm focus:border-primary-500"
+            />
           </div>
 
           {school.backendUrl && (

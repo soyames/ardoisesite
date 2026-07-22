@@ -281,6 +281,12 @@ function EnrollmentRequests({ parentId }) {
                    req.status === 'rejected' ? 'Refusée' : 'En attente'}
                 </Badge>
               </div>
+              {req.additionalComments && (
+                <div className="mt-2 text-sm text-ink-muted bg-surface p-2 rounded">
+                  <p className="font-medium">Vos commentaires :</p>
+                  <p className="whitespace-pre-wrap">{req.additionalComments}</p>
+                </div>
+              )}
               {req.status === 'pending_payment' && (
                 <div className="mt-3 border-t border-border pt-3">
                   <p className="text-sm text-warning-700 bg-warning-50 p-2 rounded mb-2">

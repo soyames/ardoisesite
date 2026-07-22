@@ -248,7 +248,9 @@ export default function PublicLayout() {
 
         <div className="border-t border-border">
           <div className="mx-auto max-w-[1600px] px-6 py-6 lg:px-12">
-            <p className="text-sm text-ink-muted">© 2026 Ardoise Platform. Tous droits réservés.</p>
+            <p className="text-sm text-ink-muted">
+              © 2026 Ardoise Platform. Tous droits réservés. Propulsé par <a href="https://soyames.com/" target="_blank" rel="noopener noreferrer" className="hover:text-ink underline">SOYAMES</a>
+            </p>
           </div>
         </div>
       </footer>

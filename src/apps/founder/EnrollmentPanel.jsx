@@ -150,6 +150,13 @@ export default function EnrollmentPanel() {
                   <p className="text-ink"><span className="text-ink-muted">Email :</span> {selected.parentEmail}</p>
                 </div>
 
+                {selected.additionalComments && (
+                  <div className="rounded-control bg-primary-50 border border-primary-100 p-3 text-sm">
+                    <p className="font-semibold text-primary-900 mb-1">Commentaires du parent :</p>
+                    <p className="text-primary-800 whitespace-pre-wrap">{selected.additionalComments}</p>
+                  </div>
+                )}
+
                 {selected.localDocuments && selected.localDocuments.length > 0 && (
                   <div className="rounded-control bg-surface border border-border p-3 text-sm">
                     <p className="font-semibold text-ink mb-2">Documents fournis :</p>

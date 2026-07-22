@@ -4,6 +4,7 @@ import { collection, onSnapshot, query, where } from 'firebase/firestore'
 import { db } from '../../shared/api/firebase.js'
 import Badge from '../../shared/ui/Badge.jsx'
 import CountryMapWrapper from '../../shared/ui/CountryMapWrapper.jsx'
+import ConstellationParticles from '../../shared/components/ConstellationParticles.jsx'
 import { OHADA_COUNTRIES } from '../../shared/constants/locations.js'
 
 export default function Home() {
@@ -114,6 +115,14 @@ export default function Home() {
           className="pointer-events-none absolute inset-x-0 -top-40 -z-10 h-[600px] sm:-top-60 sm:h-[800px]"
           style={{ background: 'radial-gradient(ellipse 60% 50% at 50% 0%, oklch(0.68 0.1108 72 / 0.15), transparent 70%)' }}
           aria-hidden="true"
+        />
+        
+        {/* Animated Particles Background */}
+        <ConstellationParticles 
+          particleCount={60} 
+          particleColor="rgba(255, 255, 255, 0.5)" 
+          lineColor="rgba(255, 255, 255, 0.15)" 
+          maxDistance={120} 
         />
 
         <div className="mx-auto max-w-[1600px] px-6 lg:px-12">
