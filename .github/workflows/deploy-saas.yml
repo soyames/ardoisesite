@@ -1,13 +1,18 @@
-name: Deploy to Cloudflare Pages (SaaS)
+name: Deploy to Cloudflare Pages
 
-# Publishes the same frontend build to the ardoise-saas Cloudflare Pages
-# project (saas.ardoise.soyames.com) on every push to main. That project
-# has no native Git integration - it was deployed once by hand via
-# `wrangler pages deploy` before this workflow existed, so without this,
-# saas.* silently drifts from the GitHub Pages marketplace build (see
-# the 2026-07-19 stale-colors incident: the SaaS install page was still
-# on the pre-rebrand blue palette while the marketplace had long since
-# moved to the current one).
+# Publishes the frontend build to the ardoise-saas Cloudflare Pages
+# project on every push to main. That project has no native Git
+# integration - it was deployed once by hand via `wrangler pages
+# deploy` before this workflow existed, so without this, deploys
+# silently drift from source.
+#
+# The project serves both ardoiseeduc.com (marketplace) and
+# saas.ardoiseeduc.com (SaaS portal) as custom domains bound to the
+# same build - domainRedirect.js tells them apart at runtime via
+# window.location.hostname. GitHub Pages previously served the
+# marketplace half from a separate deploy.yml workflow, but its
+# custom-domain HTTPS provisioning proved unreliable, so this single
+# Cloudflare Pages project now handles both.
 #
 # Required one-time setup (GitHub UI, never in this file): Settings >
 # Secrets and variables > Actions > add:
@@ -17,10 +22,16 @@ name: Deploy to Cloudflare Pages (SaaS)
 #     template, or a custom token with Account.Cloudflare Pages: Edit).
 #   CLOUDFLARE_ACCOUNT_ID - bbdb90c7c2aeeaa8b4c8f8331ab5bef7 (soyames)
 #
-# Same VITE_API_BASE_URL/VITE_FEDAPAY_* variables as deploy.yml (see
-# that file's own comments) - both workflows build the identical
-# bundle, just publish it to two different hosts, so they stay in sync
-# by construction.
+# VITE_API_BASE_URL is baked in at build time (see src/config/env.js's
+# docstring for why -- one backend per school, this frontend build
+# points at exactly one). Set it as a repository Actions variable
+# named VITE_API_BASE_URL; falls back to the central platform
+# Worker's workers.dev URL if unset.
+#
+# VITE_FEDAPAY_PUBLIC_KEY/VITE_FEDAPAY_ENVIRONMENT: FedaPay publishable
+# key, safe to bake into the client bundle (same trust model as a
+# Stripe publishable key). Set as repo Actions variables; falls back to
+# the sandbox key so a first deploy doesn't silently break checkout.
 on:
   push:
     branches: [main]
