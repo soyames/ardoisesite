@@ -5,12 +5,16 @@ import { db } from '../../shared/api/firebase.js'
 import EmptyState from '../../shared/ui/EmptyState.jsx'
 import Spinner from '../../shared/ui/Spinner.jsx'
 import { api } from '../../shared/api/client.js'
+import { DetailedTeacherEvaluationForm } from '../../shared/ui/DetailedTeacherEvaluationForm.jsx'
+import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer, PieChart, Pie, Cell, Tooltip, Legend } from 'recharts'
 
 export default function TeacherDetail() {
   const { id } = useParams()
   const navigate = useNavigate()
   const [teacher, setTeacher] = useState(undefined) // undefined = loading, null = not found
   const [rating, setRating] = useState(null)
+  const [evaluationAggregates, setEvaluationAggregates] = useState(null)
+  const [showEvaluationForm, setShowEvaluationForm] = useState(false)
 
   useEffect(() => {
     let cancelled = false
@@ -31,14 +35,15 @@ export default function TeacherDetail() {
         image: data.image || null,
       })
 
-      // Fetch rating from backend
+      // Fetch rating and detailed aggregates from backend
       api.get(`/api/hr/teacher-ratings/${snap.id}/`)
         .then(res => {
-          if (!cancelled && res?.average_rating !== undefined) {
-            setRating(res.average_rating)
+          if (!cancelled) {
+            if (res?.average_rating !== undefined) setRating(res.average_rating)
+            if (res?.evaluation_aggregates) setEvaluationAggregates(res.evaluation_aggregates)
           }
         })
-        .catch(err => console.error("Failed to fetch rating", err))
+        .catch(err => console.error("Failed to fetch rating/evaluations", err))
         
     }).catch(() => { if (!cancelled) setTeacher(null) })
     return () => { cancelled = true }
@@ -92,12 +97,18 @@ export default function TeacherDetail() {
               <p className="mt-1 text-3xl font-bold text-ink">
                 {teacher.price ? <>{Number(teacher.price).toLocaleString()} F <span className="text-lg font-normal text-ink-muted">/ mois</span></> : 'Sur demande'}
               </p>
-              <div className="mt-6">
+              <div className="mt-6 space-y-3">
                 <button
                   onClick={() => navigate(`/teachers/${teacher.id}/book`)}
                   className="w-full rounded-control bg-accent-500 px-4 py-3 text-sm font-bold text-primary-950 shadow-card transition hover:bg-accent-400 hover:scale-[1.02]"
                 >
                   Réserver et proposer un contrat
+                </button>
+                <button
+                  onClick={() => setShowEvaluationForm(true)}
+                  className="w-full rounded-control bg-white/10 px-4 py-3 text-sm font-bold text-ink border border-border shadow-card transition hover:bg-white hover:scale-[1.02]"
+                >
+                  Évaluer l'enseignant
                 </button>
               </div>
               <p className="mt-4 text-xs text-ink-muted">Le tarif final et les conditions seront convenus ensemble dans le contrat.</p>
@@ -106,7 +117,70 @@ export default function TeacherDetail() {
         </div>
       </div>
 
-      <div className="mx-auto max-w-[1600px] px-6 lg:px-12 -mt-16 sm:-mt-24">
+      <div className="mx-auto max-w-[1600px] px-6 lg:px-12 -mt-16 sm:-mt-24 space-y-8">
+        {evaluationAggregates && evaluationAggregates.pedagogy_avg !== null && (
+          <div className="rounded-card border border-border bg-surface-raised p-8">
+            <h3 className="text-xl font-bold text-ink mb-6">Profil d'évaluation détaillé</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center h-80 w-full max-w-4xl mx-auto">
+              <ResponsiveContainer width="100%" height="100%">
+                <RadarChart
+                  cx="50%"
+                  cy="50%"
+                  outerRadius="70%"
+                  data={[
+                    { subject: 'Pédagogie', A: evaluationAggregates.pedagogy_avg, fullMark: 5 },
+                    { subject: 'Maîtrise', A: evaluationAggregates.subject_mastery_avg, fullMark: 5 },
+                    { subject: 'Ponctualité', A: evaluationAggregates.punctuality_avg, fullMark: 5 },
+                    { subject: 'Engagement', A: evaluationAggregates.engagement_avg, fullMark: 5 },
+                    { subject: 'Communication', A: evaluationAggregates.communication_avg, fullMark: 5 },
+                  ]}
+                >
+                  <PolarGrid stroke="#e2e8f0" />
+                  <PolarAngleAxis dataKey="subject" tick={{ fill: '#64748b', fontSize: 13 }} />
+                  <PolarRadiusAxis angle={30} domain={[0, 5]} tick={{ fill: '#94a3b8' }} />
+                  <Radar
+                    name="Notes"
+                    dataKey="A"
+                    stroke="#3b82f6"
+                    fill="#3b82f6"
+                    fillOpacity={0.5}
+                  />
+                  <Tooltip />
+                </RadarChart>
+              </ResponsiveContainer>
+
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={[
+                      { name: 'Pédagogie', value: evaluationAggregates.pedagogy_avg },
+                      { name: 'Maîtrise', value: evaluationAggregates.subject_mastery_avg },
+                      { name: 'Ponctualité', value: evaluationAggregates.punctuality_avg },
+                      { name: 'Engagement', value: evaluationAggregates.engagement_avg },
+                      { name: 'Communication', value: evaluationAggregates.communication_avg },
+                    ]}
+                    cx="50%"
+                    cy="50%"
+                    outerRadius="70%"
+                    innerRadius="40%"
+                    fill="#8884d8"
+                    dataKey="value"
+                    labelLine={false}
+                  >
+                    {[
+                      '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'
+                    ].map((color, index) => (
+                      <Cell key={`cell-${index}`} fill={color} />
+                    ))}
+                  </Pie>
+                  <Tooltip formatter={(value) => Number(value).toFixed(2)} />
+                  <Legend />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+        )}
+
         <div className="rounded-card border border-border bg-surface-raised p-8">
           <h3 className="text-xl font-bold text-ink mb-4">Modalités d'engagement</h3>
           <ul className="list-disc pl-5 text-ink-muted space-y-2">
@@ -116,6 +190,18 @@ export default function TeacherDetail() {
           </ul>
         </div>
       </div>
+      
+      {showEvaluationForm && (
+        <DetailedTeacherEvaluationForm
+          teacherId={teacher.id}
+          evaluatorRole="parent"
+          onClose={() => setShowEvaluationForm(false)}
+          onSubmitSuccess={() => {
+            alert('Évaluation soumise avec succès !');
+          }}
+          apiSubmit={api.post}
+        />
+      )}
     </div>
   )
 }

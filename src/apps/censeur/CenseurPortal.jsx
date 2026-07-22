@@ -16,6 +16,7 @@ import WeeklyTimetableGrid from '../../shared/ui/WeeklyTimetableGrid.jsx'
 import StructureTab from './StructureTab.jsx'
 import LetterheadSettings from '../../shared/components/LetterheadSettings.jsx'
 import RecruitmentPanel from '../founder/RecruitmentPanel.jsx'
+import { DetailedTeacherEvaluationForm } from '../../shared/ui/DetailedTeacherEvaluationForm.jsx'
 
 const INPUT_CLASS =
   'block w-full rounded-control border-0 py-2 px-3 bg-surface-raised text-ink ring-1 ring-inset ring-border focus:ring-2 focus:ring-primary-500 sm:text-sm'
@@ -25,6 +26,7 @@ const TABS = [
   { key: 'structure', label: 'Classes & Matières' },
   { key: 'bulletins', label: 'Bulletins' },
   { key: 'discipline', label: 'Discipline' },
+  { key: 'evaluations', label: 'Évaluations' },
   { key: 'calendrier', label: 'Calendrier' },
   { key: 'planification', label: 'Planification' },
   { key: 'timelogs', label: 'Heures vacataires' },
@@ -68,6 +70,7 @@ export default function CenseurPortal() {
       {tab === 'structure' && <StructureTab />}
       {tab === 'bulletins' && <BulletinsTab />}
       {tab === 'discipline' && <DisciplineTab />}
+      {tab === 'evaluations' && <EvaluationsTab />}
       {tab === 'calendrier' && <CalendrierTab />}
       {tab === 'planification' && <PlanificationTab />}
       {tab === 'timelogs' && <TimeLogsTab />}
@@ -700,3 +703,55 @@ function ExamsTab() {
     </Card>
   )
 }
+
+function EvaluationsTab() {
+  const staff = useApiGet('/api/hr/staff/')
+  const [selectedTeacherId, setSelectedTeacherId] = useState(null)
+
+  return (
+    <div className="space-y-4">
+      <div className="flex justify-between items-center">
+        <div>
+          <h2 className="text-lg font-medium text-ink">Évaluation des Enseignants</h2>
+          <p className="text-sm text-ink-muted">Évaluez vos enseignants selon les critères pédagogiques.</p>
+        </div>
+      </div>
+
+      <Card>
+        <CardHeader title="Liste des enseignants" />
+        <CardBody className="p-0">
+          {staff.loading && <div className="flex justify-center py-8"><Spinner /></div>}
+          {!staff.loading && staff.data?.length === 0 && (
+            <div className="p-4"><EmptyState title="Aucun enseignant trouvé" /></div>
+          )}
+          <ul className="divide-y divide-border">
+            {staff.data?.map(s => (
+              <li key={s.id} className="flex flex-col gap-2 p-4 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <p className="text-sm font-bold text-ink">{s.firstName} {s.lastName}</p>
+                  <p className="text-xs text-ink-muted">{s.title || 'Enseignant'}</p>
+                </div>
+                <Button size="sm" onClick={() => setSelectedTeacherId(s.firebase_uid || s.id)}>
+                  Évaluer
+                </Button>
+              </li>
+            ))}
+          </ul>
+        </CardBody>
+      </Card>
+
+      {selectedTeacherId && (
+        <DetailedTeacherEvaluationForm
+          teacherId={selectedTeacherId}
+          evaluatorRole="school"
+          onClose={() => setSelectedTeacherId(null)}
+          onSubmitSuccess={() => {
+            alert('Évaluation soumise avec succès !');
+          }}
+          apiSubmit={api.post}
+        />
+      )}
+    </div>
+  )
+}
+
