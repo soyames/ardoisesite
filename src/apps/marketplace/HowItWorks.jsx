@@ -170,9 +170,9 @@ export default function HowItWorks() {
               Prêt à moderniser votre école ?
             </h3>
             <div className="flex justify-center gap-4">
-              <Link to="/register" className="rounded-control bg-accent-500 px-5 py-3 text-sm font-semibold text-primary-950 shadow-sm hover:bg-accent-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-400 transition-all">
+              <a href="https://saas.ardoiseeduc.com/register" className="rounded-control bg-accent-500 px-5 py-3 text-sm font-semibold text-primary-950 shadow-sm hover:bg-accent-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-400 transition-all">
                 Créer une école
-              </Link>
+              </a>
               <Link to="/contact" className="rounded-control bg-white/10 px-5 py-3 text-sm font-semibold text-white hover:bg-white/20 transition-all">
                 Nous contacter
               </Link>
