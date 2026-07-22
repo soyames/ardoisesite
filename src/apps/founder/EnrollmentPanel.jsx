@@ -11,12 +11,8 @@ import Icon from '../../shared/ui/Icon.jsx'
 import AppointmentSlotsPanel from '../../shared/components/AppointmentSlotsPanel.jsx'
 import { useSchoolSubscription } from '../../shared/hooks/useSchoolSubscription.js'
 
-// Helper just for updating UI status in Firestore directly for the Marketplace
-import { doc, updateDoc } from 'firebase/firestore'
-import { db } from '../../shared/api/firebase.js'
-
 const QUEUE_STATUSES = [
-  { value: 'pending', label: 'Nouvelle demande', tone: 'danger' },
+  { value: 'pending_review', label: 'Nouvelle demande', tone: 'danger' },
   { value: 'docs', label: 'Documents envoyes', tone: 'neutral' },
   { value: 'interviewed', label: 'Entretien effectue', tone: 'info' },
   { value: 'waitlisted', label: 'Liste d’attente', tone: 'neutral' },
@@ -56,23 +52,34 @@ export default function EnrollmentPanel() {
     return () => { active = false }
   }, [])
 
+  // Pre-payment queue transitions only (pending_review -> accepted/
+  // rejected/docs/interviewed/waitlisted). Goes through Django, which
+  // writes the Firestore status via the signed Worker bridge -
+  // EnrollmentPanel used to updateDoc() this straight from the browser,
+  // but firestore.rules now restricts that field to that signed path
+  // only, so the direct client write was silently failing every time.
   const handleStatusUpdate = async (id, newStatus) => {
     try {
-      if (newStatus === 'accepted') {
-        // We must pass through Django so it creates the Student and Parent locally!
-        await api.post(`/api/auth/marketplace/enrollment-requests/${id}/accept/`)
-      }
-
-      // Update the Marketplace Firestore doc so parents see the status
-      try {
-        await updateDoc(doc(db, 'school_enrollment_requests', id), { status: newStatus })
-      } catch (e) {
-        console.warn('Failed to update Firebase, might be a mock test request', e)
-      }
-
-      // Update local UI
+      await api.patch(`/api/auth/marketplace/enrollment-requests/${id}/status/`, { status: newStatus })
       setEnrollments(prev => prev.map(e => e.id === id ? { ...e, status: newStatus } : e))
-      if (newStatus === 'accepted' || newStatus === 'rejected') setSelectedId(null)
+      if (newStatus === 'rejected') setSelectedId(null)
+    } catch (err) {
+      alert(err instanceof ApiError ? err.message : "Une erreur est survenue.")
+      console.error(err)
+    }
+  }
+
+  // The heavy, final step - only ever available once the family has
+  // paid (paymentStatus) AND self-booked their on-premise appointment
+  // (e.appointment, set by PublicBookAppointmentView) - creates the
+  // real Student/Parent/Enrollment. Distinct from "accepted" above,
+  // which only makes the request payable and doesn't touch Django's
+  // student data at all.
+  const handleFinalize = async (id) => {
+    try {
+      await api.post(`/api/auth/marketplace/enrollment-requests/${id}/accept/`)
+      setEnrollments(prev => prev.map(e => e.id === id ? { ...e, status: 'enrolled' } : e))
+      setSelectedId(null)
     } catch (err) {
       // Surfaces the real reason (e.g. "Aucune classe... trouvee.
       // Creez-la d'abord." from MarketplaceEnrollmentAcceptView when
@@ -89,16 +96,18 @@ export default function EnrollmentPanel() {
   if (loading) return <div className="py-10 flex justify-center"><Spinner /></div>
 
   const queue = enrollments
-    .filter(e => e.status !== 'accepted' && e.status !== 'rejected')
+    .filter(e => e.status !== 'rejected' && e.status !== 'enrolled')
     .filter(e => !search || e.childName?.toLowerCase().includes(search.toLowerCase()))
   const selected = queue.find((e) => e.id === selectedId)
   const statusInfo = (value) => QUEUE_STATUSES.find((s) => s.value === value) || QUEUE_STATUSES[0]
+  const isPaid = (e) => e?.paymentStatus === 'paid_on_ardoise'
+  const canFinalize = (e) => isPaid(e) && !!e?.appointment
 
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <StatCard icon="how_to_reg" label="En file d'attente" value={queue.length} tone={queue.length > 0 ? 'warning' : 'success'} />
-        <StatCard icon="event_available" label="Nouvelles demandes" value={queue.filter((e) => e.status === 'pending').length} />
+        <StatCard icon="event_available" label="Nouvelles demandes" value={queue.filter((e) => e.status === 'pending_review').length} />
       </div>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-7">
@@ -182,16 +191,33 @@ export default function EnrollmentPanel() {
                   </div>
                 )}
 
-                <div>
-                  <label className="mb-1 block text-xs font-medium text-ink-muted">Statut actuel</label>
-                  <select
-                    className="w-full rounded-control border border-border bg-surface px-3 py-2 text-sm"
-                    value={selected.status}
-                    onChange={(e) => handleStatusUpdate(selected.id, e.target.value)}
-                  >
-                    {QUEUE_STATUSES.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
-                  </select>
-                </div>
+                {selected.status === 'accepted' && (
+                  <div className="rounded-control bg-surface border border-border p-3 text-sm space-y-1">
+                    <p className="text-ink">
+                      <span className="text-ink-muted">Paiement :</span>{' '}
+                      {isPaid(selected) ? 'Recu' : "En attente du parent"}
+                    </p>
+                    <p className="text-ink">
+                      <span className="text-ink-muted">Rendez-vous :</span>{' '}
+                      {selected.appointment
+                        ? `${selected.appointment.date} (${selected.appointment.start_time} - ${selected.appointment.end_time})`
+                        : "Pas encore reserve par le parent"}
+                    </p>
+                  </div>
+                )}
+
+                {selected.status !== 'accepted' && selected.status !== 'rejected' && (
+                  <div>
+                    <label className="mb-1 block text-xs font-medium text-ink-muted">Statut actuel</label>
+                    <select
+                      className="w-full rounded-control border border-border bg-surface px-3 py-2 text-sm"
+                      value={selected.status}
+                      onChange={(e) => handleStatusUpdate(selected.id, e.target.value)}
+                    >
+                      {QUEUE_STATUSES.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
+                    </select>
+                  </div>
+                )}
 
                 <div className="flex flex-wrap gap-2 border-t border-border pt-3">
                   <Link
@@ -202,12 +228,20 @@ export default function EnrollmentPanel() {
                     Visio-conférence
                   </Link>
                   <div className="flex-1"></div>
-                  <Button size="sm" variant="secondary" onClick={() => handleStatusUpdate(selected.id, 'rejected')} disabled={!isPremium}>
-                    Refuser
-                  </Button>
-                  <Button size="sm" onClick={() => handleStatusUpdate(selected.id, 'accepted')} disabled={!isPremium}>
-                    Accepter et inscrire
-                  </Button>
+                  {selected.status !== 'accepted' ? (
+                    <>
+                      <Button size="sm" variant="secondary" onClick={() => handleStatusUpdate(selected.id, 'rejected')} disabled={!isPremium}>
+                        Refuser
+                      </Button>
+                      <Button size="sm" onClick={() => handleStatusUpdate(selected.id, 'accepted')} disabled={!isPremium}>
+                        Accepter la demande
+                      </Button>
+                    </>
+                  ) : (
+                    <Button size="sm" onClick={() => handleFinalize(selected.id)} disabled={!isPremium || !canFinalize(selected)}>
+                      Finaliser l'inscription
+                    </Button>
+                  )}
                 </div>
               </CardBody>
             </Card>

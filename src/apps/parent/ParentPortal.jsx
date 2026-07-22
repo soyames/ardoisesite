@@ -242,6 +242,18 @@ function PaymentHistory({ parentId, djangoParentId }) {
   )
 }
 
+const ENROLLMENT_STATUS_BADGE = {
+  pending_review: { tone: 'neutral', label: 'En attente d\'examen' },
+  docs: { tone: 'neutral', label: 'Documents en cours' },
+  interviewed: { tone: 'info', label: 'Entretien effectué' },
+  waitlisted: { tone: 'neutral', label: 'Liste d\'attente' },
+  accepted: { tone: 'success', label: 'Acceptée' },
+  rejected: { tone: 'danger', label: 'Refusée' },
+  paid_awaiting_appointment: { tone: 'warning', label: 'Rendez-vous à prendre' },
+  appointment_booked: { tone: 'success', label: 'Rendez-vous confirmé' },
+  enrolled: { tone: 'success', label: 'Inscription finalisée' },
+}
+
 function EnrollmentRequests({ parentId }) {
   const [requests, setRequests] = useState([])
   const [loading, setLoading] = useState(true)
@@ -275,14 +287,8 @@ function EnrollmentRequests({ parentId }) {
                   <h3 className="font-bold text-ink">{req.childName}</h3>
                   <p className="text-sm text-ink-muted">Classe : {req.childClassName}</p>
                 </div>
-                <Badge tone={
-                  req.status === 'accepted' ? 'success' :
-                  req.status === 'rejected' ? 'danger' :
-                  req.status === 'pending_payment' ? 'warning' : 'neutral'
-                }>
-                  {req.status === 'pending_payment' ? 'Paiement requis' : 
-                   req.status === 'accepted' ? 'Acceptée' : 
-                   req.status === 'rejected' ? 'Refusée' : 'En attente'}
+                <Badge tone={ENROLLMENT_STATUS_BADGE[req.status]?.tone || 'neutral'}>
+                  {ENROLLMENT_STATUS_BADGE[req.status]?.label || 'En cours d\'examen'}
                 </Badge>
               </div>
               {req.additionalComments && (
@@ -291,15 +297,15 @@ function EnrollmentRequests({ parentId }) {
                   <p className="whitespace-pre-wrap">{req.additionalComments}</p>
                 </div>
               )}
-              {req.status === 'pending_payment' && (
+              {req.status === 'accepted' && req.paymentStatus !== 'paid_on_ardoise' && (
                 <div className="mt-3 border-t border-border pt-3">
-                  <p className="text-sm text-warning-700 bg-warning-50 p-2 rounded mb-2">
-                    Le paiement n'a pas été terminé. Réessayez ci-dessous.
+                  <p className="text-sm text-success-700 bg-success-50 p-2 rounded mb-2">
+                    Votre demande a été acceptée ! Payez les frais d'inscription pour continuer.
                   </p>
-                  <RetryEnrollmentPaymentButton request={req} />
+                  <EnrollmentPaymentButton request={req} />
                 </div>
               )}
-              {req.paymentStatus === 'paid_on_ardoise' && (
+              {req.paymentStatus === 'paid_on_ardoise' && req.status !== 'enrolled' && (
                 <EnrollmentAppointmentPicker request={req} />
               )}
             </CardBody>
@@ -317,6 +323,12 @@ function EnrollmentAppointmentPicker({ request }) {
   const [selectedSlotId, setSelectedSlotId] = useState('')
   const [loadingSlots, setLoadingSlots] = useState(false)
   const [booking, setBooking] = useState(false)
+  // Optimistic flag for the moment right after a successful booking -
+  // request.status itself only flips to 'appointment_booked' once the
+  // Worker's status-update round trip lands and this component's parent
+  // onSnapshot listener re-renders with the fresh doc (a second or two),
+  // same pattern as payment confirmation elsewhere in this file.
+  const [justBooked, setJustBooked] = useState(null)
 
   useEffect(() => {
     let cancelled = false
@@ -337,6 +349,10 @@ function EnrollmentAppointmentPicker({ request }) {
     }
     let cancelled = false
     setLoadingSlots(true)
+    // school.id here is the Firestore doc id, not this install's own
+    // Django School.id - the backend only uses it as a presence check
+    // now (this install's database is single-tenant), see
+    // PublicAvailableAppointmentsView's own docstring.
     fetch(`${school.backendUrl}/api/students/appointments/public/available/?school_id=${school.id}&date=${appointmentDate}`)
       .then(r => r.json())
       .then(data => {
@@ -360,17 +376,19 @@ function EnrollmentAppointmentPicker({ request }) {
           candidate_name: request.childName
         })
       })
-      
+      const data = await res.json().catch(() => ({}))
+
       if (!res.ok) {
-        alert("Ce créneau vient d'être réservé. Veuillez en choisir un autre.")
+        alert(data.message || data.error || "Ce créneau vient d'être réservé. Veuillez en choisir un autre.")
         return
       }
-      
-      // Update request to show it has an appointment
-      await updateDoc(doc(db, 'school_enrollment_requests', request.id), {
-        appointmentDate,
-        appointmentSlotId: selectedSlotId
-      })
+
+      // The Django endpoint itself reports appointment_booked back to
+      // Firestore via the signed Worker bridge - nothing to write
+      // client-side (that used to be a direct updateDoc() here, which
+      // firestore.rules now rejects for every role, parent included).
+      const slot = availableSlots.find((s) => String(s.id) === String(selectedSlotId))
+      setJustBooked({ date: appointmentDate, startTime: slot?.startTime?.substring(0, 5), endTime: slot?.endTime?.substring(0, 5) })
     } catch (e) {
       console.error(e)
       alert("Erreur de connexion.")
@@ -379,11 +397,13 @@ function EnrollmentAppointmentPicker({ request }) {
     }
   }
 
-  if (request.appointmentSlotId) {
+  if (justBooked || request.status === 'appointment_booked') {
     return (
       <div className="mt-3 border-t border-border pt-3">
         <p className="text-sm font-semibold text-success-700 bg-success-50 p-2 rounded">
-          Rendez-vous pris pour le {request.appointmentDate}
+          {justBooked
+            ? `Rendez-vous confirmé pour le ${justBooked.date}${justBooked.startTime ? ` (${justBooked.startTime} - ${justBooked.endTime})` : ''}`
+            : 'Rendez-vous confirmé - présentez-vous à l\'école avec vos documents à la date convenue.'}
         </p>
       </div>
     )
@@ -395,9 +415,9 @@ function EnrollmentAppointmentPicker({ request }) {
     <div className="mt-3 border-t border-border pt-3">
       <p className="text-sm font-semibold mb-2">Prendre rendez-vous pour le dépôt des dossiers :</p>
       <div className="flex flex-col sm:flex-row gap-3 mb-3">
-        <input 
-          type="date" 
-          value={appointmentDate} 
+        <input
+          type="date"
+          value={appointmentDate}
           onChange={e => setAppointmentDate(e.target.value)}
           min={new Date().toISOString().split('T')[0]}
           className="rounded-control border border-border p-2 text-sm focus:border-primary-500"
@@ -414,12 +434,12 @@ function EnrollmentAppointmentPicker({ request }) {
              availableSlots.length === 0 ? 'Aucun créneau' : 'Sélectionnez un créneau'}
           </option>
           {availableSlots.map(slot => (
-            <option key={slot.id} value={slot.id}>{slot.time_start.substring(0,5)} - {slot.time_end.substring(0,5)}</option>
+            <option key={slot.id} value={slot.id}>{slot.startTime?.substring(0, 5)} - {slot.endTime?.substring(0, 5)}</option>
           ))}
         </select>
       </div>
-      <Button 
-        onClick={handleBook} 
+      <Button
+        onClick={handleBook}
         disabled={!selectedSlotId || booking}
         size="sm"
         className="w-full sm:w-auto"
@@ -431,14 +451,13 @@ function EnrollmentAppointmentPicker({ request }) {
 }
 
 /**
- * The enrollment request's payment card used to be a dead end -
- * "contact support" with no way to actually pay - if the first
- * FedaPay attempt failed or was closed before completing (see
- * SchoolEnrollment.jsx's handleStartPayment, which creates this doc
- * BEFORE payment succeeds). Retrying just re-runs the same
- * onComplete write SchoolEnrollment.jsx does on success.
+ * The parent's own trigger for the admission fee - only shown once the
+ * school has accepted the request (see the accepted-status gate above).
+ * SchoolEnrollment.jsx used to start this payment immediately on
+ * submission, before the school had even seen the request; that step
+ * moved here so accepting genuinely comes first.
  */
-function RetryEnrollmentPaymentButton({ request }) {
+function EnrollmentPaymentButton({ request }) {
   const { user } = useAuth()
 
   return (
