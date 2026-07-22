@@ -84,7 +84,18 @@ service cloud.firestore {
       // (email/telephone/role/schoolId) de N'IMPORTE QUEL autre
       // utilisateur en connaissant son uid, pas seulement les tuteurs
       // publics. Trouve en revue de securite live.
-      allow read: if (isSignedIn() && request.auth.uid == userId) || resource.data.role == 'teacher';
+      // ParentPortal.jsx interroge cette collection avec
+      // where('parentId','==', parentId).where('role','==','marketplace_student')
+      // pour lister les comptes enfants (createChildProfile, Cloud
+      // Function - creation via Admin SDK, donc deja hors de portee de
+      // la regle allow create ci-dessous). Sans cette clause, le
+      // parent ne pouvait jamais RELIRE les profils qu'il venait de
+      // creer server-side - onSnapshot echouait en permission-denied
+      // en boucle, le compte enfant restait invisible indefiniment
+      // malgre une creation reussie.
+      allow read: if (isSignedIn() && request.auth.uid == userId)
+                  || resource.data.role == 'teacher'
+                  || (isSignedIn() && resource.data.role == 'marketplace_student' && resource.data.parentId == request.auth.uid);
 
       // La création (inscription - RegisterPage.jsx) est le tout premier
       // write sur ce document : resource n'existe pas encore, donc

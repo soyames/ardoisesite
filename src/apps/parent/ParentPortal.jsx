@@ -2,7 +2,8 @@ import { useMemo, useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../../shared/auth/AuthContext.jsx'
 import { doc, getDoc, updateDoc, collection, query, where, onSnapshot } from 'firebase/firestore'
-import { db } from '../../shared/api/firebase.js'
+import { db, auth } from '../../shared/api/firebase.js'
+import { getPlatformApiBaseUrl } from '../../config/env.js'
 import { FedaPayButton } from '../../shared/components/FedaPayButton.jsx'
 import { useApiGet } from '../../shared/hooks/useApi.js'
 import { Card, CardHeader, CardBody } from '../../shared/ui/Card.jsx'
@@ -873,10 +874,14 @@ function ChildProfiles({ parentId }) {
     setSaving(true)
     setError('')
     try {
-      const { getFunctions, httpsCallable } = await import('firebase/functions')
-      const functions = getFunctions()
-      const createChildProfile = httpsCallable(functions, 'createChildProfile')
-      await createChildProfile(form)
+      const idToken = await auth.currentUser.getIdToken()
+      const res = await fetch(`${getPlatformApiBaseUrl()}/api/marketplace/child-profile`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${idToken}` },
+        body: JSON.stringify(form),
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) throw new Error(data.error || 'Erreur lors de la création')
       setShowModal(false)
       setForm({ firstName: '', lastName: '', username: '', password: '' })
     } catch (err) {
