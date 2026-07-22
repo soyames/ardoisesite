@@ -136,7 +136,7 @@ export default function EnrollmentPanel() {
                   >
                     <div className="min-w-0">
                       <p className="truncate text-sm font-medium text-ink">{e.childName}</p>
-                      <p className="text-xs text-ink-muted">{e.childClass} - {timeAgo(e.createdAt)}</p>
+                      <p className="text-xs text-ink-muted">{e.childClassName} - {timeAgo(e.createdAt)}</p>
                     </div>
                     <div className="flex shrink-0 items-center gap-2">
                       <Badge tone={statusInfo(e.status).tone}>{statusInfo(e.status).label}</Badge>
@@ -152,7 +152,7 @@ export default function EnrollmentPanel() {
         <div className="lg:col-span-3">
           {selected ? (
             <Card>
-              <CardHeader title={selected.childName} subtitle={`${selected.childAge} ans - Classe demandee : ${selected.childClass}`} />
+              <CardHeader title={selected.childName} subtitle={`${selected.childAge} ans - Classe demandee : ${selected.childClassName}`} />
               <CardBody className="space-y-4">
                 <div className="space-y-1 text-sm">
                   <p className="text-ink"><span className="text-ink-muted">Parent :</span> {selected.parentName}</p>
