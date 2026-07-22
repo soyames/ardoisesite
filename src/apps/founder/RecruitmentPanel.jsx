@@ -22,6 +22,7 @@ export default function RecruitmentPanel() {
   const canDecide = user?.role === 'founder' || user?.role === 'director'
   const [applications, setApplications] = useState([])
   const [loading, setLoading] = useState(true)
+  const [locked, setLocked] = useState(false)
   const [posting, setPosting] = useState(false)
   const [acceptingId, setAcceptingId] = useState(null)
   const [jobForm, setJobForm] = useState({ title: '', type: 'Temps Plein', description: '' })
@@ -38,7 +39,17 @@ export default function RecruitmentPanel() {
       })
       .catch(err => {
         console.error(err)
-        if (active) setLoading(false)
+        if (active) {
+          // A subscription-gated 403 (feature_requires_subscription) means
+          // real candidatures may exist but the backend never even queried
+          // Firestore for them - rendering the same "Aucune candidature"
+          // empty state as a true zero-applications school made a founder
+          // with real, hidden demand think their posting got no interest.
+          if (err instanceof ApiError && err.status === 403 && err.data?.error === 'feature_requires_subscription') {
+            setLocked(true)
+          }
+          setLoading(false)
+        }
       })
     return () => { active = false }
   }, [])
@@ -117,7 +128,13 @@ export default function RecruitmentPanel() {
           subtitle={canDecide ? "Professeurs intéressés par vos annonces" : "Lecture seule - la decision finale revient au Fondateur ou au Directeur"}
         />
         <CardBody>
-          {applications.length === 0 ? (
+          {locked ? (
+            <div className="rounded-card bg-accent-50 p-4 border border-accent-200">
+              <p className="text-sm text-accent-800">
+                <strong>Mise a niveau requise :</strong> des professeurs peuvent deja avoir postule a vos annonces, mais un abonnement actif est necessaire pour les consulter. <a href="https://saas.ardoise.soyames.com/pricing" className="underline font-semibold" target="_blank" rel="noreferrer">Passez a la version Premium</a> pour voir vos candidatures.
+              </p>
+            </div>
+          ) : applications.length === 0 ? (
             <EmptyState title="Aucune candidature" description="Vos annonces d'emploi n'ont pas encore reçu de candidatures récentes." />
           ) : (
             <ul className="space-y-4">
