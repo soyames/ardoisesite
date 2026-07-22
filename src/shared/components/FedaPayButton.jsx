@@ -80,32 +80,44 @@ export function FedaPayButton({
     const firstname = customerFirstname || fallbackFirstname || undefined
     const lastname = customerLastname || (fallbackLastnameParts.length ? fallbackLastnameParts.join(' ') : undefined)
 
-    const widget = window.FedaPay.init({
-      public_key: effectivePublicKey,
-      environment: import.meta.env.VITE_FEDAPAY_ENVIRONMENT || 'sandbox',
-      transaction: {
-        amount: amount,
-        description: description,
-        custom_metadata: finalMetadata
-      },
-      customer: {
-        email: customerEmail,
-        firstname,
-        lastname,
-        phone_number: toFedaPayPhoneNumber(customerPhoneNumber),
-      },
-      onComplete: (resp) => {
-        setIsProcessing(false)
-        if (onComplete) {
-          onComplete(resp.transaction)
+    // FedaPay.init()/widget.open() had no error handling here - if either
+    // threw (bad key, SDK not fully ready, network blip loading its
+    // internal assets), isProcessing was already true and nothing ever
+    // set it back to false. The button was stuck on "Ouverture..."
+    // forever with zero feedback, indistinguishable from a slow-loading
+    // real checkout. Found live while testing the enrollment payment flow.
+    try {
+      const widget = window.FedaPay.init({
+        public_key: effectivePublicKey,
+        environment: import.meta.env.VITE_FEDAPAY_ENVIRONMENT || 'sandbox',
+        transaction: {
+          amount: amount,
+          description: description,
+          custom_metadata: finalMetadata
+        },
+        customer: {
+          email: customerEmail,
+          firstname,
+          lastname,
+          phone_number: toFedaPayPhoneNumber(customerPhoneNumber),
+        },
+        onComplete: (resp) => {
+          setIsProcessing(false)
+          if (onComplete) {
+            onComplete(resp.transaction)
+          }
+        },
+        onClose: () => {
+          setIsProcessing(false)
         }
-      },
-      onClose: () => {
-        setIsProcessing(false)
-      }
-    })
+      })
 
-    widget.open()
+      widget.open()
+    } catch (err) {
+      console.error('FedaPay widget failed to open:', err)
+      alert("Le module de paiement n'a pas pu s'ouvrir. Veuillez rafraîchir la page et réessayer.")
+      setIsProcessing(false)
+    }
   }
 
   return (
