@@ -5,6 +5,7 @@ import { doc, setDoc, addDoc, collection } from 'firebase/firestore'
 import { auth, db } from '../api/firebase.js'
 import { useAuth } from './AuthContext.jsx'
 import { isSaasHost } from './domainRedirect.js'
+import { getPlatformApiBaseUrl } from '../../config/env.js'
 
 import { FRANCOPHONE_AFRICA_DATA as WEST_AFRICA_DATA } from '../constants/locations.js'
 
@@ -109,6 +110,20 @@ export default function RegisterPage() {
         await setDoc(doc(db, 'schools', schoolId, 'secrets', 'config'), {
           activationCode: crypto.randomUUID(),
         })
+
+        // Also automatically provision the Cloudflare Tunnel via ardoise-api
+        try {
+          const token = await user.getIdToken()
+          await fetch(`${getPlatformApiBaseUrl()}/api/schools/${schoolId}/provision-tunnel`, {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            }
+          })
+        } catch (err) {
+          console.error("Failed to automatically provision tunnel:", err)
+        }
       }
 
       // 3. Send email verification (non-blocking)
