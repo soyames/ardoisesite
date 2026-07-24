@@ -19,12 +19,14 @@ export default function PlatformAnalytics() {
 
         let totalSchools = 0
         let activeSubscriptions = 0
-        const schoolSignupsByMonth = {} // format: "YYYY-MM": count
+        let schoolsWithTunnels = 0
+        const schoolSignupsByMonth = {}
         
         schoolsSnap.forEach(doc => {
           totalSchools++
           const data = doc.data()
           if (data.subscriptionActive) activeSubscriptions++
+          if (data.backendUrl) schoolsWithTunnels++
           
           if (data.createdAt) {
             const date = new Date(data.createdAt)
@@ -44,6 +46,22 @@ export default function PlatformAnalytics() {
           }
         })
 
+        let totalTutorRevenue = 0
+        let totalTutorCommissions = 0
+        const contractsSnap = await getDocs(collection(db, 'tutoring_contracts'))
+        contractsSnap.forEach(doc => {
+          const data = doc.data()
+          if (data.total) totalTutorRevenue += Number(data.total)
+          if (data.commission) totalTutorCommissions += Number(data.commission)
+        })
+
+        let totalAdmissionFees = 0
+        const payoutsSnap = await getDocs(collection(db, 'school_payouts_owed'))
+        payoutsSnap.forEach(doc => {
+          const data = doc.data()
+          if (data.amountOwed) totalAdmissionFees += Number(data.amountOwed)
+        })
+
         // Format data for Recharts
         const signupsData = Object.keys(schoolSignupsByMonth).sort().map(month => ({
           month,
@@ -57,10 +75,14 @@ export default function PlatformAnalytics() {
         setStats({
           totalSchools,
           activeSubscriptions,
+          schoolsWithTunnels,
           totalUsers,
           signupsData,
           rolesData,
-          devCount: rolesCount.developer
+          devCount: rolesCount.developer,
+          totalTutorRevenue,
+          totalTutorCommissions,
+          totalAdmissionFees
         })
       } catch (err) {
         console.error("Error loading analytics", err)
@@ -86,6 +108,22 @@ export default function PlatformAnalytics() {
         <div className="bg-white p-4 rounded-card border border-border shadow-sm">
           <p className="text-sm text-ink-muted mb-1">Abonnements Actifs</p>
           <p className="text-2xl font-bold text-success-600">{stats.activeSubscriptions}</p>
+        </div>
+        <div className="bg-white p-4 rounded-card border border-border shadow-sm">
+          <p className="text-sm text-ink-muted mb-1">Tunnels Actifs</p>
+          <p className="text-2xl font-bold text-info-600">{stats.schoolsWithTunnels}</p>
+        </div>
+        <div className="bg-white p-4 rounded-card border border-border shadow-sm">
+          <p className="text-sm text-ink-muted mb-1">Frais d'Admission CollectÃ©s</p>
+          <p className="text-2xl font-bold text-primary-600">{stats.totalAdmissionFees.toLocaleString()} F</p>
+        </div>
+        <div className="bg-white p-4 rounded-card border border-border shadow-sm">
+          <p className="text-sm text-ink-muted mb-1">Revenus Tutorat</p>
+          <p className="text-2xl font-bold text-ink">{stats.totalTutorRevenue.toLocaleString()} F</p>
+        </div>
+        <div className="bg-white p-4 rounded-card border border-border shadow-sm">
+          <p className="text-sm text-ink-muted mb-1">Commissions Tutorat</p>
+          <p className="text-2xl font-bold text-success-600">{stats.totalTutorCommissions.toLocaleString()} F</p>
         </div>
         <div className="bg-white p-4 rounded-card border border-border shadow-sm">
           <p className="text-sm text-ink-muted mb-1">Utilisateurs Totaux</p>
@@ -145,3 +183,4 @@ export default function PlatformAnalytics() {
     </div>
   )
 }
+
