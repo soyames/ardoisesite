@@ -62,7 +62,7 @@ export default function SuperadminDashboard() {
             onClick={() => setActiveTab('schools')}
             className={activeTab === 'schools' ? '' : 'text-ink-muted hover:text-ink'}
           >
-            Ã‰coles
+            Écoles
           </Button>
         )}
         {availableTabs.includes('payments') && (
@@ -319,7 +319,7 @@ function UsersRegistry() {
   }, [])
 
   const handleDeleteUser = async (userId) => {
-    if (!window.confirm("ÃŠtes-vous sûr de vouloir supprimer cet utilisateur ? Cette action supprimera définitivement son compte et ses données de la plateforme.")) return
+    if (!window.confirm("Êtes-vous sûr de vouloir supprimer cet utilisateur ? Cette action supprimera définitivement son compte et ses données de la plateforme.")) return
     try {
       const idToken = await auth.currentUser.getIdToken()
       const res = await fetch(`${getPlatformApiBaseUrl()}/api/admin/users/${userId}`, {
@@ -434,7 +434,7 @@ function PaymentsAndSubscriptions() {
   return (
     <div className="space-y-8">
       <Card>
-        <CardHeader title="Abonnements SaaS (Ã‰coles)" subtitle="Suivi des abonnements actifs au logiciel de gestion." />
+        <CardHeader title="Abonnements SaaS (Écoles)" subtitle="Suivi des abonnements actifs au logiciel de gestion." />
         <CardBody className="p-0">
           {premiumSchools.length === 0 ? (
             <div className="p-6">
