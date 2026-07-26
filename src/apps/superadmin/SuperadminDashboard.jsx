@@ -145,6 +145,14 @@ function SubscriptionManager({ school, onChanged }) {
   const [whatsapp, setWhatsapp] = useState((school.features || []).includes('whatsapp_notifications'))
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState(null)
+  // activationCode no longer lives on the public `schools/{id}` doc
+  // (it moved to the founder-only schools/{id}/secrets/config
+  // subcollection - see firestore.rules), so a superadmin can't read
+  // it via a real-time listener. The grant/revoke Worker route is
+  // already superadmin-authorized and returns just this one field
+  // alongside its response - this local state is the only place it's
+  // ever held client-side.
+  const [activationCode, setActivationCode] = useState(null)
 
   const call = async (body) => {
     setSubmitting(true)
@@ -161,6 +169,7 @@ function SubscriptionManager({ school, onChanged }) {
         setError(data.error || 'Erreur lors de la mise a jour.')
         return
       }
+      if (data.activationCode) setActivationCode(data.activationCode)
       onChanged()
     } catch (err) {
       console.error(err)
@@ -197,10 +206,15 @@ function SubscriptionManager({ school, onChanged }) {
         </label>
       </div>
 
-      {school.activationCode && (
+      {activationCode && (
         <p className="text-xs text-ink-muted">
-          Code d'activation : <code className="rounded bg-surface-raised px-1.5 py-0.5">{school.activationCode}</code>
+          Code d'activation : <code className="rounded bg-surface-raised px-1.5 py-0.5">{activationCode}</code>
           {' '}(a fournir a l'ecole pour ARDOISE_ACTIVATION_CODE)
+        </p>
+      )}
+      {!activationCode && (
+        <p className="text-xs text-ink-muted">
+          Le code d'activation s'affiche ici apres avoir accorde ou revoque l'acces.
         </p>
       )}
 

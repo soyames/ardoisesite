@@ -53,7 +53,11 @@ export default function InstallGuide() {
   useEffect(() => {
     if (user?.role !== 'founder' || !user?.schoolId) return
     let cancelled = false
-    getDoc(doc(db, 'schools', String(user.schoolId))).then((snap) => {
+    // activationCode lives in schools/{id}/secrets/config now, not on
+    // the public schools/{id} doc (firestore.rules restricts that
+    // subcollection to the founder of this exact school - matches the
+    // role/schoolId check just above).
+    getDoc(doc(db, 'schools', String(user.schoolId), 'secrets', 'config')).then((snap) => {
       if (!cancelled && snap.exists()) {
         setActivationCode(snap.data().activationCode || null)
       }

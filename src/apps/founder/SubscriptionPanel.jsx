@@ -17,6 +17,7 @@ export default function SubscriptionPanel({ schoolId }) {
   const { user } = useAuth()
   const [loading, setLoading] = useState(true)
   const [schoolData, setSchoolData] = useState(null)
+  const [activationCode, setActivationCode] = useState(null)
   const [error, setError] = useState(null)
   const [confirming, setConfirming] = useState(false)
 
@@ -24,6 +25,12 @@ export default function SubscriptionPanel({ schoolId }) {
     try {
       const docRef = doc(db, 'schools', String(schoolId))
       const docSnap = await getDoc(docRef)
+      // activationCode lives in schools/{id}/secrets/config now, not on
+      // this public doc (firestore.rules restricts that subcollection
+      // to the founder of this exact school, which is who's viewing
+      // this panel) - see the security-review note in firestore.rules.
+      const secretsSnap = await getDoc(doc(db, 'schools', String(schoolId), 'secrets', 'config'))
+      setActivationCode(secretsSnap.exists() ? secretsSnap.data().activationCode || null : null)
       if (docSnap.exists()) {
         setSchoolData(docSnap.data())
       }
@@ -116,7 +123,7 @@ export default function SubscriptionPanel({ schoolId }) {
                     Votre abonnement est actif. Voici votre clé d'activation secrète à insérer lors du premier démarrage du logiciel dans votre école :
                   </p>
                   <div className="bg-white p-3 rounded border border-primary-200 font-mono text-center text-lg text-primary-700 tracking-wider mb-6 break-all">
-                    {schoolData?.activationCode || 'Génération en cours...'}
+                    {activationCode || 'Génération en cours...'}
                   </div>
                   <div className="flex flex-col gap-3">
                     <button onClick={() => alert("Le téléchargement de l'installeur Windows (.exe) démarrera ici.")} className="w-full rounded-control bg-primary-600 px-4 py-3 text-sm font-bold text-white transition hover:bg-primary-500 flex justify-center items-center gap-2">
