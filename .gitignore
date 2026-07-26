@@ -27,8 +27,9 @@ vite.test.config.js
 *.sw?
 .env
 
-.claude/
+.claude
 claude
+e2e
 
 !readme.md
 *.md

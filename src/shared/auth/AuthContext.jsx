@@ -180,6 +180,27 @@ export function AuthProvider({ children }) {
 
         // Note: moved outside callback
       } else {
+        try {
+          const me = await api.get('/api/auth/me/')
+          if (me && me.id) {
+            setUser({
+              id: me.id,
+              uid: `django-${me.id}`,
+              email: me.email,
+              emailVerified: true,
+              needsEmailVerification: false,
+              role: me.role,
+              roleDisplay: me.role_display || me.role,
+              schoolId: me.school ? String(me.school.id) : null,
+              firstName: me.first_name || '',
+              lastName: me.last_name || '',
+              cycleScope: me.cycle_scope || me.cycleScope || '',
+              staffId: me.staff_id || me.staffId || null,
+            })
+            setStatus('authenticated')
+            return
+          }
+        } catch (_) {}
         setUser(null)
         setStatus('anonymous')
       }
@@ -194,6 +215,33 @@ export function AuthProvider({ children }) {
       await signInWithEmailAndPassword(auth, email, password)
       // onAuthStateChanged will handle the rest
     } catch (error) {
+      try {
+        await primeCsrf()
+        const res = await api.post('/api/auth/login/', { username: email, password })
+        await primeCsrf()
+        if (res && res.id) {
+          const role = res.role || 'parent'
+          const schoolId = res.school ? String(res.school.id) : null
+          setUser({
+            id: res.id,
+            uid: `django-${res.id}`,
+            email: res.email || email,
+            emailVerified: true,
+            needsEmailVerification: false,
+            role,
+            roleDisplay: res.role_display || role,
+            schoolId,
+            firstName: res.first_name || '',
+            lastName: res.last_name || '',
+            cycleScope: res.cycle_scope || res.cycleScope || '',
+            staffId: res.staff_id || res.staffId || null,
+          })
+          setStatus('authenticated')
+          return
+        }
+      } catch (djangoErr) {
+        console.warn('Django direct login fallback failed:', djangoErr)
+      }
       setStatus('anonymous')
       throw error
     }
