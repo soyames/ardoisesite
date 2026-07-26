@@ -33,7 +33,7 @@ export default function SuperadminDashboard() {
       <div>
         <h1 className="text-xl font-semibold text-ink">Administration Ardoise</h1>
         <p className="mt-1 text-sm text-ink-muted">
-          Espace de gestion globale de la plateforme (Support et Ã©quipe).
+          Espace de gestion globale de la plateforme (Support et équipe).
         </p>
       </div>
 
@@ -89,7 +89,7 @@ export default function SuperadminDashboard() {
             onClick={() => setActiveTab('team')}
             className={activeTab === 'team' ? '' : 'text-ink-muted hover:text-ink'}
           >
-            Gestion de l'Ã©quipe
+            Gestion de l'équipe
           </Button>
         )}
         {availableTabs.includes('settings') && (
@@ -129,13 +129,13 @@ const DURATION_OPTIONS = [
 ]
 
 function isExpired(school) {
-  const expiresAt = school.subscriptionExpiresAt ? new Date(school.subscriptionExpiresAt) : null
+  const expiresAt = school.subscriptionExpiresAt ? (school.subscriptionExpiresAt.toDate ? school.subscriptionExpiresAt.toDate() : new Date(school.subscriptionExpiresAt)) : null
   return expiresAt !== null && expiresAt.getTime() < Date.now()
 }
 
 function subscriptionBadge(school) {
   if (!school.subscriptionActive) return <Badge tone="neutral">Gratuit</Badge>
-  if (isExpired(school)) return <Badge tone="danger">ExpirÃ©</Badge>
+  if (isExpired(school)) return <Badge tone="danger">Expiré</Badge>
   return <Badge tone="success">Actif</Badge>
 }
 
@@ -251,13 +251,13 @@ function SchoolsRegistry() {
     return () => unsubscribe()
   }, [])
 
-  if (loading) return <div className="text-sm text-ink-muted">Chargement des Ã©coles...</div>
+  if (loading) return <div className="text-sm text-ink-muted">Chargement des écoles...</div>
 
   if (schools.length === 0) {
     return (
       <EmptyState
-        title="Aucune Ã©cole enregistrÃ©e"
-        description="Les Ã©coles apparaissent ici une fois leur inscription terminÃ©e sur le marketplace."
+        title="Aucune école enregistrée"
+        description="Les écoles apparaissent ici une fois leur inscription terminée sur le marketplace."
       />
     )
   }
@@ -280,8 +280,8 @@ function SchoolsRegistry() {
                     {school.name || 'Sans nom'}
                   </p>
                   <p className="text-xs text-ink-muted mt-1">
-                    {[school.city, school.country].filter(Boolean).join(', ') || 'Ville non renseignÃ©e'}
-                    {school.backendUrl && <span className="ml-2 text-ink-muted">Â· {school.backendUrl}</span>}
+                    {[school.city, school.country].filter(Boolean).join(', ') || 'Ville non renseignée'}
+                    {school.backendUrl && <span className="ml-2 text-ink-muted">· {school.backendUrl}</span>}
                   </p>
                 </div>
                 <div className="flex items-center gap-3">
@@ -319,7 +319,7 @@ function UsersRegistry() {
   }, [])
 
   const handleDeleteUser = async (userId) => {
-    if (!window.confirm("ÃŠtes-vous sÃ»r de vouloir supprimer cet utilisateur ? Cette action supprimera dÃ©finitivement son compte et ses donnÃ©es de la plateforme.")) return
+    if (!window.confirm("ÃŠtes-vous sûr de vouloir supprimer cet utilisateur ? Cette action supprimera définitivement son compte et ses données de la plateforme.")) return
     try {
       const idToken = await auth.currentUser.getIdToken()
       const res = await fetch(`${getPlatformApiBaseUrl()}/api/admin/users/${userId}`, {
@@ -348,19 +348,19 @@ function UsersRegistry() {
 
   return (
     <Card>
-      <CardHeader title="Utilisateurs Inscrits" subtitle="Gestion des parents, professeurs, dÃ©veloppeurs et superadmins." />
+      <CardHeader title="Utilisateurs Inscrits" subtitle="Gestion des parents, professeurs, développeurs et superadmins." />
       <CardBody className="p-0">
         <div className="p-4 border-b border-border bg-surface-raised flex gap-2 overflow-x-auto">
           <Button size="sm" variant={filterRole === 'all' ? 'primary' : 'secondary'} onClick={() => setFilterRole('all')}>Tous</Button>
           <Button size="sm" variant={filterRole === 'parent' ? 'primary' : 'secondary'} onClick={() => setFilterRole('parent')}>Parents</Button>
           <Button size="sm" variant={filterRole === 'teacher' ? 'primary' : 'secondary'} onClick={() => setFilterRole('teacher')}>Professeurs</Button>
-          <Button size="sm" variant={filterRole === 'developer' ? 'primary' : 'secondary'} onClick={() => setFilterRole('developer')}>DÃ©veloppeurs</Button>
+          <Button size="sm" variant={filterRole === 'developer' ? 'primary' : 'secondary'} onClick={() => setFilterRole('developer')}>Développeurs</Button>
           <Button size="sm" variant={filterRole === 'superadmin' ? 'primary' : 'secondary'} onClick={() => setFilterRole('superadmin')}>Superadmins</Button>
         </div>
         
         {filteredUsers.length === 0 ? (
           <div className="p-6">
-            <EmptyState title="Aucun utilisateur" description="Aucun utilisateur trouvÃ© pour ce filtre." />
+            <EmptyState title="Aucun utilisateur" description="Aucun utilisateur trouvé pour ce filtre." />
           </div>
         ) : (
           <ul className="divide-y divide-border">
@@ -427,7 +427,7 @@ function PaymentsAndSubscriptions() {
     }
   }, [])
 
-  if (loading) return <div className="text-sm text-ink-muted">Chargement des donnÃ©es...</div>
+  if (loading) return <div className="text-sm text-ink-muted">Chargement des données...</div>
 
   const premiumSchools = schools.filter(s => s.subscriptionActive)
 
@@ -438,7 +438,7 @@ function PaymentsAndSubscriptions() {
         <CardBody className="p-0">
           {premiumSchools.length === 0 ? (
             <div className="p-6">
-              <EmptyState title="Aucun abonnement" description="Aucune Ã©cole n'a d'abonnement SaaS actif." />
+              <EmptyState title="Aucun abonnement" description="Aucune école n'a d'abonnement SaaS actif." />
             </div>
           ) : (
             <ul className="divide-y divide-border">
@@ -449,7 +449,7 @@ function PaymentsAndSubscriptions() {
                     <p className="text-xs text-ink-muted mt-1">Plan: <span className="font-semibold uppercase">{school.planCode}</span></p>
                   </div>
                   <div className="text-right">
-                    <p className="text-sm text-ink">Expire le {school.subscriptionExpiresAt ? new Date(school.subscriptionExpiresAt).toLocaleDateString() : 'N/A'}</p>
+                    <p className="text-sm text-ink">Expire le {school.subscriptionExpiresAt ? (school.subscriptionExpiresAt.toDate ? school.subscriptionExpiresAt.toDate() : new Date(school.subscriptionExpiresAt)).toLocaleDateString() : 'N/A'}</p>
                     <p className="text-xs text-success-600 font-medium">Actif</p>
                   </div>
                 </li>
@@ -460,11 +460,11 @@ function PaymentsAndSubscriptions() {
       </Card>
 
       <Card>
-        <CardHeader title="Contrats de Tutorat (Marketplace)" subtitle="Suivi des rÃ©servations de tuteurs par les parents." />
+        <CardHeader title="Contrats de Tutorat (Marketplace)" subtitle="Suivi des réservations de tuteurs par les parents." />
         <CardBody className="p-0">
           {contracts.length === 0 ? (
             <div className="p-6">
-              <EmptyState title="Aucun contrat" description="Aucun tuteur n'a encore Ã©tÃ© rÃ©servÃ© via la plateforme." />
+              <EmptyState title="Aucun contrat" description="Aucun tuteur n'a encore été réservé via la plateforme." />
             </div>
           ) : (
             <ul className="divide-y divide-border">
@@ -472,13 +472,13 @@ function PaymentsAndSubscriptions() {
                 <li key={c.id} className="p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                   <div>
                     <p className="text-sm font-bold text-ink">{c.parentName} &rarr; {c.teacherName}</p>
-                    <p className="text-xs text-ink-muted mt-1">{c.hoursPerWeek}h/semaine Â· DÃ©but: {c.startDate}</p>
+                    <p className="text-xs text-ink-muted mt-1">{c.hoursPerWeek}h/semaine · Début: {c.startDate}</p>
                     <p className="text-xs text-ink-muted">Contact Parent: {c.parentEmail}</p>
                   </div>
                   <div className="text-right">
                     <p className="text-sm font-bold text-primary-600">{c.total?.toLocaleString() || 0} F / mois</p>
                     <p className="text-xs text-ink-muted">Commission: {c.commission?.toLocaleString() || 0} F</p>
-                    <Badge tone="success" className="mt-1">PrÃ©levÃ© le {c.paymentDate}</Badge>
+                    <Badge tone="success" className="mt-1">Prélevé le {c.paymentDate}</Badge>
                   </div>
                 </li>
               ))}
@@ -516,7 +516,7 @@ function HealthPing({ backendUrl }) {
   return (
     <div className="flex items-center gap-2">
       {status === 'loading' && <span className="text-sm text-ink-muted">Ping en cours...</span>}
-      {status === 'up' && <Badge tone="success">ConnectÃ© (Backend Actif)</Badge>}
+      {status === 'up' && <Badge tone="success">Connecté (Backend Actif)</Badge>}
       {status === 'down' && <Badge tone="danger">Injoignable (Erreur de connexion)</Badge>}
     </div>
   )
@@ -528,14 +528,14 @@ function SchoolDetailView({ school, onBack }) {
   return (
     <div className="space-y-6">
       <button onClick={onBack} className="flex items-center gap-1 text-sm font-medium text-primary-600 hover:text-primary-700">
-        <Icon name="arrow_back" className="text-base" /> Retour aux Ã©coles
+        <Icon name="arrow_back" className="text-base" /> Retour aux écoles
       </button>
 
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold text-ink">{school.name || 'Sans nom'}</h2>
           <p className="text-sm text-ink-muted">
-            ID: {school.id} Â· AjoutÃ© le {school.createdAt ? new Date(school.createdAt).toLocaleDateString() : 'N/A'}
+            ID: {school.id} · Ajouté le {school.createdAt ? (school.createdAt.toDate ? school.createdAt.toDate() : new Date(school.createdAt)).toLocaleDateString() : 'N/A'}
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -546,23 +546,23 @@ function SchoolDetailView({ school, onBack }) {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Card>
-          <CardHeader title="Informations de l'Ã©tablissement" />
+          <CardHeader title="Informations de l'établissement" />
           <CardBody className="space-y-3">
             <div>
               <span className="block text-xs font-semibold text-ink-muted uppercase">Adresse & Localisation</span>
-              <p className="text-sm text-ink">{school.address || 'Non renseignÃ©e'}</p>
-              <p className="text-sm text-ink">{[school.city, school.country].filter(Boolean).join(', ') || 'Non renseignÃ©'}</p>
+              <p className="text-sm text-ink">{school.address || 'Non renseignée'}</p>
+              <p className="text-sm text-ink">{[school.city, school.country].filter(Boolean).join(', ') || 'Non renseigné'}</p>
             </div>
             <div>
               <span className="block text-xs font-semibold text-ink-muted uppercase">Contact</span>
-              <p className="text-sm text-ink">{school.email || 'Non renseignÃ©'}</p>
-              <p className="text-sm text-ink">{school.phone || 'Non renseignÃ©'}</p>
+              <p className="text-sm text-ink">{school.email || 'Non renseigné'}</p>
+              <p className="text-sm text-ink">{school.phone || 'Non renseigné'}</p>
             </div>
           </CardBody>
         </Card>
 
         <Card>
-          <CardHeader title="SantÃ© de l'intÃ©gration" />
+          <CardHeader title="Santé de l'intégration" />
           <CardBody className="space-y-4">
             <div>
               <span className="block text-xs font-semibold text-ink-muted uppercase mb-1">URL du Serveur ERP (Backend)</span>
@@ -571,7 +571,7 @@ function SchoolDetailView({ school, onBack }) {
                   {school.backendUrl}
                 </a>
               ) : (
-                <p className="text-sm text-warning-600 font-medium">Aucune URL configurÃ©e. Le logiciel de l'Ã©cole n'est pas encore liÃ©.</p>
+                <p className="text-sm text-warning-600 font-medium">Aucune URL configurée. Le logiciel de l'école n'est pas encore lié.</p>
               )}
             </div>
             
@@ -608,7 +608,7 @@ function SchoolDetailView({ school, onBack }) {
           title="Abonnement & Licences" 
           action={
             <Button size="sm" variant={managing ? 'ghost' : 'secondary'} onClick={() => setManaging(!managing)}>
-              {managing ? 'Fermer' : 'GÃ©rer l\'abonnement'}
+              {managing ? 'Fermer' : 'Gérer l\'abonnement'}
             </Button>
           } 
         />
@@ -621,16 +621,16 @@ function SchoolDetailView({ school, onBack }) {
             <div>
               <span className="block text-xs font-semibold text-ink-muted uppercase">Expiration</span>
               <p className="text-sm text-ink mt-1">
-                {school.subscriptionExpiresAt ? new Date(school.subscriptionExpiresAt).toLocaleDateString() : 'Jamais'}
+                {school.subscriptionExpiresAt ? (school.subscriptionExpiresAt.toDate ? school.subscriptionExpiresAt.toDate() : new Date(school.subscriptionExpiresAt)).toLocaleDateString() : 'Jamais'}
               </p>
             </div>
             <div>
-              <span className="block text-xs font-semibold text-ink-muted uppercase">FonctionnalitÃ©s</span>
+              <span className="block text-xs font-semibold text-ink-muted uppercase">Fonctionnalités</span>
               <div className="flex flex-wrap gap-1 mt-1">
                 {school.features && school.features.length > 0 ? (
                   school.features.map(f => <Badge key={f} tone="neutral">{f}</Badge>)
                 ) : (
-                  <span className="text-sm text-ink-muted">Aucune fonctionnalitÃ© Premium</span>
+                  <span className="text-sm text-ink-muted">Aucune fonctionnalité Premium</span>
                 )}
               </div>
             </div>
@@ -646,4 +646,5 @@ function SchoolDetailView({ school, onBack }) {
     </div>
   )
 }
+
 

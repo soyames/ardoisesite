@@ -94,7 +94,7 @@ export default function PlatformAnalytics() {
   }, [])
 
   if (loading) return <div className="p-4 text-ink-muted">Chargement des analytiques...</div>
-  if (!stats) return <div className="p-4 text-danger-600">Impossible de charger les donnAces.</div>
+  if (!stats) return <div className="p-4 text-danger-600">Impossible de charger les données.</div>
 
   const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8']
 
@@ -102,7 +102,7 @@ export default function PlatformAnalytics() {
     <div className="space-y-6">
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <div className="bg-white p-4 rounded-card border border-border shadow-sm">
-          <p className="text-sm text-ink-muted mb-1">A%coles Inscrites</p>
+          <p className="text-sm text-ink-muted mb-1">Écoles Inscrites</p>
           <p className="text-2xl font-bold text-ink">{stats.totalSchools}</p>
         </div>
         <div className="bg-white p-4 rounded-card border border-border shadow-sm">
@@ -114,7 +114,7 @@ export default function PlatformAnalytics() {
           <p className="text-2xl font-bold text-info-600">{stats.schoolsWithTunnels}</p>
         </div>
         <div className="bg-white p-4 rounded-card border border-border shadow-sm">
-          <p className="text-sm text-ink-muted mb-1">Frais d'Admission CollectÃ©s</p>
+          <p className="text-sm text-ink-muted mb-1">Frais d'Admission Collectés</p>
           <p className="text-2xl font-bold text-primary-600">{stats.totalAdmissionFees.toLocaleString()} F</p>
         </div>
         <div className="bg-white p-4 rounded-card border border-border shadow-sm">
@@ -130,14 +130,14 @@ export default function PlatformAnalytics() {
           <p className="text-2xl font-bold text-ink">{stats.totalUsers}</p>
         </div>
         <div className="bg-white p-4 rounded-card border border-border shadow-sm">
-          <p className="text-sm text-ink-muted mb-1">DAcveloppeurs / ReprAcsentants</p>
+          <p className="text-sm text-ink-muted mb-1">Développeurs / ReprAcsentants</p>
           <p className="text-2xl font-bold text-primary-600">{stats.devCount}</p>
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card>
-          <CardHeader title="A%volution des Inscriptions (A%coles)" />
+          <CardHeader title="Évolution des Inscriptions (Écoles)" />
           <CardBody>
             <div className="h-64">
               <ResponsiveContainer width="100%" height="100%">
