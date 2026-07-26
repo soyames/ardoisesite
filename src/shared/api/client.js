@@ -57,12 +57,18 @@ async function request(path, { method = 'GET', body, headers = {}, isFormData = 
     if (csrfToken) finalHeaders['X-CSRFToken'] = csrfToken
   }
 
-  const response = await fetch(`${getApiBaseUrl()}${path}`, {
-    method,
-    credentials: 'include', // send/receive the session + csrf cookies cross-origin
-    headers: finalHeaders,
-    body: body === undefined ? undefined : isFormData ? body : JSON.stringify(body),
-  })
+  const controller = new AbortController()
+  const timeoutId = setTimeout(() => controller.abort(), 5000)
+
+  try {
+    const response = await fetch(`${getApiBaseUrl()}${path}`, {
+      method,
+      credentials: 'include', // send/receive the session + csrf cookies cross-origin
+      headers: finalHeaders,
+      body: body === undefined ? undefined : isFormData ? body : JSON.stringify(body),
+      signal: controller.signal
+    })
+    clearTimeout(timeoutId)
 
   if (response.status === 204) return null
 
@@ -73,6 +79,13 @@ async function request(path, { method = 'GET', body, headers = {}, isFormData = 
     throw new ApiError(response.status, data)
   }
   return data
+  } catch (error) {
+    if (typeof clearTimeout !== 'undefined') clearTimeout(timeoutId)
+    if (error.name === 'AbortError') {
+      throw new ApiError(408, { detail: 'Request timed out' })
+    }
+    throw error
+  }
 }
 
 export const api = {

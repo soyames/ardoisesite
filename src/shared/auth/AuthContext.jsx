@@ -253,6 +253,7 @@ export function AuthProvider({ children }) {
       if (auth.currentUser && auth.currentUser._firestoreUnsubscribe) {
         auth.currentUser._firestoreUnsubscribe()
       }
+      setApiBaseUrl(null)
       await firebaseSignOut(auth)
     } catch(err) {
       setStatus('anonymous')
