@@ -65,6 +65,15 @@ export default function SupportPage() {
         <Card className="lg:col-span-1 h-fit">
           <CardHeader title="Contacter le Support" subtitle="Besoin d'aide avec Ardoise ?" />
           <CardBody>
+            <a
+              href="https://docs.ardoiseeduc.com/index"
+              target="_blank"
+              rel="noreferrer noopener"
+              className="mb-4 flex items-center justify-between rounded-card border border-primary-100 bg-primary-50 px-4 py-3 text-sm text-primary-800 hover:bg-primary-100"
+            >
+              <span>Consultez d'abord la <strong>documentation</strong> - la réponse s'y trouve peut-être déjà.</span>
+              <span aria-hidden="true">&rarr;</span>
+            </a>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-ink mb-1">Sujet</label>

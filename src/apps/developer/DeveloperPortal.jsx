@@ -124,9 +124,20 @@ export default function DeveloperPortal() {
 
   return (
     <div className="space-y-6 max-w-5xl">
-      <div>
-        <h1 className="text-xl font-semibold text-ink">Espace Développeur</h1>
-        <p className="mt-1 text-sm text-ink-muted">Gérez vos clés API, vos intégrations webhooks et votre programme partenaire avec Ardoise.</p>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-xl font-semibold text-ink">Espace Développeur</h1>
+          <p className="mt-1 text-sm text-ink-muted">Gérez vos clés API, vos intégrations webhooks et votre programme partenaire avec Ardoise.</p>
+        </div>
+        <a
+          href="https://docs.ardoiseeduc.com/index"
+          target="_blank"
+          rel="noreferrer noopener"
+          className="inline-flex shrink-0 items-center gap-1 text-sm font-medium text-primary-600 hover:text-primary-700"
+        >
+          <Icon name="menu_book" className="text-base" />
+          Documentation
+        </a>
       </div>
 
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2">

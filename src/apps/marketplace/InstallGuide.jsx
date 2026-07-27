@@ -340,6 +340,10 @@ docker run -d --name caddy -p 80:80 -p 443:443 \\
               <p>Dans les deux cas, gardez au moins une copie <strong>hors du serveur lui-même</strong> (un autre disque, un stockage cloud chiffré) - une sauvegarde qui vit sur la même machine que les données originales ne protège de rien en cas de panne matérielle.</p>
             </div>
           )}
+          <p className="text-ink-muted mt-3">
+            Ardoise sait aussi sauvegarder automatiquement vers Google Drive, sans manipulation manuelle - voir{' '}
+            <a href="https://docs.ardoiseeduc.com/guide-technique/sauvegardes" target="_blank" rel="noreferrer" className="text-primary-600 underline">la documentation complète des sauvegardes</a>.
+          </p>
         </section>
 
         {/* ---------------------------------------------------------------- */}
@@ -363,8 +367,12 @@ docker run -d --name caddy -p 80:80 -p 443:443 \\
             un nom de domaine public (scénario « serveur cloud »), un tunnel comme{' '}
             <a href="https://www.cloudflare.com/products/tunnel/" className="text-primary-600 underline" target="_blank" rel="noreferrer">Cloudflare Tunnel</a>{' '}
             ou <a href="https://tailscale.com/" className="text-primary-600 underline" target="_blank" rel="noreferrer">Tailscale</a>{' '}
-            permet de relier votre serveur local à internet sans ouvrir de port sur votre routeur. C'est une
-            configuration plus technique - contactez-nous si votre école en a besoin, nous pouvons vous orienter.
+            permet de relier votre serveur local à internet sans ouvrir de port sur votre routeur. Ardoise intègre
+            directement un Tunnel Cloudflare nommé, prêt à l'emploi - suivez{' '}
+            <a href="https://docs.ardoiseeduc.com/guide-technique/acces-distant" target="_blank" rel="noreferrer" className="text-primary-600 underline">
+              le guide pas à pas
+            </a>{' '}
+            dans la documentation complète.
           </p>
         </section>
 
