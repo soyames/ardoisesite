@@ -242,7 +242,7 @@ export default function PublicLayout() {
                 <li><Link to="/cookies" className="text-sm text-ink-muted hover:text-ink">Cookies</Link></li>
                 <li><Link to="/terms" className="text-sm text-ink-muted hover:text-ink">Conditions d'Utilisation</Link></li>
                 <li>
-                  <a href="https://docs.ardoiseeduc.com/index" target="_blank" rel="noreferrer noopener" className="text-sm text-ink-muted hover:text-ink">
+                  <a href="https://docs.ardoiseeduc.com" target="_blank" rel="noreferrer noopener" className="text-sm text-ink-muted hover:text-ink">
                     Documentation
                   </a>
                 </li>

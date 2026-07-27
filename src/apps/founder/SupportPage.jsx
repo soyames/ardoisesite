@@ -66,7 +66,7 @@ export default function SupportPage() {
           <CardHeader title="Contacter le Support" subtitle="Besoin d'aide avec Ardoise ?" />
           <CardBody>
             <a
-              href="https://docs.ardoiseeduc.com/index"
+              href="https://docs.ardoiseeduc.com"
               target="_blank"
               rel="noreferrer noopener"
               className="mb-4 flex items-center justify-between rounded-card border border-primary-100 bg-primary-50 px-4 py-3 text-sm text-primary-800 hover:bg-primary-100"

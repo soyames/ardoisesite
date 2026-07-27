@@ -130,7 +130,7 @@ export default function DeveloperPortal() {
           <p className="mt-1 text-sm text-ink-muted">Gérez vos clés API, vos intégrations webhooks et votre programme partenaire avec Ardoise.</p>
         </div>
         <a
-          href="https://docs.ardoiseeduc.com/index"
+          href="https://docs.ardoiseeduc.com"
           target="_blank"
           rel="noreferrer noopener"
           className="inline-flex shrink-0 items-center gap-1 text-sm font-medium text-primary-600 hover:text-primary-700"

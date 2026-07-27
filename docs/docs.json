@@ -11,15 +11,9 @@
   "logo": {
     "light": "/logo/light.png",
     "dark": "/logo/dark.png",
-    "href": "/index"
+    "href": "/"
   },
   "favicon": "/favicon.png",
-  "redirects": [
-    {
-      "source": "/",
-      "destination": "/index"
-    }
-  ],
   "navbar": {
     "links": [
       {
