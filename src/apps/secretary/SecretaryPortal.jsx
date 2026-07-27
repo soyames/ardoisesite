@@ -15,12 +15,14 @@ import Icon from '../../shared/ui/Icon.jsx'
 import LetterheadSettings from '../../shared/components/LetterheadSettings.jsx'
 import Encaissement from '../../shared/components/Encaissement.jsx'
 import AppointmentSlotsPanel from '../../shared/components/AppointmentSlotsPanel.jsx'
+import EnrollmentPanel from '../founder/EnrollmentPanel.jsx'
 
 const INPUT_CLASS =
   'block w-full rounded-control border-0 py-2 px-3 bg-surface-raised text-ink ring-1 ring-inset ring-border focus:ring-2 focus:ring-primary-500 sm:text-sm'
 
 const TABS = [
   { key: 'dashboard', label: 'Tableau de bord' },
+  { key: 'admissions', label: "Demandes d'inscription" },
   { key: 'students', label: 'Eleves' },
   { key: 'parents', label: 'Parents' },
   { key: 'guardianships', label: 'Tutelle' },
@@ -33,10 +35,13 @@ const TABS = [
 /**
  * Secretary's registration flow: create a Student, link them to an
  * existing Parent via Guardianship, then Enrollment places the student
- * into a classroom for an academic year. Parents are never created
- * here - they register themselves on the marketplace, and accepting
- * that request (Founder/Director's "Demandes d'inscription" panel) is
- * what creates the Parent + Student + Guardianship + Enrollment rows
+ * into a classroom for an academic year. Parents are never created on
+ * the tabs below - they register themselves on the marketplace, and
+ * accepting that request (the "Demandes d'inscription" tab, same
+ * MarketplaceEnrollmentAcceptView backend the Founder's dashboard
+ * calls - Secretary was already allowed there server-side, this tab
+ * was just never added to give Secretary a way to reach it) is what
+ * creates the Parent + Student + Guardianship + Enrollment rows
  * together (see core/api_views.py:MarketplaceEnrollmentAcceptView).
  * The Parents tab below is a read-only directory for front-desk lookup.
  */
@@ -53,6 +58,7 @@ export default function SecretaryPortal() {
       <PortalTabs tabs={TABS} active={tab} onChange={setTab} />
 
       {tab === 'dashboard' && <DashboardTab onNavigate={setTab} />}
+      {tab === 'admissions' && <EnrollmentPanel />}
       {tab === 'students' && <StudentsTab />}
       {tab === 'parents' && <ParentsTab />}
       {tab === 'guardianships' && <GuardianshipsTab />}
