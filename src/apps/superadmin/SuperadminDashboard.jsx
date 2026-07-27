@@ -10,17 +10,18 @@ import EmptyState from '../../shared/ui/EmptyState.jsx'
 import Icon from '../../shared/ui/Icon.jsx'
 import { getPlatformApiBaseUrl } from '../../config/env.js'
 import MarketplaceAccountSettings from '../../shared/settings/MarketplaceAccountSettings.jsx'
-import PlatformAnalytics from './PlatformAnalytics.jsx'
+import Overview from './Overview.jsx'
+import Crm from './Crm.jsx'
 import SupportTickets from './SupportTickets.jsx'
 import { TeamManagement } from './TeamManagement.jsx'
 
 const TABS_BY_ROLE = {
-  superadmin: ['analytics', 'tickets', 'schools', 'payments', 'users', 'team', 'settings'],
+  superadmin: ['overview', 'crm', 'tickets', 'schools', 'payments', 'users', 'team', 'settings'],
   support_agent: ['tickets', 'settings'],
-  school_onboarding: ['schools', 'tickets', 'settings'],
+  school_onboarding: ['crm', 'schools', 'tickets', 'settings'],
   dev_onboarding: ['users', 'tickets', 'settings'],
-  billing_agent: ['payments', 'analytics', 'tickets', 'settings'],
-  marketing_agent: ['analytics', 'settings']
+  billing_agent: ['crm', 'payments', 'overview', 'tickets', 'settings'],
+  marketing_agent: ['crm', 'overview', 'settings']
 }
 
 export default function SuperadminDashboard() {
@@ -38,13 +39,22 @@ export default function SuperadminDashboard() {
       </div>
 
       <div className="flex flex-wrap gap-3 border-b border-border pb-4">
-        {availableTabs.includes('analytics') && (
+        {availableTabs.includes('overview') && (
           <Button
-            variant={activeTab === 'analytics' ? 'primary' : 'ghost'}
-            onClick={() => setActiveTab('analytics')}
-            className={activeTab === 'analytics' ? '' : 'text-ink-muted hover:text-ink'}
+            variant={activeTab === 'overview' ? 'primary' : 'ghost'}
+            onClick={() => setActiveTab('overview')}
+            className={activeTab === 'overview' ? '' : 'text-ink-muted hover:text-ink'}
           >
-            <Icon name="monitoring" className="mr-2" /> Analytiques
+            <Icon name="monitoring" className="mr-2" /> Vue d'ensemble
+          </Button>
+        )}
+        {availableTabs.includes('crm') && (
+          <Button
+            variant={activeTab === 'crm' ? 'primary' : 'ghost'}
+            onClick={() => setActiveTab('crm')}
+            className={activeTab === 'crm' ? '' : 'text-ink-muted hover:text-ink'}
+          >
+            <Icon name="handshake" className="mr-2" /> CRM
           </Button>
         )}
         {availableTabs.includes('tickets') && (
@@ -104,7 +114,8 @@ export default function SuperadminDashboard() {
       </div>
 
       <div className="mt-6">
-        {activeTab === 'analytics' && availableTabs.includes('analytics') && <PlatformAnalytics />}
+        {activeTab === 'overview' && availableTabs.includes('overview') && <Overview />}
+        {activeTab === 'crm' && availableTabs.includes('crm') && <Crm />}
         {activeTab === 'tickets' && availableTabs.includes('tickets') && <SupportTickets />}
         {activeTab === 'schools' && availableTabs.includes('schools') && <SchoolsRegistry />}
         {activeTab === 'payments' && availableTabs.includes('payments') && <PaymentsAndSubscriptions />}

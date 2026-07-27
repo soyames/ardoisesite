@@ -37,21 +37,27 @@ service cloud.firestore {
       allow create: if isSignedIn()
                     && !request.resource.data.keys().hasAny(
                           ['subscriptionActive', 'subscriptionExpiresAt', 'subscriptionStatus',
-                           'activationCode', 'lastPaymentDate', 'lastPaymentTx']);
+                           'activationCode', 'lastPaymentDate', 'lastPaymentTx',
+                           'pipelineStage', 'assignedTo', 'lastContactedAt']);
 
       // SEUL le fondateur lié à cette école a le droit de modifier les infos (comme le backendUrl) --
-      // MAIS jamais les champs d'abonnement. Ces champs ne sont écrits que par
-      // le webhook FedaPay signé (ardoise-api, via le SDK Admin qui ignore ces
-      // règles) après confirmation réelle du paiement -- un fondateur qui
-      // appelait updateDoc() directement depuis le client (SubscriptionPanel.jsx,
-      // corrigé) pouvait sinon s'auto-activer un abonnement gratuit sans jamais
-      // payer, puisque cette règle ne restreignait aucun champ.
+      // MAIS jamais les champs d'abonnement, ni les champs CRM internes
+      // (pipelineStage/assignedTo/lastContactedAt - ops.ardoiseeduc.com,
+      // ecrits uniquement via /api/admin/crm/* cote Worker). Ces champs
+      // ne sont écrits que par le webhook FedaPay signé ou par le Worker
+      // (ardoise-api, via le SDK Admin qui ignore ces règles) -- un
+      // fondateur qui appelait updateDoc() directement depuis le client
+      // (SubscriptionPanel.jsx, corrigé) pouvait sinon s'auto-activer un
+      // abonnement gratuit sans jamais payer, puisque cette règle ne
+      // restreignait aucun champ ; meme raisonnement pour les champs CRM,
+      // qui ne regardent que l'équipe Ardoise, jamais le fondateur lui-meme.
       allow update: if isSignedIn()
                     && getUserData().role == 'founder'
                     && getUserData().schoolId == schoolId
                     && !request.resource.data.diff(resource.data).affectedKeys()
                           .hasAny(['subscriptionActive', 'subscriptionExpiresAt', 'subscriptionStatus',
-                                   'activationCode', 'lastPaymentDate', 'lastPaymentTx']);
+                                   'activationCode', 'lastPaymentDate', 'lastPaymentTx',
+                                   'pipelineStage', 'assignedTo', 'lastContactedAt']);
       allow delete: if isSignedIn()
                     && getUserData().role == 'founder'
                     && getUserData().schoolId == schoolId;
@@ -61,6 +67,13 @@ service cloud.firestore {
         allow read, write: if isSignedIn()
                            && getUserData().role == 'founder'
                            && getUserData().schoolId == schoolId;
+      }
+
+      // CRM interaction log for this (already-registered) school - same
+      // read-only-here, write-via-Worker reasoning as crm_leads above.
+      match /crm_activities/{activityId} {
+        allow read: if isSignedIn() && getUserData().role in ['superadmin', 'support_agent', 'school_onboarding', 'dev_onboarding', 'billing_agent', 'marketing_agent'];
+        allow write: if false;
       }
     }
 
@@ -227,6 +240,23 @@ service cloud.firestore {
     match /support_tickets/{ticketId} {
       allow create: if true;
       allow read, update: if isSignedIn() && getUserData().role in ['superadmin', 'support_agent', 'school_onboarding', 'dev_onboarding', 'billing_agent', 'marketing_agent'];
+    }
+
+    // CRM (ops.ardoiseeduc.com) -- prospects that have not registered
+    // a real schools/{id} doc yet. Read-only for the platform team
+    // here; every write (create/update/pipeline stage/activity notes)
+    // goes through ardoise-api's /api/admin/crm/* routes (Admin SDK,
+    // ignores these rules) so field validation (enum pipelineStage,
+    // etc.) lives in one place, same reasoning as school_payouts_owed
+    // above and every other admin-only collection in this file.
+    match /crm_leads/{leadId} {
+      allow read: if isSignedIn() && getUserData().role in ['superadmin', 'support_agent', 'school_onboarding', 'dev_onboarding', 'billing_agent', 'marketing_agent'];
+      allow write: if false;
+
+      match /crm_activities/{activityId} {
+        allow read: if isSignedIn() && getUserData().role in ['superadmin', 'support_agent', 'school_onboarding', 'dev_onboarding', 'billing_agent', 'marketing_agent'];
+        allow write: if false;
+      }
     }
 
     // Transactions FedaPay -- écrites uniquement par le Worker

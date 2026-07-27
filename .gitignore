@@ -12,6 +12,7 @@ node_modules_broken*
 dist
 dist_old*
 dist-ssr
+ops-dist
 vite.test.config.js
 *.local
 

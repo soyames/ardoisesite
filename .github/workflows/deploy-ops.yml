@@ -1,0 +1,53 @@
+name: Deploy Ops to Cloudflare Pages
+
+# Publishes ops/ (internal team tooling - CRM, BI, support, subscription
+# management, formerly reachable on saas.ardoiseeduc.com as part of the
+# customer-facing bundle, see domainRedirect.js) to its own Cloudflare
+# Pages project (ardoise-ops) and its own domain, ops.ardoiseeduc.com -
+# deliberately a separate deploy from deploy-saas.yml, so an internal
+# tooling change never ships alongside (or blocks) a customer-facing
+# release, and vice versa.
+#
+# Required one-time setup (GitHub UI, never in this file): same
+# CLOUDFLARE_API_TOKEN / CLOUDFLARE_ACCOUNT_ID secrets deploy-saas.yml
+# already uses (same Cloudflare account, same token scope covers both
+# Pages projects). ops.ardoiseeduc.com itself is added as a custom
+# domain on the ardoise-ops Pages project in the Cloudflare dashboard
+# once DNS is pointed at it - not something this workflow manages.
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'ops/**'
+      - 'src/shared/**'
+      - 'src/apps/superadmin/**'
+      - 'src/index.css'
+      - 'vite.ops.config.js'
+      - 'package.json'
+  workflow_dispatch: {}
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      deployments: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm install
+
+      - run: npm run build:ops
+
+      - name: Deploy to Cloudflare Pages
+        uses: cloudflare/wrangler-action@v4
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy ./ops-dist --project-name=ardoise-ops --branch=main
+          gitHubToken: ${{ secrets.GITHUB_TOKEN }}
