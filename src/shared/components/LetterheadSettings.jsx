@@ -6,7 +6,7 @@ import Button from '../ui/Button.jsx'
 import Badge from '../ui/Badge.jsx'
 import Spinner from '../ui/Spinner.jsx'
 import EmptyState from '../ui/EmptyState.jsx'
-import RichTextEditor from './RichTextEditor.jsx'
+import Icon from '../ui/Icon.jsx'
 
 const INPUT_CLASS =
   'block w-full rounded-control border-0 py-2 px-3 bg-surface text-ink ring-1 ring-inset ring-border focus:ring-2 focus:ring-primary-500 sm:text-sm'
@@ -21,9 +21,93 @@ const PURPOSES = [
 
 const EMPTY_FORM = { name: '', purpose: 'generic', headerHtml: '', footerHtml: '' }
 
-const SAMPLE_TEMPLATES = {
-  header: `<h1 style="text-align: center"><strong>[Nom de l'Ecole]</strong></h1><p style="text-align: center">[Adresse complete de l'ecole] | Tel: [Numero] | Email: [Email]</p><p style="text-align: center"></p>`,
-  footer: `<p style="text-align: center"><strong>[Nom de l'Ecole]</strong> - Agree par le Ministere de l'Education Nationale</p><p style="text-align: center">Site Web: [Site Web] | RCCM: [Numero d'immatriculation]</p>`
+function ImageDropzone({ value, onChange, label }) {
+  const [dragActive, setDragActive] = useState(false)
+
+  // Extract base64 src from img tag if value is an img tag
+  const extractSrc = (html) => {
+    if (!html) return null
+    const match = html.match(/src="([^"]+)"/)
+    return match ? match[1] : null
+  }
+
+  const handleDrop = (e) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setDragActive(false)
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      handleFile(e.dataTransfer.files[0])
+    }
+  }
+
+  const handleChange = (e) => {
+    e.preventDefault()
+    if (e.target.files && e.target.files[0]) {
+      handleFile(e.target.files[0])
+    }
+  }
+
+  const handleFile = (file) => {
+    if (!file.type.startsWith('image/')) return
+    const reader = new FileReader()
+    reader.readAsDataURL(file)
+    reader.onload = () => {
+      // Wraps the base64 image in a clean img tag that looks good on PDF
+      const html = `<img src="${reader.result}" style="max-width: 100%; height: auto; display: block; margin: 0 auto;" alt="${label}" />`
+      onChange(html)
+    }
+  }
+
+  const handleDrag = (e) => {
+    e.preventDefault()
+    e.stopPropagation()
+    if (e.type === 'dragenter' || e.type === 'dragover') {
+      setDragActive(true)
+    } else if (e.type === 'dragleave') {
+      setDragActive(false)
+    }
+  }
+
+  const imgSrc = extractSrc(value)
+
+  return (
+    <div 
+      className={`relative mt-2 flex justify-center rounded-lg border border-dashed px-6 py-10 transition-colors ${
+        dragActive ? 'border-primary-500 bg-primary-50' : 'border-border bg-surface-raised'
+      }`}
+      onDragEnter={handleDrag}
+      onDragLeave={handleDrag}
+      onDragOver={handleDrag}
+      onDrop={handleDrop}
+    >
+      <div className="text-center w-full">
+        {imgSrc ? (
+          <div className="mb-4 relative w-full flex justify-center">
+            <img src={imgSrc} alt="Previsualisation" className="max-h-48 object-contain border border-border shadow-sm rounded-md" />
+            <button 
+              type="button" 
+              onClick={(e) => { e.preventDefault(); onChange('') }}
+              className="absolute -top-3 -right-3 bg-red-100 text-red-600 rounded-full p-1 hover:bg-red-200"
+            >
+              <Icon name="close" className="text-[16px]" />
+            </button>
+          </div>
+        ) : (
+          <Icon name="photo_camera" className="mx-auto h-12 w-12 text-ink-muted/50" />
+        )}
+        <div className="mt-4 flex text-sm leading-6 text-ink-muted justify-center">
+          <label
+            className="relative cursor-pointer rounded-md bg-transparent font-semibold text-primary-600 focus-within:outline-none hover:text-primary-500"
+          >
+            <span>Cliquez pour sélectionner un fichier</span>
+            <input type="file" accept="image/*" className="sr-only" onChange={handleChange} />
+          </label>
+          <p className="pl-1">ou glissez-déposez l'image ici</p>
+        </div>
+        <p className="text-xs leading-5 text-ink-muted">PNG, JPG ou JPEG (idéalement largeur de 800px)</p>
+      </div>
+    </div>
+  )
 }
 
 
@@ -92,22 +176,12 @@ export default function LetterheadSettings() {
               </select>
             </div>
             <div>
-              <div className="mb-1 flex items-center justify-between">
-                <label className="block text-xs font-medium text-ink-muted">En-tête (Visuel)</label>
-                <button type="button" onClick={() => setForm({ ...form, headerHtml: SAMPLE_TEMPLATES.header })} className="text-xs text-primary-600 hover:underline">
-                  + Inserer modele
-                </button>
-              </div>
-              <RichTextEditor value={form.headerHtml} onChange={(html) => setForm({ ...form, headerHtml: html })} />
+              <label className="block text-sm font-medium text-ink">Image d'En-tête (Logo + Nom)</label>
+              <ImageDropzone value={form.headerHtml} onChange={(html) => setForm({ ...form, headerHtml: html })} label="En-tête" />
             </div>
             <div>
-              <div className="mb-1 flex items-center justify-between">
-                <label className="block text-xs font-medium text-ink-muted">Pied de page (Visuel)</label>
-                <button type="button" onClick={() => setForm({ ...form, footerHtml: SAMPLE_TEMPLATES.footer })} className="text-xs text-primary-600 hover:underline">
-                  + Inserer modele
-                </button>
-              </div>
-              <RichTextEditor value={form.footerHtml} onChange={(html) => setForm({ ...form, footerHtml: html })} />
+              <label className="block text-sm font-medium text-ink mt-4">Image de Pied de page</label>
+              <ImageDropzone value={form.footerHtml} onChange={(html) => setForm({ ...form, footerHtml: html })} label="Pied de page" />
             </div>
             {error && <p className="text-sm text-danger-600">{error}</p>}
             <Button type="submit" size="sm" disabled={submitting}>{submitting ? 'Enregistrement...' : editingId ? 'Mettre a jour' : 'Creer'}</Button>

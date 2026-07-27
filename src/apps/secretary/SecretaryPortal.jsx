@@ -269,6 +269,7 @@ function StudentProfile({ studentId, onBack, onUpdated }) {
   const attendance = useApiGet(currentEnrollment ? `/api/academics/attendance/?enrollment=${currentEnrollment.id}` : null, { skip: !currentEnrollment })
 
   const [editing, setEditing] = useState(false)
+  const [documentModalOpen, setDocumentModalOpen] = useState(false)
   const [form, setForm] = useState(null)
   const [error, setError] = useState(null)
   const [saving, setSaving] = useState(false)
@@ -327,10 +328,22 @@ function StudentProfile({ studentId, onBack, onUpdated }) {
           </div>
           <div className="flex items-center gap-2">
             <Badge tone={student.data.status === 'active' ? 'success' : 'neutral'}>{student.data.status || 'active'}</Badge>
+            <Button size="sm" variant="outline" onClick={() => setDocumentModalOpen(true)}>
+              <Icon name="description" className="mr-1 text-[16px]" />
+              Générer un document
+            </Button>
             <Button size="sm" variant="secondary" onClick={startEditing}>Modifier</Button>
           </div>
         </CardBody>
       </Card>
+
+      {documentModalOpen && (
+        <DocumentGeneratorModal 
+          student={student.data} 
+          currentEnrollment={currentEnrollment}
+          onClose={() => setDocumentModalOpen(false)} 
+        />
+      )}
 
       {editing && (
         <Card>
@@ -450,6 +463,89 @@ function ParentsTab() {
           </ul>
         </CardBody>
       </Card>
+    </div>
+  )
+}
+
+function DocumentGeneratorModal({ student, currentEnrollment, onClose }) {
+  const [docType, setDocType] = useState('certificat_scolarite')
+  const [customText, setCustomText] = useState('')
+  const [generating, setGenerating] = useState(false)
+  const [error, setError] = useState(null)
+
+  const handleGenerate = async () => {
+    setGenerating(true)
+    setError(null)
+    try {
+      const payload = { studentId: student.id, docType }
+      if (currentEnrollment?.id) payload.enrollmentId = currentEnrollment.id
+      if (docType === 'lettre_libre' || docType === 'convocation_parent') payload.customText = customText
+
+      const document = await api.post('/api/collab/documents/generate/', payload)
+      window.open(document.file, '_blank', 'noopener')
+      onClose()
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'Erreur reseau lors de la generation du document.')
+    } finally {
+      setGenerating(false)
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/50 backdrop-blur-sm p-4">
+      <div className="bg-surface rounded-xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+        <div className="flex items-center justify-between p-4 border-b border-border">
+          <h3 className="text-lg font-bold text-ink">Générer un document</h3>
+          <button onClick={onClose} className="text-ink-muted hover:text-ink">
+            <Icon name="close" />
+          </button>
+        </div>
+        <div className="p-4 space-y-4">
+          <div className="bg-primary-50 text-primary-700 p-3 rounded-md text-sm">
+            Ce document sera automatiquement imprimé sur le <strong>papier à en-tête officiel de l'école</strong>.
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-ink mb-1">Type de document</label>
+            <select 
+              value={docType} 
+              onChange={(e) => setDocType(e.target.value)}
+              className={INPUT_CLASS}
+            >
+              <option value="certificat_scolarite">Certificat de Scolarité</option>
+              <option value="convocation_parent">Convocation des parents</option>
+              <option value="attestation_presence">Attestation de présence</option>
+              <option value="lettre_libre">Lettre libre / Autre</option>
+            </select>
+          </div>
+
+          {docType === 'lettre_libre' || docType === 'convocation_parent' ? (
+            <div>
+              <label className="block text-sm font-medium text-ink mb-1">Texte du document</label>
+              <textarea 
+                rows={6}
+                placeholder="Cher parent, nous vous invitons à..."
+                value={customText}
+                onChange={(e) => setCustomText(e.target.value)}
+                className={INPUT_CLASS}
+              />
+            </div>
+          ) : (
+            <div className="p-4 border border-dashed border-border rounded-md bg-surface-raised text-sm text-ink-muted">
+              Le système générera un certificat officiel attestant que <strong>{student.firstName} {student.lastName}</strong> (Matricule: {student.matricule}) est inscrit(e) en classe de <strong>{currentEnrollment?.classroomName || '...'}</strong> pour l'année en cours.
+            </div>
+          )}
+
+          {error && <p className="text-sm text-danger-600">{error}</p>}
+        </div>
+        <div className="flex justify-end gap-3 p-4 border-t border-border bg-surface-raised rounded-b-xl">
+          <Button variant="ghost" onClick={onClose}>Annuler</Button>
+          <Button variant="primary" onClick={handleGenerate} loading={generating} disabled={generating}>
+            <Icon name="print" className="mr-1 text-[16px]" />
+            Générer le PDF
+          </Button>
+        </div>
+      </div>
     </div>
   )
 }
