@@ -456,9 +456,40 @@ function EnrollmentAppointmentPicker({ request }) {
  * SchoolEnrollment.jsx used to start this payment immediately on
  * submission, before the school had even seen the request; that step
  * moved here so accepting genuinely comes first.
+ *
+ * Ardoise-mediated collection is opt-in per school now (schools/{id}.
+ * feeCollectionEnabled), not the default everywhere - some countries
+ * (e.g. Burkina Faso) are starting to cap/regulate school fees, and
+ * taking a cut of a capped fee is a regulatory risk this platform
+ * doesn't need to carry in every jurisdiction. Defaults to disabled
+ * for those countries at registration (see RegisterPage.jsx); a
+ * superadmin can override per school via the CRM (ops.ardoiseeduc.com).
  */
 function EnrollmentPaymentButton({ request }) {
   const { user } = useAuth()
+  const [school, setSchool] = useState(undefined) // undefined = loading
+
+  useEffect(() => {
+    let cancelled = false
+    getDoc(doc(db, 'schools', request.schoolId)).then((snap) => {
+      if (!cancelled) setSchool(snap.exists() ? { id: snap.id, ...snap.data() } : null)
+    })
+    return () => { cancelled = true }
+  }, [request.schoolId])
+
+  if (school === undefined) return <Spinner className="h-4 w-4" />
+
+  if (school?.feeCollectionEnabled === false) {
+    return (
+      <div className="rounded-control bg-primary-50 p-3 text-sm text-ink">
+        <p>
+          Cette école gère elle-même ses frais d'inscription. Contactez directement l'établissement
+          {school.phone ? ` au ${school.phone}` : ''}{school.email ? ` (${school.email})` : ''} pour
+          régler les {request.registrationFee} FCFA de frais d'inscription.
+        </p>
+      </div>
+    )
+  }
 
   return (
     <FedaPayButton

@@ -1,11 +1,22 @@
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../../shared/auth/AuthContext.jsx'
-import { doc, getDoc } from 'firebase/firestore'
-import { FedaPayButton } from '../../shared/components/FedaPayButton.jsx'
+import { doc, getDoc, addDoc, collection } from 'firebase/firestore'
 import { db } from '../../shared/api/firebase.js'
 import Spinner from '../../shared/ui/Spinner.jsx'
 
+/**
+ * The parent-tutor contract (schedule, hours, agreed rate) is still a
+ * real record - see ParentPortal.jsx's "Mes Cours de Soutien" and
+ * TeacherMarketplaceDashboard.jsx's "Mes Contrats", both of which read
+ * this collection. What changed (2026-07 paywall/revenue-model pivot)
+ * is who handles payment: Ardoise no longer sits in the middle
+ * (parent paid Ardoise, Ardoise paid the tutor, 10% commission) - the
+ * parent and tutor agree and settle the proposedPrice directly, off
+ * -platform, however they prefer. This form just records the terms
+ * both sides agreed to, so the relationship still shows up on both
+ * dashboards; it's not a payment form anymore.
+ */
 export default function TutoringBookingFlow() {
   const { id } = useParams()
   const navigate = useNavigate()
@@ -16,10 +27,8 @@ export default function TutoringBookingFlow() {
   const [proposedPrice, setProposedPrice] = useState('')
   const [startDate, setStartDate] = useState('')
   const [hoursPerWeek, setHoursPerWeek] = useState('4')
-
-  // New State for Payment
-  const [paymentDate, setPaymentDate] = useState('5') // default 5th of the month
-  const [agreedToTerms, setAgreedToTerms] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
+  const [error, setError] = useState('')
 
   useEffect(() => {
     let cancelled = false
@@ -70,13 +79,29 @@ export default function TutoringBookingFlow() {
     )
   }
 
-  const commission = Math.round(Number(proposedPrice) * 0.1)
-  const total = Number(proposedPrice) + commission
-
-  const handleBook = () => {
-    // Mock booking logic
-    alert('Contrat signé et mandat de prélèvement validé !')
-    navigate('/portal') // Assume parent goes to their portal after
+  const handleConfirm = async () => {
+    setSubmitting(true)
+    setError('')
+    try {
+      await addDoc(collection(db, 'tutoring_contracts'), {
+        teacherId: teacher.id,
+        teacherName: teacher.name,
+        parentId: user.uid,
+        parentName: `${user?.firstName || ''} ${user?.lastName || ''}`.trim(),
+        parentEmail: user?.email || '',
+        startDate,
+        hoursPerWeek: Number(hoursPerWeek),
+        proposedPrice: Number(proposedPrice),
+        status: 'active',
+        createdAt: new Date().toISOString(),
+      })
+      setStep(3)
+    } catch (err) {
+      console.error('Failed to create tutoring contract:', err)
+      setError("Impossible d'enregistrer l'accord. Réessayez.")
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   return (
@@ -103,7 +128,7 @@ export default function TutoringBookingFlow() {
               1. Modalités
             </div>
             <div className={`flex-1 p-4 text-center text-sm font-semibold ${step === 2 ? 'text-primary-600 border-b-2 border-primary-600' : 'text-ink-muted'}`}>
-              2. Contrat & Paiement
+              2. Confirmation
             </div>
           </div>
 
@@ -142,6 +167,11 @@ export default function TutoringBookingFlow() {
                     className="block w-full rounded-control border-0 py-2.5 px-3 text-ink shadow-sm ring-1 ring-inset ring-border focus:ring-2 focus:ring-primary-500 sm:text-sm"
                   />
                 </div>
+                <p className="text-xs text-ink-muted">
+                  Ardoise ne prend aucune commission et n'intervient pas dans le paiement - vous réglez {teacher.name}
+                  directement, selon le mode de paiement de votre choix. Ceci enregistre simplement les modalités
+                  convenues pour que vous les retrouviez tous les deux dans votre espace.
+                </p>
 
                 <div className="pt-6">
                   <button
@@ -149,7 +179,7 @@ export default function TutoringBookingFlow() {
                     disabled={!startDate || !proposedPrice}
                     className="w-full rounded-control bg-accent-500 px-4 py-3 text-sm font-bold text-primary-950 shadow-card hover:bg-accent-400 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    Continuer vers le contrat
+                    Continuer
                   </button>
                 </div>
               </div>
@@ -158,110 +188,47 @@ export default function TutoringBookingFlow() {
             {step === 2 && (
               <div className="space-y-6">
                 <div className="rounded-card bg-surface p-6 ring-1 ring-border">
-                  <h3 className="text-lg font-bold text-ink mb-4">Contrat d'Engagement</h3>
-                  <div className="space-y-4 text-sm text-ink-muted">
-                    <p><strong>Parties :</strong> Ce contrat lie le Parent et M./Mme {teacher.name}.</p>
-                    <p><strong>Durée :</strong> Engagement minimum obligatoire de <strong>6 mois</strong> à compter du {startDate || '...'}.</p>
-                    <p className="text-danger-600 font-medium"><strong>Interdiction de Paiement Direct :</strong> Le parent s'engage formellement à <strong>ne jamais payer le tuteur de la main à la main</strong>. Tous les paiements doivent obligatoirement transiter par la plateforme Ardoise, qui se charge de rémunérer l'enseignant.</p>
-                  </div>
-
-                  <div className="mt-6 pt-6 border-t border-border">
-                    <label className="block text-sm font-bold text-ink mb-2">Jour du prélèvement mensuel</label>
-                    <p className="text-xs text-ink-muted mb-3">Choisissez la date à laquelle vous serez prélevé chaque mois. Vous recevrez un rappel par email avant chaque prélèvement automatique.</p>
-                    <select
-                      value={paymentDate}
-                      onChange={(e) => setPaymentDate(e.target.value)}
-                      className="block w-full max-w-xs rounded-control border-0 py-2.5 px-3 text-ink shadow-sm ring-1 ring-inset ring-border focus:ring-2 focus:ring-primary-500 sm:text-sm"
-                    >
-                      <option value="1">Le 1er du mois</option>
-                      <option value="5">Le 5 du mois</option>
-                      <option value="10">Le 10 du mois</option>
-                      <option value="15">Le 15 du mois</option>
-                      <option value="25">Le 25 du mois</option>
-                    </select>
-                  </div>
-
-                  <div className="mt-6 flex items-start bg-surface-raised p-4 rounded-control ring-1 ring-border">
-                    <input
-                      id="terms"
-                      type="checkbox"
-                      checked={agreedToTerms}
-                      onChange={(e) => setAgreedToTerms(e.target.checked)}
-                      className="mt-1 h-4 w-4 rounded border-border text-primary-600 focus:ring-primary-500"
-                    />
-                    <label htmlFor="terms" className="ml-3 text-sm text-ink">
-                      J'accepte les termes du contrat, la durée minimum de 6 mois, et j'autorise Ardoise à prélever automatiquement le montant total chaque mois le {paymentDate}.
-                    </label>
-                  </div>
-                </div>
-
-                <div className="rounded-card border border-border p-6">
-                  <h3 className="text-lg font-bold text-ink mb-4">Détail du paiement (Mensuel)</h3>
+                  <h3 className="text-lg font-bold text-ink mb-4">Récapitulatif</h3>
                   <dl className="space-y-3 text-sm text-ink-muted">
                     <div className="flex justify-between">
-                      <dt>Rémunération du tuteur</dt>
-                      <dd className="font-semibold text-ink">{Number(proposedPrice).toLocaleString()} F</dd>
+                      <dt>Tuteur</dt>
+                      <dd className="font-semibold text-ink">{teacher.name}</dd>
                     </div>
                     <div className="flex justify-between">
-                      <dt>Frais de plateforme (10%)</dt>
-                      <dd className="font-semibold text-ink">{commission.toLocaleString()} F</dd>
+                      <dt>Début</dt>
+                      <dd className="font-semibold text-ink">{startDate}</dd>
+                    </div>
+                    <div className="flex justify-between">
+                      <dt>Volume horaire</dt>
+                      <dd className="font-semibold text-ink">{hoursPerWeek}h/semaine</dd>
                     </div>
                     <div className="flex justify-between border-t border-border pt-3 text-base">
-                      <dt className="font-bold text-ink">Prélèvement Mensuel</dt>
-                      <dd className="font-bold text-primary-600">{total.toLocaleString()} F</dd>
+                      <dt className="font-bold text-ink">Tarif mensuel convenu</dt>
+                      <dd className="font-bold text-primary-600">{Number(proposedPrice).toLocaleString()} F</dd>
                     </div>
                   </dl>
                 </div>
 
-                <div className="flex gap-4 pt-6">
+                {error && <p className="text-sm text-danger-600">{error}</p>}
+
+                <div className="flex gap-4 pt-2">
                   <button
                     onClick={() => setStep(1)}
                     className="w-1/3 rounded-control bg-surface-raised px-4 py-3 text-sm font-bold text-ink ring-1 ring-border hover:bg-surface"
                   >
                     Retour
                   </button>
-                  {user ? (
-                    <FedaPayButton
-                      amount={total}
-                      description={`Réservation Tuteur: ${teacher.name}`}
-                      customerEmail={user?.email}
-                      customerFirstname={user?.firstName}
-                      customerLastname={user?.lastName}
-                      customerPhoneNumber={user?.phone}
-                      customMetadata={{
-                        type: 'tutoring_subscription',
-                        teacherId: teacher.id,
-                        teacherName: teacher.name,
-                        parentId: user?.uid || 'unknown',
-                        parentEmail: user?.email || '',
-                        parentName: `${user?.firstName || ''} ${user?.lastName || ''}`.trim(),
-                        startDate,
-                        hoursPerWeek: String(hoursPerWeek),
-                        paymentDate: String(paymentDate),
-                      }}
-                      onComplete={() => {
-                        // The signed FedaPay webhook (ardoise-api) creates the
-                        // tutoring_contracts document now - see firestore.rules,
-                        // which no longer lets the client create one directly.
-                        // It'll show up in "Mes Cours de Soutien" within seconds.
-                        setStep(3)
-                      }}
-                      className={`w-2/3 rounded-control px-4 py-3 text-sm font-bold shadow-card ${agreedToTerms ? 'bg-accent-500 text-primary-950 hover:bg-accent-400' : 'bg-primary-400 text-white cursor-not-allowed'}`}
-                    >
-                      Signer et Payer {total.toLocaleString('fr-FR')} F
-                    </FedaPayButton>
-                  ) : (
-                    <Link
-                      to="/register"
-                      className="flex w-2/3 items-center justify-center rounded-control bg-accent-500 px-4 py-3 text-sm font-bold text-primary-950 shadow-card hover:bg-accent-400"
-                    >
-                      S'inscrire ou se connecter pour payer
-                    </Link>
-                  )}
+                  <button
+                    onClick={handleConfirm}
+                    disabled={submitting}
+                    className="w-2/3 rounded-control bg-accent-500 px-4 py-3 text-sm font-bold text-primary-950 shadow-card hover:bg-accent-400 disabled:opacity-50"
+                  >
+                    {submitting ? 'Enregistrement...' : 'Confirmer l\'accord'}
+                  </button>
                 </div>
               </div>
             )}
-            
+
             {step === 3 && (
               <div className="text-center py-10">
                 <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-success-50 mb-6">
@@ -269,16 +236,17 @@ export default function TutoringBookingFlow() {
                     <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                   </svg>
                 </div>
-                <h2 className="text-2xl font-bold text-ink mb-2">Paiement Réussi !</h2>
+                <h2 className="text-2xl font-bold text-ink mb-2">Accord enregistré !</h2>
                 <p className="text-ink-muted mb-8 max-w-md mx-auto">
-                  Votre abonnement pour {teacher.name} est confirmé. Vous recevrez très bientôt un email avec les détails de la première séance.
+                  Votre accord avec {teacher.name} est enregistré. Retrouvez-le dans votre espace parent, et
+                  convenez du règlement directement avec {teacher.name}.
                 </p>
-                <Link
-                  to="/"
+                <button
+                  onClick={() => navigate('/portal')}
                   className="inline-flex justify-center rounded-control bg-accent-500 px-6 py-3 text-sm font-bold text-primary-950 shadow-card hover:bg-accent-400"
                 >
-                  Retour à l'accueil
-                </Link>
+                  Aller à mon espace
+                </button>
               </div>
             )}
           </div>

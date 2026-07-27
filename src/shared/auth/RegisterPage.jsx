@@ -11,6 +11,15 @@ import { FRANCOPHONE_AFRICA_DATA as WEST_AFRICA_DATA } from '../constants/locati
 
 const INPUT_CLASS = "relative block w-full rounded-control border-0 bg-surface-raised py-2.5 px-3 text-ink ring-1 ring-inset ring-border placeholder:text-ink-muted focus:z-10 focus:ring-2 focus:ring-inset focus:ring-primary-500 sm:text-sm sm:leading-6"
 
+// Countries where a regulator is known to cap/regulate school fees -
+// taking a commission on a capped fee is a regulatory risk Ardoise
+// doesn't need to carry, so fee collection defaults OFF there (see
+// EnrollmentPaymentButton in ParentPortal.jsx). This is a starting
+// default only, editable per school afterward via the CRM
+// (ops.ardoiseeduc.com) - firestore.rules blocks the founder
+// themselves from changing it post-registration.
+const FEE_CAPPED_COUNTRIES = ['Burkina Faso']
+
 export default function RegisterPage() {
   const navigate = useNavigate()
   const { refreshUser } = useAuth()

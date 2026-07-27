@@ -43,21 +43,27 @@ service cloud.firestore {
       // SEUL le fondateur lié à cette école a le droit de modifier les infos (comme le backendUrl) --
       // MAIS jamais les champs d'abonnement, ni les champs CRM internes
       // (pipelineStage/assignedTo/lastContactedAt - ops.ardoiseeduc.com,
-      // ecrits uniquement via /api/admin/crm/* cote Worker). Ces champs
-      // ne sont écrits que par le webhook FedaPay signé ou par le Worker
-      // (ardoise-api, via le SDK Admin qui ignore ces règles) -- un
-      // fondateur qui appelait updateDoc() directement depuis le client
-      // (SubscriptionPanel.jsx, corrigé) pouvait sinon s'auto-activer un
-      // abonnement gratuit sans jamais payer, puisque cette règle ne
-      // restreignait aucun champ ; meme raisonnement pour les champs CRM,
-      // qui ne regardent que l'équipe Ardoise, jamais le fondateur lui-meme.
+      // ecrits uniquement via /api/admin/crm/* cote Worker), ni
+      // feeCollectionEnabled une fois créé (le fondateur le définit via
+      // sa valeur par défaut à l'inscription - RegisterPage.jsx calcule
+      // ce défaut selon le pays - mais ne peut plus le modifier après
+      // coup ; c'est une decision de conformité reglementaire qui
+      // regarde Ardoise, pas quelque chose qu'un fondateur devrait
+      // pouvoir activer/désactiver lui-même une fois l'école créée).
+      // Ces champs ne sont écrits que par le webhook FedaPay signé ou
+      // par le Worker (ardoise-api, via le SDK Admin qui ignore ces
+      // règles) -- un fondateur qui appelait updateDoc() directement
+      // depuis le client (SubscriptionPanel.jsx, corrigé) pouvait sinon
+      // s'auto-activer un abonnement gratuit sans jamais payer, puisque
+      // cette règle ne restreignait aucun champ ; meme raisonnement
+      // pour les champs CRM et feeCollectionEnabled.
       allow update: if isSignedIn()
                     && getUserData().role == 'founder'
                     && getUserData().schoolId == schoolId
                     && !request.resource.data.diff(resource.data).affectedKeys()
                           .hasAny(['subscriptionActive', 'subscriptionExpiresAt', 'subscriptionStatus',
                                    'activationCode', 'lastPaymentDate', 'lastPaymentTx',
-                                   'pipelineStage', 'assignedTo', 'lastContactedAt']);
+                                   'pipelineStage', 'assignedTo', 'lastContactedAt', 'feeCollectionEnabled']);
       allow delete: if isSignedIn()
                     && getUserData().role == 'founder'
                     && getUserData().schoolId == schoolId;
@@ -212,8 +218,25 @@ service cloud.firestore {
     // FedaPay mais le contrat n'atteignait jamais Firestore, et
     // personne ne pouvait le voir meme quand l'ecriture passait par le
     // client (rare, car elle aussi refusee).
+    // The contract itself (who's tutoring whom, what schedule/hours they
+    // agreed) is still a real, useful record - only Ardoise-mediated
+    // PAYMENT was removed (see the 2026-07 paywall/revenue-model pivot:
+    // parent and tutor now agree price/payment method between
+    // themselves, off-platform). The parent creates it directly - no
+    // signed webhook needed anymore since no money moves through here -
+    // scoped to their own uid so a parent can't forge a contract on
+    // someone else's behalf. Either party can update it afterward
+    // (status changes, the parent assigning a child - see
+    // ParentPortal.jsx's handleAssignChild).
     match /tutoring_contracts/{contractId} {
-      allow create, update: if false;
+      allow create: if isSignedIn()
+                    && request.auth.uid == request.resource.data.parentId
+                    && request.resource.data.teacherId is string
+                    && !request.resource.data.keys().hasAny(['commission', 'total', 'transactionId']);
+      allow update: if isSignedIn() && (
+        request.auth.uid == resource.data.parentId ||
+        request.auth.uid == resource.data.teacherId
+      );
       allow read: if isSignedIn() && (
         request.auth.uid == resource.data.parentId ||
         request.auth.uid == resource.data.teacherId

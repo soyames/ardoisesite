@@ -84,6 +84,8 @@ export default function Crm() {
       lastContactedAt: s.lastContactedAt || null,
       subscriptionActive: !!s.subscriptionActive,
       city: s.city || '',
+      country: s.country || '',
+      feeCollectionEnabled: s.feeCollectionEnabled !== false,
     }))
     const leadRows = leads.map((l) => ({
       kind: 'lead', id: l.id, name: l.name,
@@ -268,6 +270,23 @@ function CrmDetailModal({ entity, onClose, onLeadsChanged }) {
   const [newType, setNewType] = useState('note')
   const [submittingNote, setSubmittingNote] = useState(false)
   const [error, setError] = useState(null)
+  const [feeCollectionEnabled, setFeeCollectionEnabled] = useState(entity.feeCollectionEnabled)
+  const [savingFeeToggle, setSavingFeeToggle] = useState(false)
+
+  const toggleFeeCollection = async () => {
+    const next = !feeCollectionEnabled
+    setFeeCollectionEnabled(next)
+    setSavingFeeToggle(true)
+    setError(null)
+    try {
+      await authedFetch(`/api/admin/schools/${entity.id}/crm`, { method: 'POST', body: JSON.stringify({ feeCollectionEnabled: next }) })
+    } catch (err) {
+      setFeeCollectionEnabled(!next)
+      setError(err.message)
+    } finally {
+      setSavingFeeToggle(false)
+    }
+  }
 
   const loadActivities = async () => {
     try {
@@ -337,6 +356,22 @@ function CrmDetailModal({ entity, onClose, onLeadsChanged }) {
             {PIPELINE_STAGES.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
           </select>
         </div>
+
+        {entity.kind === 'school' && (
+          <label className="mt-4 flex items-center justify-between gap-3 rounded-control bg-primary-50/40 px-3 py-2.5">
+            <span className="text-sm text-ink">
+              Collecte des frais d'inscription via Ardoise
+              {entity.country && <span className="block text-xs text-ink-muted">Pays : {entity.country}</span>}
+            </span>
+            <input
+              type="checkbox"
+              checked={feeCollectionEnabled}
+              disabled={savingFeeToggle}
+              onChange={toggleFeeCollection}
+              className="h-5 w-5 rounded border-border text-primary-600 focus:ring-primary-500"
+            />
+          </label>
+        )}
 
         {error && <p className="mt-3 text-sm text-danger-600">{error}</p>}
 
