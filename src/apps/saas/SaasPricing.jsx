@@ -13,7 +13,7 @@ export default function SaasPricing() {
           </p>
         </div>
         <p className="mx-auto mt-6 max-w-2xl text-center text-lg leading-8 text-ink-muted">
-          Commencez gratuitement avec l'installation locale, puis passez à la vitesse supérieure quand vous êtes prêt à recruter et automatiser vos inscriptions en ligne.
+          Installez Ardoise et rejoignez l'annuaire public gratuitement. La Licence Premium ouvre le logiciel de gestion complet - dossiers élèves, notes, finances, RH - pour vous et tout votre personnel.
         </p>
 
         <div className="isolate mx-auto mt-16 grid max-w-md grid-cols-1 gap-y-8 sm:mt-20 lg:mx-0 lg:max-w-none lg:grid-cols-2 lg:gap-x-8 xl:gap-x-12">
@@ -22,7 +22,7 @@ export default function SaasPricing() {
           <div className="rounded-3xl p-8 ring-1 ring-border xl:p-10 bg-surface">
             <h3 className="text-lg font-semibold leading-8 text-ink">Version Locale (Gratuit)</h3>
             <p className="mt-4 text-sm leading-6 text-ink-muted">
-              L'essentiel pour numériser votre gestion interne, sans engagement.
+              Installez votre serveur et faites-vous connaître, sans engagement.
             </p>
             <p className="mt-6 flex items-baseline gap-x-1">
               <span className="text-4xl font-bold tracking-tight text-ink">0 FCFA</span>
@@ -41,15 +41,19 @@ export default function SaasPricing() {
               </li>
               <li className="flex gap-x-3">
                 <svg className="h-6 w-5 flex-none text-primary-600" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fillRule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clipRule="evenodd" /></svg>
-                Gestion complète des élèves et notes
+                Présence et visibilité sur l'annuaire public Ardoise
               </li>
               <li className="flex gap-x-3">
                 <svg className="h-6 w-5 flex-none text-primary-600" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fillRule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clipRule="evenodd" /></svg>
-                Bulletins scolaires
+                Ajout et gestion du personnel (comptes et rôles)
               </li>
               <li className="flex gap-x-3">
                 <svg className="h-6 w-5 flex-none text-primary-600" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fillRule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clipRule="evenodd" /></svg>
-                Comptabilité de base
+                Publication d'offres de recrutement
+              </li>
+              <li className="flex gap-x-3">
+                <svg className="h-6 w-5 flex-none text-primary-600" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fillRule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clipRule="evenodd" /></svg>
+                Tableau de bord analytique
               </li>
             </ul>
           </div>
@@ -59,7 +63,7 @@ export default function SaasPricing() {
             <div className="absolute top-0 -translate-y-1/2 left-1/2 -translate-x-1/2 bg-primary-600 text-white px-3 py-1 text-xs font-semibold uppercase tracking-wide rounded-full">Recommandé</div>
             <h3 className="text-lg font-semibold leading-8 text-ink">Licence Premium</h3>
             <p className="mt-4 text-sm leading-6 text-ink-muted">
-              Idéal pour les écoles connectées, la gestion des inscriptions en ligne et le recrutement.
+              Le logiciel de gestion scolaire complet : dossiers élèves, notes, finances, RH, et plus.
             </p>
             <p className="mt-6 flex items-baseline gap-x-1">
               <span className="text-4xl font-bold tracking-tight text-ink">50 000 FCFA</span>
@@ -78,19 +82,35 @@ export default function SaasPricing() {
               </li>
               <li className="flex gap-x-3 text-ink font-medium">
                 <svg className="h-6 w-5 flex-none text-primary-600" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fillRule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clipRule="evenodd" /></svg>
-                Présence sur la Marketplace Ardoise
+                Dossiers élèves et inscriptions (gestion complète)
               </li>
               <li className="flex gap-x-3 text-ink font-medium">
                 <svg className="h-6 w-5 flex-none text-primary-600" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fillRule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clipRule="evenodd" /></svg>
-                Gestion des inscriptions parents
+                Notes, bulletins, présences et discipline
               </li>
               <li className="flex gap-x-3 text-ink font-medium">
                 <svg className="h-6 w-5 flex-none text-primary-600" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fillRule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clipRule="evenodd" /></svg>
-                Outils de recrutement de professeurs
+                Comptabilité et finances complètes
               </li>
               <li className="flex gap-x-3 text-ink font-medium">
                 <svg className="h-6 w-5 flex-none text-primary-600" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fillRule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clipRule="evenodd" /></svg>
-                Déploiement Staff & RH
+                RH et paie complètes
+              </li>
+              <li className="flex gap-x-3 text-ink font-medium">
+                <svg className="h-6 w-5 flex-none text-primary-600" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fillRule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clipRule="evenodd" /></svg>
+                Accès complet au portail pour tout votre personnel
+              </li>
+              <li className="flex gap-x-3 text-ink font-medium">
+                <svg className="h-6 w-5 flex-none text-primary-600" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fillRule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clipRule="evenodd" /></svg>
+                Traitement des candidatures de recrutement
+              </li>
+              <li className="flex gap-x-3 text-ink font-medium">
+                <svg className="h-6 w-5 flex-none text-primary-600" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fillRule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clipRule="evenodd" /></svg>
+                Notifications WhatsApp
+              </li>
+              <li className="flex gap-x-3 text-ink font-medium">
+                <svg className="h-6 w-5 flex-none text-primary-600" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fillRule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clipRule="evenodd" /></svg>
+                Collecte des frais par Mobile Money
               </li>
             </ul>
           </div>
