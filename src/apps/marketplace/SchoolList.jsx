@@ -5,12 +5,8 @@ import { db } from '../../shared/api/firebase.js'
 import EmptyState from '../../shared/ui/EmptyState.jsx'
 import Spinner from '../../shared/ui/Spinner.jsx'
 import CountryMapWrapper from '../../shared/ui/CountryMapWrapper.jsx'
-import { FRANCOPHONE_AFRICA_DATA, OHADA_COUNTRIES } from '../../shared/constants/locations.js'
+import { OHADA_COUNTRIES } from '../../shared/constants/locations.js'
 import { COUNTRY_CITIES } from '../../shared/constants/cities.js'
-
-// Marketplace is Benin-only for now - see FRANCOPHONE_AFRICA_DATA for the
-// full multi-country list this will expand into later.
-const BENIN_CITIES = FRANCOPHONE_AFRICA_DATA['Benin']
 
 export default function SchoolList() {
   const [searchParams, setSearchParams] = useSearchParams()
@@ -51,8 +47,24 @@ export default function SchoolList() {
     return counts
   }, [schools, communeDepartmentMap])
 
+  // The selected country's own registered name (e.g. "Burkina Faso"),
+  // not its code ("BFA") - schools/{id}.country is written straight
+  // from RegisterPage.jsx's country <select>, which uses these same
+  // OHADA_COUNTRIES names.
+  const countryName = OHADA_COUNTRIES.find((c) => c.code === country)?.name
+
   const filteredSchools = schools.filter(school => {
-    const matchesCountry = communeDepartmentMap[school.city] !== undefined
+    // Matched on the school's own `country` field, not on whether its
+    // `city` happens to be a key in communeDepartmentMap (a per-country
+    // administrative-boundary dataset parsed from that country's map
+    // file) - some countries' datasets are coarser than "real city
+    // names" (Burkina Faso's is province-level only; Guinée équatoriale's
+    // keys are ALL CAPS), so a school registered with an ordinary city
+    // name never matched and was silently hidden from its own country's
+    // listing. communeDepartmentMap still drives the optional
+    // department/commune map drill-down below, just not the base
+    // country filter.
+    const matchesCountry = school.country === countryName
     const matchesSearch = (school.name || '').toLowerCase().includes(search.toLowerCase())
     const matchesCity = cityFilter === 'Toutes' || school.city === cityFilter
     const matchesDepartment = !department || communeDepartmentMap[school.city] === department
@@ -200,7 +212,7 @@ export default function SchoolList() {
                   icon="school"
                   title="Aucune école ne correspond à vos critères"
                   description={
-                    Object.keys(communeDepartmentMap).length === 0 || !schools.some(s => communeDepartmentMap[s.city] !== undefined)
+                    !schools.some((s) => s.country === countryName)
                       ? "Aucune école enregistrée dans ce pays pour le moment."
                       : "Essayez une autre région, une autre ville, ou un autre terme de recherche."
                   }
