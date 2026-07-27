@@ -7,6 +7,7 @@ import {
 } from '@livekit/components-react'
 import '@livekit/components-styles'
 import { useAuth } from '../auth/AuthContext.jsx'
+import { api } from '../api/client.js'
 import Spinner from './Spinner.jsx'
 import CustomLiveKitControls from './CustomLiveKitControls.jsx'
 import PulseSurveyModal from './PulseSurveyModal.jsx'
@@ -29,24 +30,11 @@ export default function LiveKitRoomUI() {
 
     async function fetchToken() {
       try {
-        // Must use token passed from parent auth context to call secure backend
-        const authHeader = localStorage.getItem('token') 
-          ? { Authorization: `Token ${localStorage.getItem('token')}` }
-          : {}
-
-        const response = await fetch(`/api/collab/livekit/token/${roomId}/`, {
-          headers: { ...authHeader, 'Content-Type': 'application/json' }
-        })
-        
-        if (!response.ok) {
-          throw new Error('Impossible de rejoindre la salle de visioconference.')
-        }
-
-        const data = await response.json()
+        const data = await api.get(`/api/collab/livekit/token/${roomId}/`)
         setToken(data.token)
-        setLivekitUrl(data.livekitUrl || 'wss://livekit.ardoise.soyames.com') // Ensure it connects to proper endpoint
+        setLivekitUrl(data.livekitUrl || 'wss://livekit.ardoiseeduc.com') // Ensure it connects to proper endpoint
       } catch (err) {
-        setError(err.message)
+        setError('Impossible de rejoindre la salle de visioconference.')
       }
     }
 

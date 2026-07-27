@@ -186,7 +186,7 @@ export default function EnrollmentPanel() {
                 {!isPremium && (
                   <div className="rounded-card bg-accent-50 p-4 border border-accent-200">
                     <p className="text-sm text-accent-800">
-                      <strong>Mise a niveau requise :</strong> Votre plan actuel ne permet pas de traiter les demandes d'inscription. <a href="https://saas.ardoise.soyames.com/pricing" className="underline" target="_blank" rel="noreferrer">Passez a la version Premium</a> pour continuer.
+                      <strong>Mise a niveau requise :</strong> Votre plan actuel ne permet pas de traiter les demandes d'inscription. <a href="https://saas.ardoiseeduc.com/pricing" className="underline" target="_blank" rel="noreferrer">Passez a la version Premium</a> pour continuer.
                     </p>
                   </div>
                 )}

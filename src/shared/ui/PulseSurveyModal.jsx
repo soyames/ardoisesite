@@ -21,7 +21,7 @@ export default function PulseSurveyModal({ onClose, teacherId, schoolId }) {
           comment: comment,
         });
       } else if (schoolId) {
-        await api.post('/api/core/school-ratings/', {
+        await api.post('/api/auth/school-ratings/', {
           school: schoolId,
           score: rating,
           comment: comment,

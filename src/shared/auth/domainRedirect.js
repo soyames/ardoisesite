@@ -1,6 +1,6 @@
 /**
- * The school ERP (saas.ardoise.soyames.com) and the marketplace
- * (ardoise.soyames.com) are one shared frontend build deployed to two
+ * The school ERP (saas.ardoiseeduc.com) and the marketplace
+ * (ardoiseeduc.com) are one shared frontend build deployed to two
  * hostnames (see vite.config.js / deploy.yml + deploy-saas.yml). Until
  * now nothing enforced which hostname a given role actually belongs
  * on - RequireRole and LoginPage let any authenticated role reach
@@ -41,7 +41,7 @@ export function roleMatchesCurrentDomain(role) {
 
 /**
  * Cross-origin redirect (a real page load, not React Router's
- * <Navigate> - saas.ardoise.soyames.com and ardoise.soyames.com are
+ * <Navigate> - saas.ardoiseeduc.com and ardoiseeduc.com are
  * different origins) to the same `path` on the domain `role` actually
  * belongs on. Call only after confirming roleMatchesCurrentDomain(role)
  * is false.

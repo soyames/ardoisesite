@@ -79,7 +79,7 @@ export function TeamManagement() {
   return (
     <div className="space-y-6">
       <Card>
-        <CardHeader title="Ajouter un collaborateur" subtitle="La personne doit déjà avoir un compte Ardoise (elle s'inscrit normalement sur ardoise.soyames.com, puis vous lui donnez accès ici)." />
+        <CardHeader title="Ajouter un collaborateur" subtitle="La personne doit déjà avoir un compte Ardoise (elle s'inscrit normalement sur saas.ardoiseeduc.com, puis vous lui donnez accès ici)." />
         <CardBody>
           <form onSubmit={handleAddMember} className="flex flex-col sm:flex-row gap-4 items-end">
             <div className="flex-1 w-full">

@@ -26,7 +26,7 @@ export default function Privacy() {
 
         <h2 className="text-xl font-bold text-ink mt-8">2. Données traitées par la Plateforme centrale</h2>
         <p>
-          Pour les fonctionnalités ci-dessous, la plateforme centrale (<code>ardoise.soyames.com</code>) est elle-même Responsable de Traitement, car ces données lui sont directement confiées, indépendamment de toute école :
+          Pour les fonctionnalités ci-dessous, la plateforme centrale (<code>ardoiseeduc.com</code>) est elle-même Responsable de Traitement, car ces données lui sont directement confiées, indépendamment de toute école :
         </p>
         <ul className="list-disc pl-6 space-y-2">
           <li>L'annuaire public des écoles partenaires (nom, coordonnées, effectifs déclarés).</li>

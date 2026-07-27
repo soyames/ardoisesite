@@ -7,7 +7,7 @@ import { getApiBaseUrl } from '../../config/env.js'
  *
  * The token is captured from primeCsrf()'s response BODY, not read
  * from document.cookie: every real deployment has this frontend
- * (saas.ardoise.soyames.com) on a different origin than the school's
+ * (saas.ardoiseeduc.com) on a different origin than the school's
  * own backend, and document.cookie can only ever see cookies set for
  * the page's own origin - no CORS or SameSite setting changes that,
  * it's basic same-origin policy. The csrftoken cookie IS still

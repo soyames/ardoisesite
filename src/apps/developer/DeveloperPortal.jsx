@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react'
 import { collection, query, where, onSnapshot, addDoc, deleteDoc, doc, setDoc } from 'firebase/firestore'
-import { db } from '../../shared/api/firebase.js'
+import { auth, db } from '../../shared/api/firebase.js'
 import { useAuth } from '../../shared/auth/AuthContext.jsx'
+import { getPlatformApiBaseUrl } from '../../config/env.js'
 import { Card, CardHeader, CardBody } from '../../shared/ui/Card.jsx'
 import Button from '../../shared/ui/Button.jsx'
 import Icon from '../../shared/ui/Icon.jsx'
@@ -119,7 +120,7 @@ export default function DeveloperPortal() {
 
   if (loading) return <div className="p-4">Chargement...</div>
 
-  const partnerLink = `https://saas.ardoise.soyames.com/register?ref=${user?.uid}`
+  const partnerLink = `https://saas.ardoiseeduc.com/register?ref=${user?.uid}`
 
   return (
     <div className="space-y-6 max-w-5xl">
@@ -187,7 +188,7 @@ export default function DeveloperPortal() {
                           onClick={async () => {
                             try {
                               const idToken = await auth.currentUser.getIdToken()
-                              const res = await fetch(`https://ardoise-api.soyames.workers.dev/api/developer/webhook/test`, {
+                              const res = await fetch(`${getPlatformApiBaseUrl()}/api/developer/webhook/test`, {
                                 method: 'POST',
                                 headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${idToken}` },
                                 body: JSON.stringify({ webhookId: hook.id })

@@ -66,7 +66,7 @@ export default function ApiIntegrations() {
   useEffect(() => {
     const fetchConfig = async () => {
       try {
-        const data = await api.get('/api/system/settings/')
+        const data = await api.get('/api/auth/system/settings/')
         // SystemSettingsView returns a plain dict, but the project's
         // CamelCaseJSONRenderer (djangorestframework-camel-case) still
         // camelCases it at the render layer regardless of whether a
@@ -96,7 +96,7 @@ export default function ApiIntegrations() {
     setSaving(true)
     setMsg('')
     try {
-      await api.patch('/api/system/settings/', {
+      await api.patch('/api/auth/system/settings/', {
         fedapayPublicKey: config.fedaPayPublicKey,
         fedapaySecretKey: config.fedaPaySecretKey,
         fedapayWebhookSecret: config.fedaPayWebhookSecret,

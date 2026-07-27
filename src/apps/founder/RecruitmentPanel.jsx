@@ -93,7 +93,7 @@ export default function RecruitmentPanel() {
     <div className="space-y-8">
       {canDecide && (
         <Card>
-          <CardHeader title="Publier une offre d'emploi" subtitle="L'offre apparaîtra publiquement sur ardoise.soyames.com" />
+          <CardHeader title="Publier une offre d'emploi" subtitle="L'offre apparaîtra publiquement sur ardoiseeduc.com" />
           <CardBody>
             <form onSubmit={handleJobSubmit} className="space-y-4 max-w-2xl">
               <div>
@@ -131,7 +131,7 @@ export default function RecruitmentPanel() {
           {locked ? (
             <div className="rounded-card bg-accent-50 p-4 border border-accent-200">
               <p className="text-sm text-accent-800">
-                <strong>Mise a niveau requise :</strong> des professeurs peuvent deja avoir postule a vos annonces, mais un abonnement actif est necessaire pour les consulter. <a href="https://saas.ardoise.soyames.com/pricing" className="underline font-semibold" target="_blank" rel="noreferrer">Passez a la version Premium</a> pour voir vos candidatures.
+                <strong>Mise a niveau requise :</strong> des professeurs peuvent deja avoir postule a vos annonces, mais un abonnement actif est necessaire pour les consulter. <a href="https://saas.ardoiseeduc.com/pricing" className="underline font-semibold" target="_blank" rel="noreferrer">Passez a la version Premium</a> pour voir vos candidatures.
               </p>
             </div>
           ) : applications.length === 0 ? (
@@ -149,7 +149,7 @@ export default function RecruitmentPanel() {
                       ) : (
                         <div className="mt-2 rounded-card bg-accent-50 p-3 border border-accent-200">
                           <p className="text-sm text-accent-800">
-                            <strong>Mise a niveau requise :</strong> <a href="https://saas.ardoise.soyames.com/pricing" className="underline font-semibold" target="_blank" rel="noreferrer">Passez a la version Premium</a> pour voir les coordonnees et contacter ce candidat.
+                            <strong>Mise a niveau requise :</strong> <a href="https://saas.ardoiseeduc.com/pricing" className="underline font-semibold" target="_blank" rel="noreferrer">Passez a la version Premium</a> pour voir les coordonnees et contacter ce candidat.
                           </p>
                         </div>
                       )}

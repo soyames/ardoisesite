@@ -78,7 +78,7 @@ export default function InstallGuide() {
           </p>
         </div>
         <a 
-          href="https://saas.ardoise.soyames.com/" 
+          href="https://saas.ardoiseeduc.com/"
           className="whitespace-nowrap px-6 py-3 bg-primary-600 text-white font-bold rounded-full hover:bg-primary-500 transition shadow-sm"
         >
           Découvrir l'offre SaaS
@@ -194,14 +194,10 @@ export default function InstallGuide() {
   --name ardoise-backend \\
   -p 8000:8000 \\
   -v ardoise_data:/app/data \\
-  -e ARDOISE_ACTIVATION_CODE="${activationCode || 'VOTRE_CODE_ICI'}" \\
-  -e FIREBASE_SERVICE_ACCOUNT='COLLEZ_ICI_LE_JSON_FOURNI_PAR_ARDOISE' \\
   amesc/ardoise:latest`}</CodeBlock>
               <p className="text-ink-muted mt-4">
-                <code className="bg-primary-100 px-1 rounded">-v ardoise_data:/app/data</code> est important : sans ce
-                volume, vos données seraient perdues au prochain redémarrage du conteneur. La commande télécharge
-                l'image la plus récente (mise à jour automatiquement à chaque nouvelle version) et démarre le
-                serveur.
+                Aucune variable à préparer à l'avance : la commande démarre le serveur tel quel. <code className="bg-primary-100 px-1 rounded">-v ardoise_data:/app/data</code> est
+                important : sans ce volume, vos données seraient perdues au prochain redémarrage du conteneur.
               </p>
               <Callout tone="info" title="Trouver l'adresse de votre ordinateur">
                 Les autres postes de l'école (caissier, secrétariat) doivent utiliser l'adresse IP locale de cet
@@ -215,10 +211,7 @@ export default function InstallGuide() {
 
           {scenario === 'server' && (
             <>
-              <p className="text-ink-muted mb-4">
-                Créez un fichier <code className="bg-primary-100 px-1 rounded">.env</code> à partir du modèle fourni
-                (voir la référence des variables à l'étape 4), puis :
-              </p>
+              <p className="text-ink-muted mb-4">Aucun fichier à préparer à l'avance - lancez directement :</p>
               <CodeBlock>{`# SQLite (par défaut, aucune configuration supplémentaire) :
 docker compose up -d
 
@@ -235,8 +228,8 @@ docker compose --profile postgres up -d`}</CodeBlock>
           {scenario === 'cloud' && (
             <>
               <p className="text-ink-muted mb-4">
-                Sur votre serveur, créez un fichier <code className="bg-primary-100 px-1 rounded">.env</code> (voir
-                l'étape 4), lancez l'application, puis ajoutez un reverse proxy pour le HTTPS. Avec Caddy :
+                Aucun fichier à préparer à l'avance. Lancez l'application sur votre serveur, puis ajoutez un reverse
+                proxy pour le HTTPS. Avec Caddy :
               </p>
               <CodeBlock>{`# 1. Démarrer Ardoise (sans exposer le port 8000 publiquement)
 docker compose --profile postgres up -d
@@ -257,64 +250,55 @@ docker run -d --name caddy -p 80:80 -p 443:443 \\
               </Callout>
             </>
           )}
+
+          <Callout tone="info" title="Dernière étape : l'assistant dans votre navigateur">
+            Ouvrez l'adresse de votre serveur dans un navigateur (ex. <code>http://localhost:8000</code>) - vous
+            tombez automatiquement sur un écran « Welcome to Ardoise ». Collez-y votre code d'activation
+            (étape 2 ci-dessus) et cliquez sur « Activate &amp; Provision ». Tout le reste (clé de sécurité,
+            connexion à la Plateforme, certificat WebRTC) se configure automatiquement à ce moment-là - il ne vous
+            reste plus qu'à redémarrer le conteneur une fois (<code>docker compose down &amp;&amp; docker compose up -d</code>,
+            ou l'équivalent <code>docker restart ardoise-backend</code> pour le mode « un seul ordinateur »)
+            pour que ce soit pris en compte.
+          </Callout>
         </section>
 
         {/* ---------------------------------------------------------------- */}
         <section>
-          <h2 className="text-xl font-bold text-ink mb-4">4. Variables d'environnement</h2>
+          <h2 className="text-xl font-bold text-ink mb-4">4. Configuration avancée (optionnelle)</h2>
           <p className="text-ink-muted mb-4">
-            Toutes les variables ci-dessous vivent dans votre fichier <code className="bg-primary-100 px-1 rounded">.env</code> (ou
-            dans les options <code className="bg-primary-100 px-1 rounded">-e</code> de <code className="bg-primary-100 px-1 rounded">docker run</code>).
-            Aucune n'est jamais envoyée à Ardoise ou à qui que ce soit d'autre - elles restent sur votre machine.
+            Vous n'avez <strong>aucun fichier <code className="bg-primary-100 px-1 rounded">.env</code> à créer</strong> -
+            l'assistant de l'étape 3 s'occupe de tout ce qui est indispensable (clé de sécurité, connexion à la
+            Plateforme, autorisation du portail) et l'écrit lui-même dans <code className="bg-primary-100 px-1 rounded">data/config.json</code>,
+            sur votre propre machine. Rien de tout cela n'est jamais envoyé à Ardoise ou à qui que ce soit d'autre.
+          </p>
+          <p className="text-ink-muted mb-4">
+            Les options ci-dessous restent facultatives - elles ne concernent que des besoins spécifiques, et se
+            configurent en ajoutant un bloc <code className="bg-primary-100 px-1 rounded">environment:</code> pour le
+            service <code className="bg-primary-100 px-1 rounded">app</code> dans <code className="bg-primary-100 px-1 rounded">docker-compose.yml</code> (jamais un fichier <code className="bg-primary-100 px-1 rounded">.env</code>) :
           </p>
           <div className="overflow-x-auto rounded-card ring-1 ring-border">
             <table className="min-w-full text-sm">
               <thead className="bg-primary-100 text-left text-ink-muted">
                 <tr>
                   <th className="px-4 py-2 font-semibold">Variable</th>
-                  <th className="px-4 py-2 font-semibold">Obligatoire</th>
-                  <th className="px-4 py-2 font-semibold">À quoi ça sert</th>
+                  <th className="px-4 py-2 font-semibold">Quand s'en servir</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border text-ink-muted">
                 <tr>
-                  <td className="px-4 py-2 font-mono text-xs">DJANGO_SECRET_KEY</td>
-                  <td className="px-4 py-2">Oui</td>
-                  <td className="px-4 py-2">Clé de sécurité interne - générez-en une longue et aléatoire, ne la partagez jamais.</td>
-                </tr>
-                <tr>
-                  <td className="px-4 py-2 font-mono text-xs">FIREBASE_SERVICE_ACCOUNT</td>
-                  <td className="px-4 py-2">Oui</td>
-                  <td className="px-4 py-2">Sans elle, la connexion échoue pour tout le monde. Fournie par Ardoise lors de votre inscription - un bloc JSON à coller tel quel.</td>
-                </tr>
-                <tr>
-                  <td className="px-4 py-2 font-mono text-xs">DJANGO_ALLOWED_HOSTS</td>
-                  <td className="px-4 py-2">Oui</td>
-                  <td className="px-4 py-2"><code>*</code> pour un ordinateur/serveur local ; votre nom de domaine pour un serveur cloud.</td>
-                </tr>
-                <tr>
-                  <td className="px-4 py-2 font-mono text-xs">CORS_ALLOWED_ORIGINS<br/>CSRF_TRUSTED_ORIGINS</td>
-                  <td className="px-4 py-2">Oui</td>
-                  <td className="px-4 py-2">Toujours <code>https://ardoise.soyames.com</code> - sans ça, le portail ne peut pas du tout parler à votre serveur.</td>
-                </tr>
-                <tr>
-                  <td className="px-4 py-2 font-mono text-xs">ARDOISE_ACTIVATION_CODE</td>
-                  <td className="px-4 py-2">Oui</td>
-                  <td className="px-4 py-2">Généré automatiquement à l'inscription (voir l'étape 2 ci-dessus) - sans lui, votre installation ne peut pas se faire connaître de la Plateforme, même en forfait gratuit.</td>
-                </tr>
-                <tr>
                   <td className="px-4 py-2 font-mono text-xs">DB_ENGINE, DB_NAME,<br/>DB_USER, DB_PASSWORD</td>
-                  <td className="px-4 py-2">Non</td>
-                  <td className="px-4 py-2">Laissez tout vide pour SQLite (par défaut). Définissez <code>DB_ENGINE=postgres</code> + les 3 autres pour Postgres.</td>
+                  <td className="px-4 py-2">Laissez tout vide pour SQLite (par défaut, suffisant pour la plupart des écoles). Définissez <code>DB_ENGINE=postgres</code> + les 3 autres uniquement si vous utilisez le profil <code>--profile postgres</code>.</td>
                 </tr>
                 <tr>
                   <td className="px-4 py-2 font-mono text-xs">WHATSAPP_CLOUD_API_TOKEN<br/>WHATSAPP_CLOUD_API_PHONE_NUMBER_ID</td>
-                  <td className="px-4 py-2">Non</td>
-                  <td className="px-4 py-2">Requiert un forfait avec WhatsApp + un compte Meta Business. Sans elles, les notifications WhatsApp échouent proprement (pas d'envoi silencieux raté).</td>
+                  <td className="px-4 py-2">Uniquement si votre forfait inclut WhatsApp et que vous avez un compte Meta Business. Sans elles, les notifications WhatsApp échouent proprement (pas d'envoi silencieux raté).</td>
+                </tr>
+                <tr>
+                  <td className="px-4 py-2 font-mono text-xs">DJANGO_ALLOWED_HOSTS</td>
+                  <td className="px-4 py-2">Par défaut <code>*</code> (tout hôte accepté) - à restreindre à votre nom de domaine uniquement si vous voulez durcir un serveur cloud exposé publiquement.</td>
                 </tr>
                 <tr>
                   <td className="px-4 py-2 font-mono text-xs">SESSION_COOKIE_SECURE<br/>CSRF_COOKIE_SECURE</td>
-                  <td className="px-4 py-2">Non</td>
                   <td className="px-4 py-2">Ne désactivez (<code>false</code>) que pour un ordinateur unique sans HTTPS. Jamais sur un serveur accessible depuis internet.</td>
                 </tr>
               </tbody>
@@ -326,12 +310,12 @@ docker run -d --name caddy -p 80:80 -p 443:443 \\
         <section>
           <h2 className="text-xl font-bold text-ink mb-4">5. Connecter votre portail à votre école</h2>
           <p className="text-ink-muted mb-4">
-            Une dernière étape, indispensable : Ardoise.soyames.com est un portail partagé par toutes les écoles -
+            Une dernière étape, indispensable : saas.ardoiseeduc.com est un portail partagé par toutes les écoles -
             il a besoin de savoir à quelle adresse joindre <em>votre</em> serveur pour chaque membre de votre
             personnel.
           </p>
           <ol className="list-decimal pl-6 space-y-2 text-ink-muted">
-            <li>Connectez-vous en tant que Fondateur/Fondatrice sur <a href="https://ardoise.soyames.com/login" className="text-primary-600 underline">ardoise.soyames.com/login</a>.</li>
+            <li>Connectez-vous en tant que Fondateur/Fondatrice sur <a href="https://saas.ardoiseeduc.com/login" className="text-primary-600 underline">saas.ardoiseeduc.com/login</a>.</li>
             <li>Allez dans <strong>Intégrations API</strong> depuis votre tableau de bord.</li>
             <li>Dans « Adresse de votre serveur », entrez l'adresse trouvée à l'étape 3 (ex. <code className="bg-primary-100 px-1 rounded">http://192.168.1.42:8000</code> ou <code className="bg-primary-100 px-1 rounded">https://votre-domaine.com</code>).</li>
             <li>Enregistrez. Tout le personnel de votre école (déjà connecté ou nouveau) sera automatiquement dirigé vers votre serveur à sa prochaine connexion - rien à configurer de leur côté.</li>
