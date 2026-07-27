@@ -5,9 +5,11 @@ import RecruitmentPanel from './RecruitmentPanel.jsx'
 import EnrollmentPanel from './EnrollmentPanel.jsx'
 import ApiIntegrations from './ApiIntegrations.jsx'
 import SubscriptionPanel from './SubscriptionPanel.jsx'
-import DepartmentsHub from './DepartmentsHub.jsx'
 import AnalyticsDashboard from './AnalyticsDashboard.jsx'
 import SupportPage from './SupportPage.jsx'
+import CyclesPanel from './CyclesPanel.jsx'
+import SystemPanel from './SystemPanel.jsx'
+import DepartmentsHub from './DepartmentsHub.jsx'
 import PortalTabs from '../../shared/ui/PortalTabs.jsx'
 
 export default function FounderDashboard() {
@@ -20,10 +22,12 @@ export default function FounderDashboard() {
 
   const tabs = [
     { key: 'dashboard', label: 'Tableau de bord' },
-    { key: 'departments', label: 'Departements (ERP)' },
     { key: 'overview', label: "Vue d'ensemble (Inscriptions)" },
     { key: 'recruitment', label: 'Recrutement' },
     { key: 'settings', label: "Paramètres de l'école" },
+    { key: 'cycles', label: 'Cycles & Niveaux' },
+    { key: 'departments', label: 'Départements (Personnel)' },
+    { key: 'system', label: 'Système & Audit' },
     { key: 'integrations', label: 'Intégrations API' },
     { key: 'subscription', label: 'Facturation & Abonnement' },
     { key: 'support', label: 'Support & Aide' }
@@ -42,10 +46,12 @@ export default function FounderDashboard() {
 
       <div className="mt-6">
         {activeTab === 'dashboard' && <AnalyticsDashboard onNavigate={setActiveTab} />}
-        {activeTab === 'departments' && <DepartmentsHub />}
         {activeTab === 'overview' && <EnrollmentPanel />}
         {activeTab === 'recruitment' && <RecruitmentPanel />}
         {activeTab === 'settings' && <SchoolSettings />}
+        {activeTab === 'cycles' && <CyclesPanel />}
+        {activeTab === 'departments' && <DepartmentsHub />}
+        {activeTab === 'system' && <SystemPanel />}
         { activeTab === 'integrations' && <ApiIntegrations schoolId={user.schoolId} /> }
         { activeTab === 'subscription' && <SubscriptionPanel schoolId={user.schoolId} /> }
         { activeTab === 'support' && <SupportPage /> }

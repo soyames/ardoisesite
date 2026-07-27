@@ -95,7 +95,8 @@ service cloud.firestore {
       // malgre une creation reussie.
       allow read: if (isSignedIn() && request.auth.uid == userId)
                   || resource.data.role == 'teacher'
-                  || (isSignedIn() && resource.data.role == 'marketplace_student' && resource.data.parentId == request.auth.uid);
+                  || (isSignedIn() && resource.data.role == 'marketplace_student' && resource.data.parentId == request.auth.uid)
+                  || (isSignedIn() && getUserData().role == 'founder' && resource.data.schoolId == getUserData().schoolId);
 
       // La création (inscription - RegisterPage.jsx) est le tout premier
       // write sur ce document : resource n'existe pas encore, donc
