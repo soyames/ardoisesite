@@ -1,0 +1,25 @@
+---
+title: "Accès à distance"
+description: "Rendre votre serveur joignable hors du reseau de l'ecole, sans redirection de port ni IP fixe."
+---
+
+Pour un serveur qui reste sur le reseau local de l'ecole (scenario "un seul ordinateur" ou "serveur dedie") mais doit rester joignable par du personnel travaillant hors site, Ardoise integre un **Tunnel Cloudflare** nomme - contrairement a une redirection de port classique, il n'expose aucun port sur votre routeur et garde la meme adresse publique a chaque redemarrage.
+
+<Steps>
+  <Step title="Creer le tunnel (une seule fois, dans Cloudflare)">
+    Dans le tableau de bord Cloudflare : Zero Trust > Networks > Tunnels > Create a tunnel, nommez-le (ex. le nom de votre ecole), choisissez le connecteur Docker, et copiez le jeton fourni.
+  </Step>
+  <Step title="Ajouter un Public Hostname">
+    Sur ce meme tunnel, ajoutez un Public Hostname qui pointe vers `http://app:8000` (le nom du service Ardoise sur le reseau Docker, pas `localhost`). Le nom d'hote choisi ici est celui a renseigner dans **Integrations API** de votre tableau de bord fondateur.
+  </Step>
+  <Step title="Demarrer le tunnel">
+    ```bash
+    docker compose --profile tunnel up -d
+    ```
+    Le conteneur `cloudflared` attend que la configuration initiale (voir [Installation](/guide-technique/installation)) soit terminee avant de lire le jeton et de demarrer.
+  </Step>
+</Steps>
+
+<Note>
+  Le jeton du tunnel est stocke localement (dans `data/config.json`, sur votre propre machine) - il n'est jamais partage avec la Plateforme ni avec qui que ce soit d'autre.
+</Note>

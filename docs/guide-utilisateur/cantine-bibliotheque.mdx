@@ -1,0 +1,20 @@
+---
+title: "Cantine & Bibliothèque"
+description: "Portefeuille eleve, rechargement et ventes au comptoir."
+---
+
+## Portefeuille eleve (wallet)
+
+Chaque eleve dispose d'un portefeuille interne. Un parent (ou l'ecole) le recharge d'un montant donne ; ce solde sert ensuite a regler les repas a la cantine ou les emprunts/frais a la bibliotheque, sans manipulation d'especes au quotidien par l'eleve.
+
+## Rechargement
+
+Le rechargement (WalletTopup) est enregistre par le personnel autorise (cantine, bibliotheque, ou caissier) et vient crediter immediatement le solde de l'eleve.
+
+## Vente au comptoir
+
+Une vente (repas, fourniture, emprunt payant) debite le portefeuille de l'eleve au moment de la vente et met a jour le stock de l'article concerne (InventoryItem) - utile pour suivre les niveaux de stock de la cantine ou de la bibliotheque.
+
+<Note>
+  Si le solde du portefeuille est insuffisant, la vente est refusee - il n'y a pas de solde negatif.
+</Note>

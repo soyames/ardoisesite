@@ -1,0 +1,79 @@
+---
+title: "Installation"
+description: "Deployer le serveur de votre ecole - aucun fichier .env a preparer."
+---
+
+<Info>
+  Aucun fichier `.env` a creer et aucune variable d'environnement a preparer a l'avance, quel que soit le scenario choisi ci-dessous. L'assistant de configuration dans votre navigateur s'occupe de tout ce qui est indispensable (cle de securite, connexion a la Plateforme) une fois le conteneur demarre.
+</Info>
+
+## Choisir un scenario
+
+<CardGroup cols={3}>
+  <Card title="Un seul ordinateur" icon="desktop">
+    Le plus simple pour demarrer. Tous les postes se connectent via le Wi-Fi de l'ecole, pas d'acces depuis l'exterieur.
+  </Card>
+  <Card title="Serveur dedie" icon="server">
+    Une machine allumee en continu sur le reseau de l'ecole. Recommande des que plusieurs membres du personnel utilisent Ardoise quotidiennement.
+  </Card>
+  <Card title="Serveur cloud" icon="cloud">
+    Pour un acces a distance (personnel travaillant hors du site). Necessite un nom de domaine et un reverse proxy HTTPS.
+  </Card>
+</CardGroup>
+
+## Prerequis communs
+
+- **Docker Desktop** (ordinateur unique) ou **Docker + Docker Compose** (serveur dedie/cloud)
+- Une connexion internet (pour la synchronisation de licence et les notifications) - l'ecole continue de fonctionner hors ligne entre deux synchronisations
+
+## Deploiement
+
+<Steps>
+  <Step title="Recuperez votre code d'activation">
+    Affiche automatiquement sur votre tableau de bord fondateur apres inscription sur [saas.ardoiseeduc.com](https://saas.ardoiseeduc.com/register). Voir [Codes d'activation](/plateforme/codes-activation).
+  </Step>
+  <Step title="Lancez le conteneur">
+    <CodeGroup>
+    ```bash Un seul ordinateur
+    docker run -d \
+      --name ardoise-backend \
+      -p 8000:8000 \
+      -v ardoise_data:/app/data \
+      amesc/ardoise:latest
+    ```
+
+    ```bash Serveur dedie ou cloud
+    # SQLite (par defaut) :
+    docker compose up -d
+
+    # OU avec Postgres (recommande a partir de plusieurs utilisateurs quotidiens) :
+    docker compose --profile postgres up -d
+    ```
+    </CodeGroup>
+  </Step>
+  <Step title="Terminez la configuration dans le navigateur">
+    Ouvrez l'adresse de votre serveur (ex. `http://localhost:8000` ou l'IP locale de la machine) - vous tombez automatiquement sur un ecran de bienvenue. Collez-y votre code d'activation, puis redemarrez le conteneur une fois (`docker compose down && docker compose up -d`, ou `docker restart ardoise-backend`).
+  </Step>
+  <Step title="Connectez votre serveur au portail">
+    Depuis **Integrations API** sur votre tableau de bord fondateur, indiquez l'adresse de votre serveur (ex. `http://192.168.1.42:8000`) pour que tout le personnel s'y connecte automatiquement.
+  </Step>
+</Steps>
+
+## Serveur cloud : HTTPS
+
+Un serveur cloud expose sur internet doit passer par un reverse proxy HTTPS (Caddy, par exemple) plutot que d'exposer directement le port du conteneur.
+
+<Warning>
+  N'exposez jamais le port du serveur Ardoise directement sur internet - seuls les ports 80/443 geres par le reverse proxy doivent etre publics.
+</Warning>
+
+## Configuration avancee (facultative)
+
+Tout ce qui precede suffit pour une installation standard. Ces options restent facultatives, a ajouter via un bloc `environment:` dans `docker-compose.yml` (jamais un fichier `.env`) :
+
+| Variable | Quand s'en servir |
+|---|---|
+| `DB_ENGINE`, `DB_NAME`, `DB_USER`, `DB_PASSWORD` | Uniquement avec le profil `--profile postgres`. |
+| `WHATSAPP_CLOUD_API_TOKEN`, `WHATSAPP_CLOUD_API_PHONE_NUMBER_ID` | Uniquement si votre forfait inclut WhatsApp et que vous avez un compte Meta Business. |
+| `DJANGO_ALLOWED_HOSTS` | Par defaut `*` - a restreindre uniquement pour durcir un serveur cloud expose publiquement. |
+| `SESSION_COOKIE_SECURE`, `CSRF_COOKIE_SECURE` | A desactiver (`false`) uniquement pour un ordinateur unique sans HTTPS. |

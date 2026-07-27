@@ -1,0 +1,32 @@
+---
+title: "Elèves et inscriptions"
+description: "Dossiers eleves, classes, inscriptions et demandes du marketplace."
+---
+
+## Dossier eleve
+
+Chaque eleve a une fiche unique (matricule, nom, date de naissance, tuteurs) et une **inscription** (Enrollment) distincte par annee scolaire - reinscrire un eleve qui redouble cree une nouvelle inscription plutot que de modifier l'historique existant, pour que le parcours de l'eleve reste consultable annee par annee.
+
+## Classes
+
+Une classe (ClassRoom) appartient a une annee scolaire et a un niveau (ex. 6eme, Terminale). Sa **capacite maximale** est appliquee cote serveur : une inscription au-dela de la capacite est refusee, y compris pour les demandes venant du marketplace public.
+
+## Demandes d'inscription depuis le marketplace
+
+Une famille interessee par votre ecole peut soumettre une demande d'inscription directement depuis votre profil public sur [ardoiseeduc.com](https://ardoiseeduc.com). Ces demandes arrivent dans votre tableau de bord :
+
+<Steps>
+  <Step title="Reception">
+    La demande apparait avec le nom de l'enfant, son age, la classe visee et les coordonnees du parent - visible gratuitement, sans abonnement.
+  </Step>
+  <Step title="Traitement">
+    Accepter une demande (creer reellement l'eleve et son inscription) necessite un abonnement actif - voir [Abonnement et forfaits](/plateforme/abonnement). Consulter les demandes recues reste toujours gratuit.
+  </Step>
+  <Step title="Paiement des frais d'inscription">
+    Une fois acceptee, la famille regle les frais d'inscription (Mobile Money via FedaPay, si configure) puis reserve un creneau de rendez-vous pour finaliser le dossier.
+  </Step>
+</Steps>
+
+## Tuteurs et fratrie
+
+Un eleve peut avoir plusieurs tuteurs (Guardianship) - utile pour les familles recomposees ou la garde partagee. Un tuteur marque comme payeur principal est celui vers qui les notifications de frais sont envoyees par defaut.

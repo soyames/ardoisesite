@@ -1,0 +1,44 @@
+---
+title: "Dépannage"
+description: "Diagnostiquer les problemes les plus courants d'une installation Ardoise."
+---
+
+## Verifier que le serveur tourne
+
+```bash
+curl http://localhost:8000/health/
+```
+
+Une reponse `{"status": "ok", "version": "..."}` confirme que le conteneur repond. Pas de reponse ? Verifiez que le conteneur tourne :
+
+```bash
+docker compose ps
+docker compose logs app
+```
+
+## Tout redirige vers un ecran "Welcome to Ardoise"
+
+Cela signifie que l'installation n'a pas encore ete activee (ou a perdu sa configuration). Repassez par l'[assistant de configuration](/guide-technique/installation) avec votre code d'activation, puis redemarrez le conteneur.
+
+## Le personnel ne peut pas se connecter depuis le portail SaaS
+
+<AccordionGroup>
+  <Accordion title="Erreur CORS visible dans la console du navigateur">
+    L'adresse de votre serveur (renseignee dans Integrations API) doit correspondre exactement a celle que le personnel utilise pour s'y connecter. Verifiez qu'il n'y a pas de faute (http vs https, port manquant).
+  </Accordion>
+  <Accordion title="Le serveur est injoignable">
+    Si le personnel travaille hors du reseau de l'ecole, un acces direct par IP locale ne fonctionnera pas - voir [Acces a distance](/guide-technique/acces-distant).
+  </Accordion>
+</AccordionGroup>
+
+## Les paiements Mobile Money ne se confirment pas
+
+Verifiez que le secret de webhook FedaPay configure dans **Integrations API** correspond exactement a celui affiche sur votre tableau de bord FedaPay - une signature invalide fait rejeter silencieusement la confirmation de paiement (le paiement reste "en attente" cote Ardoise meme si le parent a bien paye).
+
+## "No tunnel token returned" au demarrage du tunnel
+
+Le tunnel Cloudflare n'a pas encore ete active ou associe correctement a votre ecole. Reprenez les etapes d'[Acces a distance](/guide-technique/acces-distant) depuis le tableau de bord Cloudflare.
+
+## Les sauvegardes automatiques semblent s'etre arretees
+
+La connexion Google Drive a probablement expire ou ete revoquee. Reconnectez-la depuis votre tableau de bord fondateur (voir [Sauvegardes](/guide-technique/sauvegardes)).

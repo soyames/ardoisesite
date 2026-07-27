@@ -1,0 +1,43 @@
+---
+title: "Finance : frais de scolarité et paiements"
+description: "Grille tarifaire, encaissement, moyens de paiement, et etat de conformite comptable."
+---
+
+## Grille tarifaire
+
+Une **grille de frais** (FeeStructure) est definie par niveau et par annee scolaire, decoupee en **tranches** (Inscription, 1ere tranche, 2eme tranche...) avec chacune son montant et sa date d'echeance. A l'inscription d'un eleve, une **facture** (Invoice) est generee automatiquement pour chaque tranche.
+
+## Encaissement
+
+Le comptable ou le caissier encaisse un paiement contre une ou plusieurs factures - un parent peut regler en une fois pour plusieurs enfants ou plusieurs tranches.
+
+<CardGroup cols={2}>
+  <Card title="Especes" icon="money-bill">
+    Encaisse directement au comptoir, saisi par le caissier.
+  </Card>
+  <Card title="Mobile Money (MTN MoMo / Moov Flooz)" icon="mobile">
+    Le parent paie depuis son propre telephone, via FedaPay - necessite un abonnement actif (voir ci-dessous).
+  </Card>
+</CardGroup>
+
+Un recu est genere pour chaque paiement.
+
+## Depenses et fournisseurs
+
+Les achats aupres d'un fournisseur (restockage de la cantine ou de la bibliotheque, par exemple) sont enregistres comme facture fournisseur, avec leur propre suivi de paiement - independant des frais de scolarite.
+
+<Info>
+  La collecte Mobile Money (paiement par le parent via FedaPay) est une fonctionnalite payante - une ecole en forfait gratuit peut gerer ses frais de scolarite en especes, mais doit avoir un abonnement actif pour activer la collecte Mobile Money. Voir [Abonnement et forfaits](/plateforme/abonnement).
+</Info>
+
+## Etat de la conformite comptable (SYSCOHADA)
+
+Ardoise suit le plan comptable SYSCOHADA (systeme comptable OHADA) pour ses ecritures. A ce jour :
+
+<Check>Chaque ecriture comptable est equilibree (debit = credit) et ne peut jamais etre modifiee ou supprimee une fois validee - une correction passe toujours par une extourne (ecriture inverse), les deux restant visibles dans le journal.</Check>
+
+<Check>Les frais de scolarite payes a l'avance pour une periode future sont progressivement reconnus comme produit au fil du trimestre couvert, plutot que comptabilises en totalite le jour du paiement.</Check>
+
+<Warning>
+  Ce systeme ne remplace pas un expert-comptable. Certains points restent a affiner avant la cloture d'un premier exercice reel : la prise en charge du regime simplifie (Systeme Minimal de Tresorerie) pour les petites ecoles, la comptabilisation separee des charges sociales patronales, et la configuration des taux statutaires (CNSS, IRPP) actuellement fixes par defaut. **Faites valider votre premier exercice comptable par un professionnel avant toute cloture ou declaration fiscale.**
+</Warning>

@@ -1,0 +1,26 @@
+---
+title: "Sécurité"
+description: "Ce qu'Ardoise protege par defaut, et ce qui reste sous votre responsabilite."
+---
+
+## Ce qu'Ardoise gere par defaut
+
+<Check>Une cle de securite unique generee automatiquement pour chaque installation (jamais une valeur partagee entre ecoles).</Check>
+<Check>Authentification par session avec jeton CSRF sur chaque action sensible.</Check>
+<Check>Seuls les logos d'ecole sont accessibles publiquement en tant que fichiers - tout document (dossier eleve, piece jointe, bulletin de paie) passe par un controle d'acces qui verifie que la personne qui le demande a le droit de le voir.</Check>
+<Check>Chaque ecole recoit ses propres identifiants Firebase, isoles des autres ecoles.</Check>
+
+## Ce qui reste sous votre responsabilite
+
+<Warning>
+  Un serveur cloud expose sur internet doit imperativement passer par HTTPS (reverse proxy) - jamais de port ouvert directement en HTTP. Voir [Installation](/guide-technique/installation).
+</Warning>
+
+- Gardez Docker et votre systeme d'exploitation a jour.
+- Limitez l'acces physique/reseau a la machine hebergeant votre serveur (surtout pour le scenario "un seul ordinateur").
+- Ne partagez jamais votre code d'activation publiquement - il identifie votre ecole aupres de la Plateforme.
+- Testez vos sauvegardes (voir [Sauvegardes](/guide-technique/sauvegardes)) - une securite sans sauvegarde restauree avec succes n'a pas ete testee.
+
+## Signaler une vulnerabilite
+
+Si vous decouvrez une faille de securite, ne la publiez pas publiquement - contactez l'equipe Ardoise directement pour une divulgation responsable.

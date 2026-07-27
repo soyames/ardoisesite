@@ -1,0 +1,30 @@
+---
+title: "Mise à jour"
+description: "Recuperer la derniere version, sans reconstruire depuis les sources."
+---
+
+Ardoise est distribue en image Docker prete a l'emploi (`amesc/ardoise:latest`), reconstruite automatiquement a chaque nouvelle version - vous n'avez jamais besoin de recompiler le code source vous-meme.
+
+<Steps>
+  <Step title="Recuperer la derniere image">
+    ```bash
+    docker compose pull
+    ```
+  </Step>
+  <Step title="Redemarrer avec la nouvelle version">
+    ```bash
+    docker compose up -d
+    ```
+    Au demarrage, le conteneur applique automatiquement les migrations de base de donnees necessaires - aucune manipulation manuelle de schema requise.
+  </Step>
+  <Step title="Verifier la version en cours">
+    ```bash
+    curl http://localhost:8000/health/
+    ```
+    Renvoie `{"status": "ok", "version": "..."}`.
+  </Step>
+</Steps>
+
+<Note>
+  Vos donnees (le dossier `data/`, monte en volume Docker) survivent a chaque mise a jour et redemarrage - elles ne font jamais partie de l'image elle-meme.
+</Note>

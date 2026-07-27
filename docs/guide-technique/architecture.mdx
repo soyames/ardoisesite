@@ -1,0 +1,31 @@
+---
+title: "Architecture"
+description: "Pourquoi chaque ecole heberge sa propre installation, et comment les trois composants d'Ardoise s'articulent."
+---
+
+Ardoise repose sur trois composants distincts :
+
+<CardGroup cols={3}>
+  <Card title="Le serveur de l'ecole" icon="server">
+    Une installation Django auto-hebergee, une par ecole, avec sa propre base de donnees (SQLite par defaut, Postgres en option). Contient toutes les donnees operationnelles : eleves, notes, finances, paie.
+  </Card>
+  <Card title="Le portail SaaS" icon="browser">
+    Une application web partagee (React), servie a la fois sur ardoiseeduc.com (marketplace public) et saas.ardoiseeduc.com (portail personnel/fondateur), qui parle au serveur de chaque ecole depuis le navigateur.
+  </Card>
+  <Card title="La Plateforme" icon="cloud">
+    Un service central (Cloudflare Worker) qui ne gere que ce qui doit etre partage entre ecoles : annuaire public, abonnements, codes d'activation, notifications WhatsApp/Mobile Money du cote plateforme.
+  </Card>
+</CardGroup>
+
+## Pourquoi ce modele
+
+Une ecole qui heberge son propre serveur garde un controle total sur ses donnees les plus sensibles (dossiers eleves, notes, paiements) - rien de tout cela ne transite ni ne reste stocke sur l'infrastructure d'Ardoise. C'est un choix de confiance autant qu'un choix technique : un etablissement peut verifier lui-meme, sur sa propre machine, que ses donnees ne quittent jamais son reseau (sauf synchronisation explicite qu'il controle : sauvegarde cloud, notifications).
+
+Cela a une consequence directe : le navigateur du personnel de l'ecole communique **directement** avec le serveur de l'ecole (une origine differente du portail SaaS lui-meme) - une configuration cross-origin assumee, pas une architecture a corriger.
+
+## Ce que la Plateforme sait, et ce qu'elle ne sait jamais
+
+<Check>Nom de l'ecole, coordonnees, effectifs declares (annuaire public)</Check>
+<Check>Etat de l'abonnement et code d'activation</Check>
+<Check>Profils publics des tuteurs a domicile (marketplace de recrutement)</Check>
+<Danger>Jamais : dossiers eleves, notes, bulletins, montants de frais de scolarite, bulletins de paie</Danger>

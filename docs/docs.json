@@ -1,0 +1,117 @@
+{
+  "$schema": "https://mintlify.com/docs.json",
+  "theme": "mint",
+  "name": "Ardoise",
+  "description": "Documentation d'Ardoise - la gestion scolaire tout-en-un pour les etablissements prives au Benin.",
+  "colors": {
+    "primary": "#B37640",
+    "light": "#D9A574",
+    "dark": "#8A5A2E"
+  },
+  "logo": {
+    "light": "/logo/light.png",
+    "dark": "/logo/dark.png",
+    "href": "https://ardoiseeduc.com"
+  },
+  "favicon": "/favicon.png",
+  "navbar": {
+    "links": [
+      {
+        "label": "Marketplace",
+        "href": "https://ardoiseeduc.com"
+      },
+      {
+        "label": "Portail SaaS",
+        "href": "https://saas.ardoiseeduc.com"
+      }
+    ],
+    "primary": {
+      "type": "button",
+      "label": "S'inscrire",
+      "href": "https://saas.ardoiseeduc.com/register"
+    }
+  },
+  "footer": {
+    "socials": {
+      "website": "https://ardoiseeduc.com"
+    }
+  },
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Guide utilisateur",
+        "groups": [
+          {
+            "group": "Bienvenue",
+            "pages": ["index", "guide-utilisateur/premiers-pas"]
+          },
+          {
+            "group": "Elèves",
+            "pages": ["guide-utilisateur/eleves"]
+          },
+          {
+            "group": "Académique",
+            "pages": ["guide-utilisateur/academique"]
+          },
+          {
+            "group": "Finance",
+            "pages": ["guide-utilisateur/finance"]
+          },
+          {
+            "group": "RH & Paie",
+            "pages": ["guide-utilisateur/rh-paie"]
+          },
+          {
+            "group": "Cantine & Bibliothèque",
+            "pages": ["guide-utilisateur/cantine-bibliotheque"]
+          },
+          {
+            "group": "Communication",
+            "pages": ["guide-utilisateur/communication"]
+          },
+          {
+            "group": "Aide",
+            "pages": ["guide-utilisateur/faq"]
+          }
+        ]
+      },
+      {
+        "tab": "Guide technique",
+        "groups": [
+          {
+            "group": "Comprendre Ardoise",
+            "pages": ["guide-technique/architecture"]
+          },
+          {
+            "group": "Déploiement",
+            "pages": [
+              "guide-technique/installation",
+              "guide-technique/mise-a-jour",
+              "guide-technique/acces-distant"
+            ]
+          },
+          {
+            "group": "Exploitation",
+            "pages": [
+              "guide-technique/sauvegardes",
+              "guide-technique/depannage",
+              "guide-technique/securite"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Plateforme",
+        "groups": [
+          {
+            "group": "Compte et abonnement",
+            "pages": [
+              "plateforme/codes-activation",
+              "plateforme/abonnement"
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

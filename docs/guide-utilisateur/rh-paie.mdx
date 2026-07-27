@@ -1,0 +1,37 @@
+---
+title: "RH & Paie"
+description: "Personnel, heures des vacataires, paie et avances sur salaire."
+---
+
+## Personnel permanent et vacataires
+
+Chaque membre du personnel a un contrat de type **permanent** (salaire fixe mensuel) ou **vacataire** (paye a l'heure). Pour un vacataire, seules les heures **confirmees/approuvees** comptent pour le calcul de la paie - une heure saisie mais non encore validee n'entre jamais dans un cycle de paie.
+
+## Cycle de paie
+
+<Steps>
+  <Step title="Saisie des heures">
+    Un vacataire (ou la personne qui saisit pour son compte) enregistre ses heures effectuees.
+  </Step>
+  <Step title="Confirmation">
+    Les heures sont confirmees/approuvees avant de pouvoir entrer dans un cycle de paie.
+  </Step>
+  <Step title="Generation du cycle">
+    Le RH ou le comptable genere le cycle de paie (PayrollRun) pour la periode.
+  </Step>
+  <Step title="Validation et paiement">
+    Une fois le cycle valide, chaque bulletin de paie (Payslip) est paye et son ecriture comptable posee.
+  </Step>
+</Steps>
+
+## Avances sur salaire
+
+Un membre du personnel peut demander une avance sur salaire ; une fois approuvee, elle est automatiquement deduite du prochain bulletin de paie.
+
+## Conges
+
+Les demandes de conge suivent un circuit simple : demande, approbation (ou rejet), suivi du solde.
+
+<Note>
+  Les taux de cotisation sociale (CNSS) et de retenue fiscale (IRPP) appliques a la paie sont actuellement des valeurs par defaut, pas encore configurables ecole par ecole. Verifiez-les aupres de votre comptable avant de vous y fier pour une declaration officielle.
+</Note>

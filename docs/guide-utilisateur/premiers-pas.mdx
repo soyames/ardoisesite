@@ -1,0 +1,58 @@
+---
+title: "Premiers pas"
+description: "Creer un compte, obtenir un acces, et se connecter selon son role."
+---
+
+## Pour le fondateur ou la fondatrice de l'ecole
+
+<Steps>
+  <Step title="Inscription">
+    Creez votre compte sur [saas.ardoiseeduc.com](https://saas.ardoiseeduc.com/register). Ceci cree le profil de votre ecole sur la Plateforme et genere votre **code d'activation** - voir [Codes d'activation](/plateforme/codes-activation).
+  </Step>
+  <Step title="Installation du serveur">
+    Suivez le [guide d'installation](/guide-technique/installation) pour deployer le serveur de votre ecole (sur un ordinateur unique, un serveur dedie, ou un serveur cloud).
+  </Step>
+  <Step title="Assistant de configuration">
+    A la premiere ouverture, votre serveur affiche un ecran de bienvenue demandant votre code d'activation. Une fois valide, redemarrez le serveur - votre installation est prete.
+  </Step>
+  <Step title="Connecter votre serveur au portail">
+    Dans **Integrations API** de votre tableau de bord fondateur, indiquez l'adresse de votre serveur pour que le personnel de l'ecole puisse s'y connecter depuis le portail SaaS.
+  </Step>
+  <Step title="Inviter le personnel">
+    Depuis l'onglet **Departements (Personnel)**, ajoutez chaque membre du personnel par son adresse e-mail et attribuez-lui un role. Voir la section suivante.
+  </Step>
+</Steps>
+
+## Pour le personnel de l'ecole (secretaire, censeur, comptable, surveillant...)
+
+Un compte Ardoise ne suffit pas a lui seul a acceder au tableau de bord de votre ecole - il faut que le fondateur ou la directrice/le directeur vous **attribue un role** depuis l'onglet Departements.
+
+<Steps>
+  <Step title="Creez un compte">
+    Rendez-vous sur [saas.ardoiseeduc.com](https://saas.ardoiseeduc.com/register) et inscrivez-vous avec votre e-mail.
+  </Step>
+  <Step title="Demandez a etre ajoute(e)">
+    Communiquez votre e-mail au fondateur/a la fondatrice de votre ecole, qui vous attribuera un role (Secretariat, Censeur, Comptabilite, RH, Surveillant General, Cantine, Bibliotheque, Audit, Directeur).
+  </Step>
+  <Step title="Connectez-vous">
+    Une fois le role attribue, connectez-vous sur [saas.ardoiseeduc.com/login](https://saas.ardoiseeduc.com/login) - vous serez automatiquement dirige(e) vers le tableau de bord correspondant a votre role.
+  </Step>
+</Steps>
+
+<Note>
+  Si le fondateur essaie de vous ajouter avant que vous ayez cree votre compte, l'ajout echoue avec un message clair : creez d'abord votre compte gratuit, puis reessayez.
+</Note>
+
+## Roles disponibles
+
+| Role | Acces principal |
+|---|---|
+| Fondateur / Fondatrice | Tout le tableau de bord, parametres, abonnement, gestion du personnel |
+| Directeur / Directrice | Equivalent au fondateur pour la gestion academique et administrative |
+| Censeur | Cursus, emplois du temps, notes, bulletins |
+| Secretariat | Inscriptions, dossiers eleves, documents officiels |
+| Comptabilite | Frais de scolarite, paiements, paie |
+| Surveillant General | Discipline, presences, retards |
+| RH | Recrutement, contrats, personnel |
+| Cantine / Bibliotheque | Modules dedies a chaque service |
+| Audit | Lecture seule sur l'ensemble des operations |

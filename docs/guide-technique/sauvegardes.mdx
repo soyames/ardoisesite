@@ -1,0 +1,30 @@
+---
+title: "Sauvegardes et restauration"
+description: "Proteger vos donnees avec une sauvegarde cloud automatique."
+---
+
+## Sauvegarde vers Google Drive
+
+Ardoise peut sauvegarder automatiquement votre base de donnees et vos fichiers vers un compte Google Drive que vous controlez.
+
+<Steps>
+  <Step title="Connecter Google Drive">
+    Depuis votre tableau de bord fondateur, autorisez l'acces a un compte Google Drive (flux OAuth standard). Seul un fondateur/une fondatrice peut configurer cette connexion.
+  </Step>
+  <Step title="Sauvegarde automatique">
+    Un conteneur dedie (`backup_worker`, deja inclus dans `docker-compose.yml`) execute une sauvegarde toutes les 24 heures sans intervention manuelle.
+  </Step>
+  <Step title="Sauvegarde manuelle (si besoin)">
+    ```bash
+    docker compose exec app python manage.py run_cloud_backup
+    ```
+  </Step>
+</Steps>
+
+## Restauration
+
+En cas de changement de machine ou de sinistre, le dossier `data/` (base de donnees + fichiers) suffit a restaurer une installation a l'identique - copiez-le simplement dans le volume Docker de la nouvelle machine avant de demarrer le conteneur.
+
+<Warning>
+  Testez periodiquement que votre sauvegarde Google Drive est bien a jour - une connexion Google expiree ou revoquee arrete silencieusement les sauvegardes automatiques sans casser le fonctionnement quotidien de l'ecole.
+</Warning>

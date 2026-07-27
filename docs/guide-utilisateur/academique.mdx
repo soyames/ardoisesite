@@ -1,0 +1,39 @@
+---
+title: "Académique : notes, bulletins, présences"
+description: "Saisie des notes, cycle de vie des bulletins, presences et discipline."
+---
+
+## Cycle de vie d'un bulletin
+
+Le circuit d'un bulletin suit toujours le meme ordre :
+
+<Steps>
+  <Step title="Saisie des notes">
+    Chaque enseignant saisit les notes de sa matiere pour sa classe.
+  </Step>
+  <Step title="Discipline">
+    Le Surveillant General saisit les presences, retards et le score de discipline de chaque eleve.
+  </Step>
+  <Step title="Generation et validation">
+    Le Censeur genere le bulletin du trimestre et le **valide**.
+  </Step>
+  <Step title="Publication">
+    Une fois valide, le bulletin devient visible aux parents (portail marketplace) et imprimable par le secretariat.
+  </Step>
+</Steps>
+
+<Note>
+  Un bulletin ne peut pas etre modifie apres validation sans repasser par ce circuit - c'est voulu : cela garantit qu'un bulletin remis a une famille correspond exactement a ce qui a ete valide par le Censeur.
+</Note>
+
+## Emplois du temps
+
+Le Censeur construit la grille horaire (TimetableSlot) par classe et par matiere. Chaque enseignant ne voit que ses propres creneaux depuis son portail.
+
+## Discipline et presences
+
+Chaque eleve demarre l'annee avec un capital de points de discipline (configurable par ecole). Les incidents et absences saisis par le Surveillant General ajustent ce score, qui alimente ensuite le bulletin.
+
+## Activites extrascolaires
+
+Les activites (sport, club, soutien) sont creees par la Direction/le Censeur ; les eleves s'y inscrivent via le secretariat ou, selon la configuration, directement par les parents.
