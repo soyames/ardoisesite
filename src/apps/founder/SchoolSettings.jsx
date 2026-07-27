@@ -4,6 +4,7 @@ import { Card, CardHeader, CardBody } from '../../shared/ui/Card.jsx'
 import Button from '../../shared/ui/Button.jsx'
 import Spinner from '../../shared/ui/Spinner.jsx'
 import LetterheadSettings from '../../shared/components/LetterheadSettings.jsx'
+import ClassesSettings from './ClassesSettings.jsx'
 
 export default function SchoolSettings() {
   const [settings, setSettings] = useState(null)
@@ -170,6 +171,7 @@ export default function SchoolSettings() {
       </CardBody>
     </Card>
     <LetterheadSettings />
+    <ClassesSettings />
     </div>
   )
 }

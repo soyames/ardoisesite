@@ -126,10 +126,10 @@ export default function SchoolEnrollment() {
           <p className="text-ink-muted mt-1">Pour l'établissement : <span className="font-semibold text-ink">{school.name}</span></p>
         </div>
 
-        {school.enrollmentRequirements && (
+        {(selectedClass?.requiredDocuments || school.enrollmentRequirements) && (
           <div className="mb-6 p-4 rounded bg-primary-50 border border-primary-100 text-sm text-primary-900">
-            <h4 className="font-bold mb-1">Pièces à fournir (selon l'école) :</h4>
-            <p className="whitespace-pre-wrap">{school.enrollmentRequirements}</p>
+            <h4 className="font-bold mb-1">Pièces à fournir ({selectedClass?.requiredDocuments ? 'spécifiques à la classe' : "selon l'école"}) :</h4>
+            <p className="whitespace-pre-wrap">{selectedClass?.requiredDocuments || school.enrollmentRequirements}</p>
             <p className="mt-2 font-semibold italic text-primary-800">
               Note : ces documents seront à déposer physiquement lors du rendez-vous que vous prendrez
               une fois votre demande acceptée et les frais d'inscription payés.

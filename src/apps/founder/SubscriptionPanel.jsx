@@ -93,8 +93,31 @@ export default function SubscriptionPanel({ schoolId }) {
                 ainsi qu'une vitrine publique sur notre Marketplace pour recruter les meilleurs professeurs. Vos données ne quittent jamais votre école !
               </p>
               
-              {!isActive ? (
+              <div className="bg-primary-50 p-6 rounded-xl border border-primary-200 mb-6">
+                <h4 className="font-bold text-primary-900 mb-2">Logiciel prêt à installer !</h4>
+                <p className="text-sm text-primary-800 mb-4">
+                  L'installation locale et l'utilisation de base sont <strong>entièrement gratuites</strong>. Voici votre clé d'activation secrète à insérer lors du premier démarrage de l'ERP dans votre école :
+                </p>
+                <div className="bg-white p-3 rounded border border-primary-200 font-mono text-center text-lg text-primary-700 tracking-wider mb-6 break-all">
+                  {activationCode || 'Génération en cours...'}
+                </div>
+                <div className="flex flex-col gap-3">
+                  <button onClick={() => alert("Le téléchargement de l'installeur Windows (.exe) démarrera ici.")} className="w-full rounded-control bg-primary-600 px-4 py-3 text-sm font-bold text-white transition hover:bg-primary-500 flex justify-center items-center gap-2">
+                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                    Télécharger Ardoise Serveur (Windows)
+                  </button>
+                  <p className="text-xs text-center text-primary-600 mt-2">
+                    Ou branchez simplement votre <strong>Ardoise Box</strong> si vous en avez commandé une.
+                  </p>
+                </div>
+              </div>
+
+              {!isActive && (
                 <div className="bg-surface-raised p-4 rounded-xl border border-border">
+                  <h4 className="font-bold text-ink mb-2">Débloquer les fonctionnalités avancées</h4>
+                  <p className="text-sm text-ink-muted mb-4">
+                    Passez à l'abonnement Premium pour débloquer le <strong>Recrutement Marketplace</strong>, le <strong>Traitement des Inscriptions</strong>, et la <strong>Gestion du Personnel</strong>.
+                  </p>
                   <div className="flex justify-between items-center mb-4">
                     <span className="font-semibold text-ink">Licence Annuelle</span>
                     <span className="text-xl font-bold text-primary-600">{PRICE_FCFA.toLocaleString('fr-FR')} FCFA</span>
@@ -115,25 +138,6 @@ export default function SubscriptionPanel({ schoolId }) {
                   >
                     {confirming ? 'Confirmation du paiement...' : "Payer l'abonnement annuel"}
                   </FedaPayButton>
-                </div>
-              ) : (
-                <div className="bg-primary-50 p-6 rounded-xl border border-primary-200">
-                  <h4 className="font-bold text-primary-900 mb-2">Logiciel prêt à installer !</h4>
-                  <p className="text-sm text-primary-800 mb-4">
-                    Votre abonnement est actif. Voici votre clé d'activation secrète à insérer lors du premier démarrage du logiciel dans votre école :
-                  </p>
-                  <div className="bg-white p-3 rounded border border-primary-200 font-mono text-center text-lg text-primary-700 tracking-wider mb-6 break-all">
-                    {activationCode || 'Génération en cours...'}
-                  </div>
-                  <div className="flex flex-col gap-3">
-                    <button onClick={() => alert("Le téléchargement de l'installeur Windows (.exe) démarrera ici.")} className="w-full rounded-control bg-primary-600 px-4 py-3 text-sm font-bold text-white transition hover:bg-primary-500 flex justify-center items-center gap-2">
-                      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
-                      Télécharger Ardoise Serveur (Windows)
-                    </button>
-                    <p className="text-xs text-center text-primary-600 mt-2">
-                      Ou branchez simplement votre <strong>Ardoise Box</strong> si vous en avez commandé une.
-                    </p>
-                  </div>
                 </div>
               )}
             </div>
