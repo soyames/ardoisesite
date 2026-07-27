@@ -4,6 +4,7 @@ import { db } from '../../shared/api/firebase'
 import { useAuth } from '../../shared/auth/AuthContext.jsx'
 import { FedaPayButton } from '../../shared/components/FedaPayButton.jsx'
 import { Card, CardHeader, CardBody } from '../../shared/ui/Card.jsx'
+import { usePwaInstall } from '../../shared/hooks/usePwaInstall.js'
 
 // Le paiement lui-meme ne fait plus jamais d'ecriture Firestore cote client
 // -- c'est desormais le webhook FedaPay signe (ardoise-api) qui active
@@ -15,6 +16,7 @@ const CONFIRM_POLL_DELAY_MS = 2000
 
 export default function SubscriptionPanel({ schoolId }) {
   const { user } = useAuth()
+  const { promptInstall, isIOS, canOfferInstall } = usePwaInstall()
   const [loading, setLoading] = useState(true)
   const [schoolData, setSchoolData] = useState(null)
   const [activationCode, setActivationCode] = useState(null)
@@ -102,9 +104,17 @@ export default function SubscriptionPanel({ schoolId }) {
                   {activationCode || 'Génération en cours...'}
                 </div>
                 <div className="flex flex-col gap-3">
-                  <button onClick={() => alert("Le téléchargement de l'installeur Windows (.exe) démarrera ici.")} className="w-full rounded-control bg-primary-600 px-4 py-3 text-sm font-bold text-white transition hover:bg-primary-500 flex justify-center items-center gap-2">
+                  <button onClick={() => {
+                    if (isIOS) {
+                      alert("Pour installer sur iOS, appuyez sur l'icône de partage puis 'Sur l'écran d'accueil'.")
+                    } else if (canOfferInstall) {
+                      promptInstall()
+                    } else {
+                      alert("L'application est déjà installée, ou votre navigateur ne permet pas l'installation automatique.")
+                    }
+                  }} className="w-full rounded-control bg-primary-600 px-4 py-3 text-sm font-bold text-white transition hover:bg-primary-500 flex justify-center items-center gap-2">
                     <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
-                    Télécharger Ardoise Serveur (Windows)
+                    Installer Ardoise Serveur
                   </button>
                   <p className="text-xs text-center text-primary-600 mt-2">
                     Ou branchez simplement votre <strong>Ardoise Box</strong> si vous en avez commandé une.
