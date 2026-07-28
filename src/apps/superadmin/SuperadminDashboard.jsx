@@ -13,12 +13,13 @@ import Overview from './Overview.jsx'
 import Crm from './Crm.jsx'
 import SupportTickets from './SupportTickets.jsx'
 import { TeamManagement } from './TeamManagement.jsx'
+import Partners from './Partners.jsx'
 
 const TABS_BY_ROLE = {
-  superadmin: ['overview', 'crm', 'tickets', 'schools', 'payments', 'users', 'team', 'settings'],
+  superadmin: ['overview', 'crm', 'tickets', 'schools', 'payments', 'users', 'partners', 'team', 'settings'],
   support_agent: ['tickets', 'settings'],
   school_onboarding: ['crm', 'schools', 'tickets', 'settings'],
-  dev_onboarding: ['users', 'tickets', 'settings'],
+  dev_onboarding: ['users', 'partners', 'tickets', 'settings'],
   billing_agent: ['crm', 'payments', 'overview', 'tickets', 'settings'],
   marketing_agent: ['crm', 'overview', 'settings']
 }
@@ -92,6 +93,15 @@ export default function SuperadminDashboard() {
             Utilisateurs
           </Button>
         )}
+        {availableTabs.includes('partners') && (
+          <Button
+            variant={activeTab === 'partners' ? 'primary' : 'ghost'}
+            onClick={() => setActiveTab('partners')}
+            className={activeTab === 'partners' ? '' : 'text-ink-muted hover:text-ink'}
+          >
+            <Icon name="engineering" className="mr-2" /> Partenaires
+          </Button>
+        )}
         {availableTabs.includes('team') && (
           <Button
             variant={activeTab === 'team' ? 'primary' : 'ghost'}
@@ -119,6 +129,7 @@ export default function SuperadminDashboard() {
         {activeTab === 'schools' && availableTabs.includes('schools') && <SchoolsRegistry />}
         {activeTab === 'payments' && availableTabs.includes('payments') && <TutoringContracts />}
         {activeTab === 'users' && availableTabs.includes('users') && <UsersRegistry />}
+        {activeTab === 'partners' && availableTabs.includes('partners') && <Partners />}
         {activeTab === 'team' && availableTabs.includes('team') && <TeamManagement />}
         {activeTab === 'settings' && availableTabs.includes('settings') && <MarketplaceAccountSettings />}
       </div>

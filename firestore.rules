@@ -83,6 +83,26 @@ service cloud.firestore {
         allow read: if isSignedIn() && getUserData().role in ['superadmin', 'support_agent', 'school_onboarding', 'dev_onboarding', 'billing_agent', 'marketing_agent'];
         allow write: if false;
       }
+
+      // Remote support access grants (2026-07-28 certified-partner network) --
+      // a founder grants a specific certified partner narrow, time-limited
+      // access (health/backup-status/backup-trigger) to THEIR OWN school's
+      // self-hosted install. Keyed by partnerId (== the partner's own uid) so
+      // there's at most one active grant per partner per school. Creation
+      // and revocation both go through ardoise-api's /api/schools/:id/
+      // support-grants routes (Admin SDK, bypasses these rules) so the
+      // Worker can first verify the target partnerId actually corresponds to
+      // an approved certifiedPartners doc before writing anything - a
+      // founder should not be able to grant "support access" to an
+      // unvetted uid via a raw client write. The partner themselves can
+      // read their own grant (so their tooling can tell whether/until when
+      // they still have access) but never write it.
+      match /supportGrants/{partnerId} {
+        allow read: if isSignedIn()
+                    && ((getUserData().role == 'founder' && getUserData().schoolId == schoolId)
+                        || request.auth.uid == partnerId);
+        allow write: if false;
+      }
     }
 
     // Utilisateurs
@@ -317,9 +337,34 @@ service cloud.firestore {
 
     // Programme Développeur : Paramètres (Payout, etc)
     match /developer_settings/{settingId} {
-      allow create, read, update: if isSignedIn() 
+      allow create, read, update: if isSignedIn()
                     && getUserData().role == 'developer'
                     && request.auth.uid == settingId;
+    }
+
+    // Réseau de partenaires certifiés (2026-07-28 pivot Odoo -- installation
+    // et maintenance assurées par un réseau de développeurs vérifiés plutôt
+    // que par Ardoise elle-même). Un compte 'developer' existant peut
+    // candidater lui-même (même convention que api_keys/webhooks : écriture
+    // client directe, keyed by its own uid so there's exactly one profile
+    // per developer). status ne peut JAMAIS être modifié par le client --
+    // seul le Worker (Admin SDK, POST /api/admin/partners/:id/approve|reject)
+    // peut faire passer un profil de 'pending' à 'approved'/'rejected',
+    // exactement comme pipelineStage sur crm_leads plus haut. Le profil
+    // complet est public une fois approuvé (annuaire des partenaires,
+    // PartnerDirectory.jsx) ; avant ça, seul son auteur ou un superadmin
+    // peut le lire.
+    match /certifiedPartners/{partnerId} {
+      allow read: if resource.data.status == 'approved'
+                  || (isSignedIn() && (request.auth.uid == partnerId || getUserData().role == 'superadmin'));
+      allow create: if isSignedIn() && request.auth.uid == partnerId
+                    && getUserData().role == 'developer'
+                    && request.resource.data.status == 'pending';
+      allow update: if isSignedIn() && request.auth.uid == partnerId
+                    && getUserData().role == 'developer'
+                    && !request.resource.data.diff(resource.data).affectedKeys()
+                          .hasAny(['status', 'reviewedAt', 'reviewedBy']);
+      allow delete: if false;
     }
 
     // Collection historique, remplacée par users/{uid}.role +

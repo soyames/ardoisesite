@@ -1,11 +1,19 @@
 import React, { useState, useEffect } from 'react'
-import { doc, getDoc } from 'firebase/firestore'
-import { db } from '../../shared/api/firebase'
+import { doc, getDoc, collection, getDocs, query, where } from 'firebase/firestore'
+import { db, auth } from '../../shared/api/firebase'
+import { getPlatformApiBaseUrl } from '../../config/env.js'
 import { Card, CardHeader, CardBody } from '../../shared/ui/Card.jsx'
+import Button from '../../shared/ui/Button.jsx'
 import { usePwaInstall } from '../../shared/hooks/usePwaInstall.js'
 import { FedaPayButton } from '../../shared/components/FedaPayButton.jsx'
 
 const ENTERPRISE_PRICE_FCFA = 50000
+
+const SUPPORT_SCOPES = [
+  { value: 'health', label: 'État du serveur' },
+  { value: 'backup_status', label: 'État des sauvegardes' },
+  { value: 'backup_trigger', label: 'Déclencher une sauvegarde' },
+]
 
 const ENTERPRISE_MODULES = [
   { icon: '💰', label: 'Finance & Comptabilité', description: 'Facturation, encaissements, comptabilité conforme SYSCOHADA' },
@@ -26,6 +34,66 @@ export default function SubscriptionPanel({ schoolId }) {
   const [activationCode, setActivationCode] = useState(null)
   const [school, setSchool] = useState(null)
   const [error, setError] = useState(null)
+  const [approvedPartners, setApprovedPartners] = useState([])
+  const [supportGrants, setSupportGrants] = useState([])
+  const [grantForm, setGrantForm] = useState({ partnerId: '', scope: ['health', 'backup_status'], durationDays: 7 })
+
+  const loadSupportGrants = async () => {
+    if (!schoolId) return
+    try {
+      const idToken = await auth.currentUser.getIdToken()
+      const res = await fetch(`${getPlatformApiBaseUrl()}/api/schools/${schoolId}/support-grants`, {
+        headers: { Authorization: `Bearer ${idToken}` },
+      })
+      if (res.ok) setSupportGrants(await res.json())
+    } catch (err) {
+      console.error('Failed to load support grants:', err)
+    }
+  }
+
+  useEffect(() => {
+    getDocs(query(collection(db, 'certifiedPartners'), where('status', '==', 'approved')))
+      .then((snap) => setApprovedPartners(snap.docs.map((d) => ({ id: d.id, ...d.data() }))))
+      .catch((err) => console.error('Failed to load certified partners:', err))
+    loadSupportGrants()
+  }, [schoolId])
+
+  const grantSupportAccess = async (e) => {
+    e.preventDefault()
+    if (!grantForm.partnerId || grantForm.scope.length === 0) {
+      alert('Sélectionnez un partenaire et au moins une portée.')
+      return
+    }
+    const idToken = await auth.currentUser.getIdToken()
+    const res = await fetch(`${getPlatformApiBaseUrl()}/api/schools/${schoolId}/support-grants`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${idToken}` },
+      body: JSON.stringify(grantForm),
+    })
+    if (res.ok) {
+      loadSupportGrants()
+    } else {
+      const data = await res.json().catch(() => ({}))
+      alert(data.error || "Erreur lors de l'octroi de l'accès.")
+    }
+  }
+
+  const revokeSupportAccess = async (partnerId) => {
+    if (!window.confirm('Révoquer cet accès support ?')) return
+    const idToken = await auth.currentUser.getIdToken()
+    await fetch(`${getPlatformApiBaseUrl()}/api/schools/${schoolId}/support-grants/${partnerId}`, {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${idToken}` },
+    })
+    loadSupportGrants()
+  }
+
+  const toggleGrantScope = (value) => {
+    setGrantForm((f) => ({
+      ...f,
+      scope: f.scope.includes(value) ? f.scope.filter((s) => s !== value) : [...f.scope, value],
+    }))
+  }
 
   const loadSchool = () => {
     if (!schoolId) return
@@ -193,6 +261,75 @@ export default function SubscriptionPanel({ schoolId }) {
                 Passer à Enterprise
               </FedaPayButton>
             </div>
+          )}
+        </CardBody>
+      </Card>
+
+      <Card>
+        <CardHeader
+          title="Accès Support à Distance"
+          subtitle="Accordez à un partenaire certifié un accès limité et temporaire pour vous aider à distance - jamais d'accès SSH, réservé au personnel Ardoise."
+        />
+        <CardBody>
+          {supportGrants.length > 0 && (
+            <ul className="space-y-2 mb-4">
+              {supportGrants.map((g) => {
+                const expired = new Date(g.expiresAt).getTime() < Date.now()
+                return (
+                  <li key={g.id} className="flex items-center justify-between rounded-control border border-border bg-surface p-3">
+                    <div>
+                      <p className="text-sm font-medium text-ink">{g.partnerName || g.partnerId}</p>
+                      <p className="text-xs text-ink-muted mt-0.5">
+                        {(g.scope || []).map((s) => SUPPORT_SCOPES.find((x) => x.value === s)?.label || s).join(', ')}
+                        {' · '}
+                        {expired ? <span className="text-danger-600">Expiré</span> : `Expire le ${new Date(g.expiresAt).toLocaleDateString('fr-FR')}`}
+                      </p>
+                    </div>
+                    <button onClick={() => revokeSupportAccess(g.id)} className="text-danger-600 hover:text-danger-700 text-xs font-medium px-2 py-1">
+                      Révoquer
+                    </button>
+                  </li>
+                )
+              })}
+            </ul>
+          )}
+
+          {approvedPartners.length === 0 ? (
+            <p className="text-sm text-ink-muted">Aucun partenaire certifié disponible pour le moment. Consultez l'annuaire des partenaires.</p>
+          ) : (
+            <form onSubmit={grantSupportAccess} className="space-y-3">
+              <div>
+                <label className="text-xs font-medium text-ink-muted">Partenaire</label>
+                <select
+                  value={grantForm.partnerId}
+                  onChange={(e) => setGrantForm((f) => ({ ...f, partnerId: e.target.value }))}
+                  className="mt-1 w-full rounded-card border-border bg-surface px-3 py-1.5 text-sm"
+                >
+                  <option value="">Sélectionner un partenaire...</option>
+                  {approvedPartners.map((p) => <option key={p.id} value={p.id}>{p.publicName} ({p.country})</option>)}
+                </select>
+              </div>
+              <div className="flex flex-wrap gap-3">
+                {SUPPORT_SCOPES.map((s) => (
+                  <label key={s.value} className="flex items-center gap-1.5 text-sm">
+                    <input type="checkbox" checked={grantForm.scope.includes(s.value)} onChange={() => toggleGrantScope(s.value)} />
+                    {s.label}
+                  </label>
+                ))}
+              </div>
+              <div>
+                <label className="text-xs font-medium text-ink-muted">Durée (jours)</label>
+                <input
+                  type="number"
+                  min={1}
+                  max={90}
+                  value={grantForm.durationDays}
+                  onChange={(e) => setGrantForm((f) => ({ ...f, durationDays: Number(e.target.value) }))}
+                  className="mt-1 w-24 rounded-card border-border bg-surface px-3 py-1.5 text-sm"
+                />
+              </div>
+              <Button size="sm" variant="primary" type="submit">Accorder l'accès</Button>
+            </form>
           )}
         </CardBody>
       </Card>

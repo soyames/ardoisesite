@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react'
-import { collection, query, where, onSnapshot, addDoc, deleteDoc, doc } from 'firebase/firestore'
+import { collection, query, where, onSnapshot, addDoc, deleteDoc, doc, setDoc } from 'firebase/firestore'
 import { auth, db } from '../../shared/api/firebase.js'
 import { useAuth } from '../../shared/auth/AuthContext.jsx'
 import { getPlatformApiBaseUrl } from '../../config/env.js'
+import { OHADA_COUNTRIES } from '../../shared/constants/locations.js'
 import { Card, CardHeader, CardBody } from '../../shared/ui/Card.jsx'
 import Button from '../../shared/ui/Button.jsx'
 import Icon from '../../shared/ui/Icon.jsx'
@@ -10,7 +11,14 @@ import Icon from '../../shared/ui/Icon.jsx'
 const SCOPES = [
   { value: 'marketplace:read', label: 'Marketplace (lecture)', description: 'Ecoles, tuteurs, offres d\'emploi publiees' },
   { value: 'leads:write', label: 'Soumission de leads', description: 'Envoyer un prospect ecole ou une candidature vers le CRM Ardoise' },
+  { value: 'support:access', label: 'Accès support (partenaire certifié)', description: 'Consulter l\'état/déclencher une sauvegarde d\'une école qui vous a accordé l\'accès' },
 ]
+
+const PARTNER_STATUS_LABEL = {
+  pending: { label: 'Candidature en cours d\'examen', tone: 'text-warning-600' },
+  approved: { label: 'Partenaire certifié', tone: 'text-success-600' },
+  rejected: { label: 'Candidature refusée', tone: 'text-danger-600' },
+}
 
 // Real entropy (crypto.getRandomValues), unlike the Math.random() this
 // replaces - the Worker's requireApiKey() (ardoise-api/src/api-key-auth.ts)
@@ -29,6 +37,8 @@ export default function DeveloperPortal() {
   const [newWebhookUrl, setNewWebhookUrl] = useState('')
   const [loading, setLoading] = useState(true)
   const [newKeyScopes, setNewKeyScopes] = useState([])
+  const [partnerProfile, setPartnerProfile] = useState(null)
+  const [partnerForm, setPartnerForm] = useState({ publicName: '', bio: '', specialties: '', country: '', contactEmail: '', contactPhone: '' })
 
   useEffect(() => {
     if (!user) return
@@ -48,11 +58,47 @@ export default function DeveloperPortal() {
       setLoading(false)
     })
 
+    const unsubscribePartner = onSnapshot(doc(db, 'certifiedPartners', user.uid), (snap) => {
+      if (snap.exists()) {
+        const data = snap.data()
+        setPartnerProfile(data)
+        setPartnerForm({
+          publicName: data.publicName || '',
+          bio: data.bio || '',
+          specialties: Array.isArray(data.specialties) ? data.specialties.join(', ') : '',
+          country: data.country || '',
+          contactEmail: data.contactEmail || '',
+          contactPhone: data.contactPhone || '',
+        })
+      } else {
+        setPartnerProfile(null)
+      }
+    })
+
     return () => {
       unsubscribeKeys()
       unsubscribeHooks()
+      unsubscribePartner()
     }
   }, [user])
+
+  const submitPartnerApplication = async (e) => {
+    e.preventDefault()
+    if (!partnerForm.publicName || !partnerForm.country || (!partnerForm.contactEmail && !partnerForm.contactPhone)) {
+      alert('Nom public, pays, et au moins un moyen de contact sont requis.')
+      return
+    }
+    await setDoc(doc(db, 'certifiedPartners', user.uid), {
+      publicName: partnerForm.publicName,
+      bio: partnerForm.bio,
+      specialties: partnerForm.specialties.split(',').map((s) => s.trim()).filter(Boolean),
+      country: partnerForm.country,
+      contactEmail: partnerForm.contactEmail,
+      contactPhone: partnerForm.contactPhone,
+      status: 'pending',
+      appliedAt: new Date().toISOString(),
+    })
+  }
 
   const generateApiKey = async (type) => {
     if (newKeyScopes.length === 0) {
@@ -263,6 +309,86 @@ export default function DeveloperPortal() {
                 </Button>
               </div>
             </div>
+          </CardBody>
+        </Card>
+
+        <Card className="md:col-span-2">
+          <CardHeader
+            title="Réseau de Partenaires Certifiés"
+            subtitle="Devenez un partenaire vérifié pour l'installation et la maintenance des écoles - une école pourra ensuite vous accorder un accès support à distance."
+          />
+          <CardBody>
+            {partnerProfile && (
+              <div className="mb-4 flex items-center gap-2 text-sm font-medium">
+                <Icon name={partnerProfile.status === 'approved' ? 'verified' : partnerProfile.status === 'rejected' ? 'cancel' : 'hourglass_top'} className={PARTNER_STATUS_LABEL[partnerProfile.status]?.tone} />
+                <span className={PARTNER_STATUS_LABEL[partnerProfile.status]?.tone}>{PARTNER_STATUS_LABEL[partnerProfile.status]?.label || partnerProfile.status}</span>
+              </div>
+            )}
+            <form onSubmit={submitPartnerApplication} className="grid grid-cols-1 gap-3 md:grid-cols-2">
+              <div>
+                <label className="text-xs font-medium text-ink-muted">Nom public</label>
+                <input
+                  type="text"
+                  value={partnerForm.publicName}
+                  onChange={(e) => setPartnerForm((f) => ({ ...f, publicName: e.target.value }))}
+                  className="mt-1 w-full rounded-card border-border bg-surface px-3 py-1.5 text-sm"
+                  placeholder="Votre nom ou celui de votre entreprise"
+                />
+              </div>
+              <div>
+                <label className="text-xs font-medium text-ink-muted">Pays</label>
+                <select
+                  value={partnerForm.country}
+                  onChange={(e) => setPartnerForm((f) => ({ ...f, country: e.target.value }))}
+                  className="mt-1 w-full rounded-card border-border bg-surface px-3 py-1.5 text-sm"
+                >
+                  <option value="">Sélectionner...</option>
+                  {OHADA_COUNTRIES.map((c) => <option key={c.code} value={c.name}>{c.name}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="text-xs font-medium text-ink-muted">Email de contact</label>
+                <input
+                  type="email"
+                  value={partnerForm.contactEmail}
+                  onChange={(e) => setPartnerForm((f) => ({ ...f, contactEmail: e.target.value }))}
+                  className="mt-1 w-full rounded-card border-border bg-surface px-3 py-1.5 text-sm"
+                />
+              </div>
+              <div>
+                <label className="text-xs font-medium text-ink-muted">Téléphone de contact</label>
+                <input
+                  type="tel"
+                  value={partnerForm.contactPhone}
+                  onChange={(e) => setPartnerForm((f) => ({ ...f, contactPhone: e.target.value }))}
+                  className="mt-1 w-full rounded-card border-border bg-surface px-3 py-1.5 text-sm"
+                />
+              </div>
+              <div className="md:col-span-2">
+                <label className="text-xs font-medium text-ink-muted">Spécialités (séparées par des virgules)</label>
+                <input
+                  type="text"
+                  value={partnerForm.specialties}
+                  onChange={(e) => setPartnerForm((f) => ({ ...f, specialties: e.target.value }))}
+                  className="mt-1 w-full rounded-card border-border bg-surface px-3 py-1.5 text-sm"
+                  placeholder="Installation, maintenance serveur, formation..."
+                />
+              </div>
+              <div className="md:col-span-2">
+                <label className="text-xs font-medium text-ink-muted">Présentation</label>
+                <textarea
+                  value={partnerForm.bio}
+                  onChange={(e) => setPartnerForm((f) => ({ ...f, bio: e.target.value }))}
+                  rows={3}
+                  className="mt-1 w-full rounded-card border-border bg-surface px-3 py-1.5 text-sm"
+                />
+              </div>
+              <div className="md:col-span-2">
+                <Button size="sm" variant="primary" type="submit">
+                  {partnerProfile ? 'Mettre à jour ma candidature' : 'Candidater'}
+                </Button>
+              </div>
+            </form>
           </CardBody>
         </Card>
       </div>

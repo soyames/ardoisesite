@@ -52,6 +52,9 @@ export default function PublicLayout() {
               <Link to="/how-it-works" className="text-sm font-semibold text-ink-muted transition hover:text-primary-600">
                 Comment ça marche
               </Link>
+              <Link to="/partenaires" className="text-sm font-semibold text-ink-muted transition hover:text-primary-600">
+                Partenaires certifiés
+              </Link>
             </nav>
           )}
         </div>
@@ -162,6 +165,7 @@ export default function PublicLayout() {
               <>
                 <Link to="/schools" className="text-base font-semibold text-ink" onClick={() => setMobileMenuOpen(false)}>Écoles</Link>
                 <Link to="/teachers" className="text-base font-semibold text-ink" onClick={() => setMobileMenuOpen(false)}>Tuteurs à domicile</Link>
+                <Link to="/partenaires" className="text-base font-semibold text-ink" onClick={() => setMobileMenuOpen(false)}>Partenaires certifiés</Link>
                 <Link to="/jobs" className="text-base font-semibold text-ink" onClick={() => setMobileMenuOpen(false)}>Recrutement</Link>
                 <Link to="/how-it-works" className="text-base font-semibold text-ink" onClick={() => setMobileMenuOpen(false)}>Comment ça marche</Link>
                 <hr className="border-border" />
@@ -204,6 +208,7 @@ export default function PublicLayout() {
               <ul className="mt-4 space-y-3">
                 <li><Link to="/schools" className="text-sm text-ink-muted hover:text-ink">Écoles</Link></li>
                 <li><Link to="/teachers" className="text-sm text-ink-muted hover:text-ink">Tuteurs à domicile</Link></li>
+                <li><Link to="/partenaires" className="text-sm text-ink-muted hover:text-ink">Partenaires certifiés</Link></li>
                 <li><Link to="/jobs" className="text-sm text-ink-muted hover:text-ink">Recrutement</Link></li>
                 <li><Link to="/how-it-works" className="text-sm text-ink-muted hover:text-ink">Comment ça marche</Link></li>
                 <li><Link to="/install" className="text-sm text-ink-muted hover:text-ink">Pour les Écoles (Installation)</Link></li>

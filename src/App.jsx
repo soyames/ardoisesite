@@ -39,6 +39,7 @@ import TeacherList from './apps/marketplace/TeacherList.jsx'
 import TeacherDetail from './apps/marketplace/TeacherDetail.jsx'
 import TutoringBookingFlow from './apps/marketplace/TutoringBookingFlow.jsx'
 import Recruitment from './apps/marketplace/Recruitment.jsx'
+import PartnerDirectory from './apps/marketplace/PartnerDirectory.jsx'
 import TeacherMarketplaceDashboard from './apps/marketplace/TeacherMarketplaceDashboard.jsx'
 import MarketplaceStudentPortal from './apps/marketplace/MarketplaceStudentPortal.jsx'
 import Privacy from './apps/marketplace/Privacy.jsx'
@@ -157,6 +158,7 @@ export default function App() {
           <Route path="/teachers" element={<TeacherList />} />
           <Route path="/teachers/:id" element={<TeacherDetail />} />
           <Route path="/teachers/:id/book" element={<TutoringBookingFlow />} />
+          <Route path="/partenaires" element={<PartnerDirectory />} />
           <Route path="/jobs" element={<Recruitment />} />
           <Route path="/jobs/:id/apply" element={<JobApplicationFlow />} />
           <Route path="/teacher-dashboard" element={<TeacherMarketplaceDashboard />} />
