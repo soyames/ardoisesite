@@ -4,6 +4,8 @@ import { collection, doc, getDoc, onSnapshot, query, where } from 'firebase/fire
 import { db } from '../../shared/api/firebase.js'
 import EmptyState from '../../shared/ui/EmptyState.jsx'
 import Spinner from '../../shared/ui/Spinner.jsx'
+import LocationPickerMap from '../../shared/ui/LocationPickerMap.jsx'
+import { openOsmDirections } from '../../shared/geo/osmDirections.js'
 
 export default function SchoolDetail() {
   const { id } = useParams()
@@ -156,6 +158,19 @@ export default function SchoolDetail() {
 
         {/* Sidebar Stats */}
         <div className="space-y-6">
+          {school.location && (
+          <div className="rounded-card bg-surface-raised p-6 shadow-card ring-1 ring-border">
+            <h3 className="font-bold text-ink text-xl mb-4">Localisation</h3>
+            <LocationPickerMap value={school.location} height={220} />
+            <button
+              onClick={() => openOsmDirections(school.location)}
+              className="mt-4 flex w-full items-center justify-center gap-2 rounded-control bg-primary-600 px-4 py-3 text-sm font-bold text-white shadow-card transition hover:bg-primary-700"
+            >
+              Obtenir l'itinéraire
+            </button>
+          </div>
+          )}
+
           {hasStats && (
           <div className="rounded-card bg-surface-raised p-8 shadow-card ring-1 ring-border">
             <h3 className="font-bold text-ink text-xl mb-6">Performance</h3>

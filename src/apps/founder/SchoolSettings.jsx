@@ -1,10 +1,77 @@
 import { useState, useEffect } from 'react'
+import { doc, getDoc, updateDoc } from 'firebase/firestore'
+import { db } from '../../shared/api/firebase.js'
+import { useAuth } from '../../shared/auth/AuthContext.jsx'
 import { api } from '../../shared/api/client.js'
 import { Card, CardHeader, CardBody } from '../../shared/ui/Card.jsx'
 import Button from '../../shared/ui/Button.jsx'
 import Spinner from '../../shared/ui/Spinner.jsx'
 import LetterheadSettings from '../../shared/components/LetterheadSettings.jsx'
+import LocationPickerMap from '../../shared/ui/LocationPickerMap.jsx'
 import ClassesSettings from './ClassesSettings.jsx'
+
+// The pin below is stored on the school's public marketplace listing
+// (Firestore schools/{id}.location) - not on the Django-backed fields
+// above it, which live on the school's own self-hosted install and
+// aren't visible to the marketplace's map/directions feature at all.
+function SchoolLocationSettings() {
+  const { user } = useAuth()
+  const [location, setLocation] = useState(null)
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+  const [msg, setMsg] = useState('')
+
+  useEffect(() => {
+    if (!user?.schoolId) return
+    getDoc(doc(db, 'schools', String(user.schoolId)))
+      .then((snap) => {
+        if (snap.exists()) setLocation(snap.data().location || null)
+      })
+      .catch((err) => console.error('Could not load school location:', err))
+      .finally(() => setLoading(false))
+  }, [user?.schoolId])
+
+  const handleSave = async () => {
+    if (!user?.schoolId || !location) return
+    setSaving(true)
+    setMsg('')
+    try {
+      await updateDoc(doc(db, 'schools', String(user.schoolId)), { location })
+      setMsg('success:Localisation enregistrée !')
+    } catch (err) {
+      setMsg(`error:Erreur lors de l'enregistrement : ${err.message}`)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  if (loading) return <div className="py-10 flex justify-center"><Spinner /></div>
+
+  return (
+    <Card>
+      <CardHeader
+        title="Localisation sur la carte"
+        subtitle="Cliquez sur la carte (ou faites glisser le repère) pour placer votre établissement à son emplacement exact - les parents pourront ensuite obtenir un itinéraire jusqu'ici depuis l'annuaire."
+      />
+      <CardBody className="space-y-4">
+        <LocationPickerMap
+          value={location || { lat: 9.3077, lng: 2.3158 }}
+          onChange={setLocation}
+        />
+        <div className="flex items-center justify-end gap-4">
+          {msg && (
+            <p className={`text-sm ${msg.startsWith('error:') ? 'text-danger-600' : 'text-success-600'}`}>
+              {msg.slice(msg.indexOf(':') + 1)}
+            </p>
+          )}
+          <Button type="button" onClick={handleSave} disabled={saving || !location}>
+            {saving ? 'Enregistrement...' : 'Enregistrer la localisation'}
+          </Button>
+        </div>
+      </CardBody>
+    </Card>
+  )
+}
 
 export default function SchoolSettings() {
   const [settings, setSettings] = useState(null)
@@ -170,6 +237,7 @@ export default function SchoolSettings() {
         </form>
       </CardBody>
     </Card>
+    <SchoolLocationSettings />
     <LetterheadSettings />
     <ClassesSettings />
     </div>
