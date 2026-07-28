@@ -3,32 +3,53 @@ import { doc, getDoc } from 'firebase/firestore'
 import { db } from '../../shared/api/firebase'
 import { Card, CardHeader, CardBody } from '../../shared/ui/Card.jsx'
 import { usePwaInstall } from '../../shared/hooks/usePwaInstall.js'
+import { FedaPayButton } from '../../shared/components/FedaPayButton.jsx'
 
-// Ardoise ERP is free - no more subscription/payment flow here (see the
-// 2026-07 paywall removal). This panel now only shows the school's
-// activation code (still needed for marketplace/notification identity,
-// not for unlocking anything) and the PWA install prompt.
+const ENTERPRISE_PRICE_FCFA = 50000
+
+const ENTERPRISE_MODULES = [
+  { icon: '💰', label: 'Finance & Comptabilité', description: 'Facturation, encaissements, comptabilité conforme SYSCOHADA' },
+  { icon: '🧑‍💼', label: 'RH & Paie', description: 'Contrats, bulletins de paie, gestion du personnel' },
+  { icon: '🛒', label: 'Cantine & Bibliothèque', description: 'Point de vente, portefeuille élève, inventaire' },
+  { icon: '📊', label: 'Analytique & BI', description: "Tableaux de bord d'activité et de performance" },
+]
+
+// Ardoise ERP core (élèves, notes, présences) is free forever - the
+// 2026-07-28 Odoo-style pivot only paywalls the "run the business"
+// modules above (see apps/licensing/middleware.py's
+// ENTERPRISE_FEATURE_CODES). This panel still shows the school's
+// activation code (identity, not a feature gate) and the PWA install
+// prompt, plus - new - the Enterprise upgrade itself.
 export default function SubscriptionPanel({ schoolId }) {
   const { promptInstall, isIOS, canOfferInstall } = usePwaInstall()
   const [loading, setLoading] = useState(true)
   const [activationCode, setActivationCode] = useState(null)
+  const [school, setSchool] = useState(null)
   const [error, setError] = useState(null)
 
-  useEffect(() => {
+  const loadSchool = () => {
     if (!schoolId) return
     setLoading(true)
-    // activationCode lives in schools/{id}/secrets/config (firestore.rules
-    // restricts that subcollection to the founder of this exact school,
-    // which is who's viewing this panel) - see the security-review note
-    // in firestore.rules.
-    getDoc(doc(db, 'schools', String(schoolId), 'secrets', 'config'))
-      .then((secretsSnap) => setActivationCode(secretsSnap.exists() ? secretsSnap.data().activationCode || null : null))
+    Promise.all([
+      // activationCode lives in schools/{id}/secrets/config (firestore.rules
+      // restricts that subcollection to the founder of this exact school,
+      // which is who's viewing this panel) - see the security-review note
+      // in firestore.rules.
+      getDoc(doc(db, 'schools', String(schoolId), 'secrets', 'config')),
+      getDoc(doc(db, 'schools', String(schoolId))),
+    ])
+      .then(([secretsSnap, schoolSnap]) => {
+        setActivationCode(secretsSnap.exists() ? secretsSnap.data().activationCode || null : null)
+        setSchool(schoolSnap.exists() ? schoolSnap.data() : null)
+      })
       .catch((err) => {
         setError("Erreur lors du chargement des informations de l'école.")
         console.error(err)
       })
       .finally(() => setLoading(false))
-  }, [schoolId])
+  }
+
+  useEffect(loadSchool, [schoolId])
 
   if (loading) {
     return <div className="p-8 text-center text-ink-muted">Chargement...</div>
@@ -37,6 +58,9 @@ export default function SubscriptionPanel({ schoolId }) {
   if (error) {
     return <div className="p-4 bg-error-50 text-error-800 rounded-card">{error}</div>
   }
+
+  const expiresAt = school?.subscriptionExpiresAt ? new Date(school.subscriptionExpiresAt) : null
+  const hasEnterprise = school?.subscriptionActive === true && (!expiresAt || expiresAt.getTime() > Date.now())
 
   return (
     <div className="space-y-6">
@@ -48,8 +72,14 @@ export default function SubscriptionPanel({ schoolId }) {
               <div className="flex items-center gap-3 mb-4">
                 <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-semibold bg-success-100 text-success-800">
                   <span className="h-2 w-2 rounded-full bg-success-500"></span>
-                  Gratuit - toutes les fonctionnalités actives
+                  Gratuit - Élèves, Notes & Présences
                 </span>
+                {hasEnterprise && (
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-semibold bg-accent-100 text-accent-800">
+                    <span className="h-2 w-2 rounded-full bg-accent-500"></span>
+                    Enterprise actif
+                  </span>
+                )}
               </div>
               <p className="text-ink-muted text-sm leading-relaxed mb-6">
                 Ardoise vous donne accès à notre <strong>logiciel à installer sur place</strong> pour une sécurité maximale,
@@ -120,6 +150,50 @@ export default function SubscriptionPanel({ schoolId }) {
               </ul>
             </div>
           </div>
+        </CardBody>
+      </Card>
+
+      <Card>
+        <CardHeader
+          title="Ardoise Enterprise"
+          subtitle="Les modules avancés pour gérer toute l'activité financière et administrative de l'école."
+        />
+        <CardBody>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+            {ENTERPRISE_MODULES.map((mod) => (
+              <div key={mod.label} className="flex items-start gap-3 rounded-control border border-border bg-surface p-4">
+                <span className="text-2xl">{mod.icon}</span>
+                <div>
+                  <p className="font-semibold text-ink text-sm">{mod.label}</p>
+                  <p className="text-xs text-ink-muted mt-0.5">{mod.description}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {hasEnterprise ? (
+            <div className="rounded-control bg-accent-50 border border-accent-200 p-4">
+              <p className="text-sm font-semibold text-accent-800">
+                Abonnement actif{expiresAt ? ` jusqu'au ${expiresAt.toLocaleDateString('fr-FR')}` : ''}.
+              </p>
+              <p className="text-xs text-ink-muted mt-1">Contactez le support pour renouveler ou modifier votre offre.</p>
+            </div>
+          ) : (
+            <div className="rounded-control bg-primary-50 border border-primary-200 p-4">
+              <p className="text-sm text-primary-900 mb-3">
+                <strong>{ENTERPRISE_PRICE_FCFA.toLocaleString('fr-FR')} FCFA / an</strong> - active les quatre modules ci-dessus pour toute l'école. Élèves, notes et présences restent gratuits, avec ou sans Enterprise.
+              </p>
+              <FedaPayButton
+                amount={ENTERPRISE_PRICE_FCFA}
+                description="Abonnement Ardoise Enterprise (1 an)"
+                customMetadata={{ type: 'school_subscription_payment', schoolId: String(schoolId) }}
+                onComplete={() => loadSchool()}
+                className="w-full rounded-control bg-primary-600 px-4 py-3 text-sm font-bold text-white transition hover:bg-primary-500"
+              >
+                Passer à Enterprise
+              </FedaPayButton>
+            </div>
+          )}
         </CardBody>
       </Card>
     </div>

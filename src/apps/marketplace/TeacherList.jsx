@@ -38,6 +38,7 @@ export default function TeacherList() {
           description: data.bio || '',
           image: data.image || null,
           isDemo: data.isDemo || false,
+          boostedUntil: data.boostedUntil || null,
         })
       })
       setTeachers(rows)
@@ -62,6 +63,8 @@ export default function TeacherList() {
   // than real city names, which silently hid every teacher there).
   const countryName = OHADA_COUNTRIES.find((c) => c.code === country)?.name
 
+  const isBoosted = (teacher) => !!teacher.boostedUntil && new Date(teacher.boostedUntil).getTime() > Date.now()
+
   const filteredTeachers = teachers.filter(teacher => {
     const matchesCountry = teacher.country === countryName
     const matchesSearch = teacher.name.toLowerCase().includes(search.toLowerCase())
@@ -70,7 +73,7 @@ export default function TeacherList() {
     const matchesDepartment = !department || communeDepartmentMap[teacher.city] === department
     const matchesCommune = !commune || teacher.city === commune
     return matchesCountry && matchesSearch && matchesCity && matchesSubject && matchesDepartment && matchesCommune
-  })
+  }).sort((a, b) => (isBoosted(b) ? 1 : 0) - (isBoosted(a) ? 1 : 0))
 
   const availableCities = useMemo(() => {
     const officialCities = COUNTRY_CITIES[country]
@@ -190,6 +193,12 @@ export default function TeacherList() {
                       {teacher.isDemo && (
                         <span className="absolute left-2 top-2 rounded-full bg-warning-500 px-2.5 py-1 text-xs font-semibold text-white shadow">
                           Démonstration
+                        </span>
+                      )}
+                      {!teacher.isDemo && isBoosted(teacher) && (
+                        <span className="absolute left-2 top-2 flex items-center gap-1 rounded-full bg-accent-500 px-2.5 py-1 text-xs font-semibold text-primary-950 shadow">
+                          <span className="material-symbols-outlined text-[14px]">bolt</span>
+                          Boosté
                         </span>
                       )}
                     </div>

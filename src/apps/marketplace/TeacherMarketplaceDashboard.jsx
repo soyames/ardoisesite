@@ -6,6 +6,10 @@ import { useAuth } from '../../shared/auth/AuthContext.jsx'
 import Badge from '../../shared/ui/Badge.jsx'
 import Spinner from '../../shared/ui/Spinner.jsx'
 import MarketplaceAccountSettings from '../../shared/settings/MarketplaceAccountSettings.jsx'
+import { FedaPayButton } from '../../shared/components/FedaPayButton.jsx'
+
+const BOOST_PRICE_FCFA = 3000
+const BOOST_DURATION_DAYS = 30
 
 export default function TeacherMarketplaceDashboard() {
   const { user, refreshUser } = useAuth()
@@ -128,6 +132,8 @@ export default function TeacherMarketplaceDashboard() {
 
   if (!user) return null
 
+  const isBoosted = !!user.boostedUntil && new Date(user.boostedUntil).getTime() > Date.now()
+
   return (
     <div className="min-h-screen bg-surface py-12">
       <div className="mx-auto max-w-5xl px-6 lg:px-8">
@@ -228,6 +234,35 @@ export default function TeacherMarketplaceDashboard() {
                     )}
                   </div>
                 </form>
+
+                <div className="border-t border-border pt-6">
+                  <h2 className="text-xl font-bold text-ink mb-2">Booster mon profil</h2>
+                  {isBoosted ? (
+                    <div className="rounded-control bg-accent-50 border border-accent-200 p-4">
+                      <p className="text-sm font-semibold text-accent-800">
+                        Votre profil est mis en avant jusqu'au {new Date(user.boostedUntil).toLocaleDateString('fr-FR')}.
+                      </p>
+                      <p className="text-xs text-ink-muted mt-1">Il apparaît en priorité dans l'annuaire des tuteurs, avec le badge « Boosté ».</p>
+                    </div>
+                  ) : (
+                    <div className="rounded-control bg-surface border border-border p-4 space-y-3">
+                      <p className="text-sm text-ink-muted">
+                        Votre profil apparaît en priorité dans l'annuaire des tuteurs pendant {BOOST_DURATION_DAYS} jours, avec un badge « Boosté ». La mise en relation avec les parents reste gratuite - ceci ne concerne que la visibilité de votre profil.
+                      </p>
+                      <FedaPayButton
+                        amount={BOOST_PRICE_FCFA}
+                        description={`Boost profil tuteur (${BOOST_DURATION_DAYS} jours)`}
+                        customMetadata={{ type: 'teacher_boost', teacherId: user.uid, durationDays: BOOST_DURATION_DAYS }}
+                        customerEmail={user.email}
+                        customerName={`${user.firstName || ''} ${user.lastName || ''}`.trim()}
+                        onComplete={() => refreshUser()}
+                        className="rounded-control bg-accent-500 px-5 py-2.5 text-sm font-bold text-primary-950 shadow-sm hover:bg-accent-400"
+                      >
+                        Booster pour {BOOST_PRICE_FCFA.toLocaleString('fr-FR')} FCFA
+                      </FedaPayButton>
+                    </div>
+                  )}
+                </div>
               </div>
             )}
 

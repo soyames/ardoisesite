@@ -6,6 +6,7 @@ import StatCard from '../../shared/ui/StatCard.jsx'
 import ActivityList from '../../shared/ui/ActivityList.jsx'
 import QuickActionButton from '../../shared/ui/QuickActionButton.jsx'
 import Spinner from '../../shared/ui/Spinner.jsx'
+import EnterpriseUpsell, { isEnterpriseGateError } from '../../shared/components/EnterpriseUpsell.jsx'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area } from 'recharts'
 
 const AUDIT_ICON_BY_ACTION = {
@@ -35,6 +36,15 @@ export default function AnalyticsDashboard({ onNavigate }) {
   const loading = enrollments.loading || income.loading || pendingBulletins.loading
     || pendingDiscipline.loading || pendingLeave.loading || payrollRuns.loading
     || staff.loading || auditLogs.loading || analytics.loading
+
+  // This dashboard is entirely Enterprise data (revenue, payroll,
+  // BI charts) - a school without it has nothing meaningful to show
+  // here anyway. All the founder's other, free functionality (staff,
+  // admissions, settings) stays reachable via FounderDashboard's other
+  // tabs regardless of this one.
+  if (!loading && isEnterpriseGateError(analytics.error)) {
+    return <EnterpriseUpsell feature="analytics_bi" canSubscribe={user?.role === 'founder' || user?.role === 'director'} />
+  }
 
   const activeEnrollments = (enrollments.data || []).filter((e) => e.isActive).length
   const pendingPayroll = (payrollRuns.data || []).filter((p) => p.status === 'draft').length

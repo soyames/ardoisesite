@@ -37,6 +37,7 @@ service cloud.firestore {
       allow create: if isSignedIn()
                     && !request.resource.data.keys().hasAny(
                           ['subscriptionActive', 'subscriptionExpiresAt', 'subscriptionStatus',
+                           'planCode', 'features',
                            'activationCode', 'lastPaymentDate', 'lastPaymentTx',
                            'pipelineStage', 'assignedTo', 'lastContactedAt']);
 
@@ -62,6 +63,7 @@ service cloud.firestore {
                     && getUserData().schoolId == schoolId
                     && !request.resource.data.diff(resource.data).affectedKeys()
                           .hasAny(['subscriptionActive', 'subscriptionExpiresAt', 'subscriptionStatus',
+                                   'planCode', 'features',
                                    'activationCode', 'lastPaymentDate', 'lastPaymentTx',
                                    'pipelineStage', 'assignedTo', 'lastContactedAt', 'feeCollectionEnabled']);
       allow delete: if isSignedIn()
@@ -145,10 +147,16 @@ service cloud.firestore {
                           ? ('schoolId' in request.resource.data
                               && exists(/databases/$(database)/documents/schools/$(request.resource.data.schoolId)))
                           : !('schoolId' in request.resource.data));
+      // boostedUntil (2026-07-28 marketplace teacher-boost pivot) - same
+      // self-grant risk as subscriptionActive: without this, a teacher
+      // could set their own featured placement with no payment, via
+      // devtools. Only the signed FedaPay webhook (Worker Admin SDK,
+      // bypasses these rules) may set it - see ardoise-api/src/index.ts's
+      // teacher_boost webhook branch.
       allow update: if isSignedIn()
                     && request.auth.uid == userId
                     && !request.resource.data.diff(resource.data).affectedKeys()
-                          .hasAny(['role', 'schoolId', 'subscriptionActive']);
+                          .hasAny(['role', 'schoolId', 'subscriptionActive', 'boostedUntil']);
     }
 
     // Offres d'emploi -- tableau public du marketplace, lecture libre.
