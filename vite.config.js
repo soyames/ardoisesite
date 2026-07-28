@@ -18,7 +18,8 @@ export default defineConfig({
       manifest: {
         name: 'Ardoise',
         short_name: 'Ardoise',
-        description: 'Gestion scolaire tout-en-un pour les etablissements prives de l\'espace OHADA.',
+        description: 'Gestion scolaire tout-en-un pour les etablissements publics et prives de l\'espace OHADA.',
+        lang: 'fr',
         theme_color: '#2B2621',
         background_color: '#F7F3EA',
         display: 'standalone',

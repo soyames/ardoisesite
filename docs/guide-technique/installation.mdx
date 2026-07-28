@@ -1,13 +1,56 @@
 ---
 title: "Installation"
-description: "Deployer le serveur de votre ecole - aucun fichier .env a preparer."
+description: "Installer l'application Ardoise (PWA) ou deployer le serveur de votre ecole - aucun fichier .env a preparer."
 ---
+
+<Info>
+  Deux choses distinctes portent le nom "installation" ici : **installer l'application** (marketplace ou portail SaaS, quelques secondes, pour tout le monde) et **deployer le serveur de l'ecole** (pour les fondateurs, hebergement des donnees reelles de l'etablissement). Cette page couvre les deux, dans cet ordre.
+</Info>
+
+## Installer l'application (PWA)
+
+Ardoise fonctionne comme une **Progressive Web App** : pas de Play Store ni d'App Store, l'installation se fait directement depuis le navigateur, sur mobile comme sur ordinateur. Une fois installee, l'application s'ouvre dans sa propre fenetre (sans barre d'adresse), garde un raccourci sur l'ecran d'accueil ou la barre des taches, et reste utilisable hors-ligne pour l'affichage de l'interface.
+
+<CardGroup cols={2}>
+  <Card title="Marketplace" icon="store" href="https://ardoiseeduc.com">
+    Pour les parents (recherche d'ecole, inscription, suivi des tuteurs) et les enseignants independants. Installable depuis **ardoiseeduc.com**.
+  </Card>
+  <Card title="Portail SaaS" icon="school" href="https://saas.ardoiseeduc.com">
+    Pour les fondateurs et le personnel d'une ecole (gestion des eleves, notes, finances, RH). Installable depuis **saas.ardoiseeduc.com**.
+  </Card>
+</CardGroup>
+
+<Steps>
+  <Step title="Ouvrez le site dans votre navigateur">
+    [ardoiseeduc.com](https://ardoiseeduc.com) pour la marketplace, ou [saas.ardoiseeduc.com](https://saas.ardoiseeduc.com) pour le portail de votre ecole.
+  </Step>
+  <Step title="Lancez l'installation">
+    - **Chrome / Edge (ordinateur)** : icone d'installation dans la barre d'adresse, ou menu **⋮ → Installer l'application**.
+    - **Android (Chrome)** : menu **⋮ → Installer l'application** (ou bandeau "Ajouter a l'ecran d'accueil" qui apparait automatiquement).
+    - **iOS (Safari)** : bouton de partage (carre avec une fleche) **→ Sur l'ecran d'accueil**.
+  </Step>
+  <Step title="Utilisez l'application installee">
+    Un icone Ardoise apparait sur votre ecran d'accueil, bureau ou barre des taches, avec sa propre fenetre. Reconnectez-vous une fois si necessaire - le compte reste ensuite le meme que sur le site.
+  </Step>
+</Steps>
+
+<Tip>
+  Instructions detaillees avec captures par plateforme : [Installer l'application](/guide-utilisateur/premiers-pas#installer-lapplication-pwa).
+</Tip>
+
+<Note>
+  L'application installee est un raccourci vers le portail - elle ne remplace pas le serveur de l'ecole decrit ci-dessous. Pour une ecole, les vraies donnees (eleves, notes, finances) ne sont disponibles qu'une fois son propre serveur deploye et connecte (section suivante) ; sans cela, le portail installe reste accessible mais vide de donnees.
+</Note>
+
+## Deployer le serveur de l'ecole
+
+Cette partie concerne les **fondateurs d'ecole** : elle installe le logiciel qui stocke reellement les donnees de l'etablissement (eleves, notes, finances, RH). Installer seulement l'application (PWA, ci-dessus) ne suffit pas pour cela.
 
 <Info>
   Aucun fichier `.env` a creer et aucune variable d'environnement a preparer a l'avance, quel que soit le scenario choisi ci-dessous. L'assistant de configuration dans votre navigateur s'occupe de tout ce qui est indispensable (cle de securite, connexion a la Plateforme) une fois le conteneur demarre.
 </Info>
 
-## Choisir un scenario
+### Choisir un scenario
 
 <CardGroup cols={3}>
   <Card title="Un seul ordinateur" icon="desktop">
@@ -21,12 +64,12 @@ description: "Deployer le serveur de votre ecole - aucun fichier .env a preparer
   </Card>
 </CardGroup>
 
-## Prerequis communs
+### Prerequis communs
 
 - **Docker Desktop** (ordinateur unique) ou **Docker + Docker Compose** (serveur dedie/cloud)
 - Une connexion internet (pour la synchronisation de licence et les notifications) - l'ecole continue de fonctionner hors ligne entre deux synchronisations
 
-## Deploiement
+### Deploiement
 
 <Steps>
   <Step title="Recuperez votre code d'activation">
@@ -59,11 +102,7 @@ description: "Deployer le serveur de votre ecole - aucun fichier .env a preparer
   </Step>
 </Steps>
 
-<Tip>
-  Le portail SaaS est installable comme une application (PWA) sur les postes du personnel - voir [Installer l'application](/guide-utilisateur/premiers-pas#installer-lapplication-pwa). Cela ne remplace pas le serveur ci-dessus : c'est juste un raccourci vers le portail, sans barre d'adresse de navigateur.
-</Tip>
-
-## Serveur cloud : HTTPS
+### Serveur cloud : HTTPS
 
 Un serveur cloud expose sur internet doit passer par un reverse proxy HTTPS (Caddy, par exemple) plutot que d'exposer directement le port du conteneur.
 
@@ -71,7 +110,7 @@ Un serveur cloud expose sur internet doit passer par un reverse proxy HTTPS (Cad
   N'exposez jamais le port du serveur Ardoise directement sur internet - seuls les ports 80/443 geres par le reverse proxy doivent etre publics.
 </Warning>
 
-## Configuration avancee (facultative)
+### Configuration avancee (facultative)
 
 Tout ce qui precede suffit pour une installation standard. Ces options restent facultatives, a ajouter via un bloc `environment:` dans `docker-compose.yml` (jamais un fichier `.env`) :
 
