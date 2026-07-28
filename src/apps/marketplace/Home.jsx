@@ -107,9 +107,22 @@ export default function Home() {
     return activeTeachers.filter((t) => (selectedCommune ? t.city === selectedCommune : communeDepartmentMap[t.city] === selectedDepartment))
   }, [activeTeachers, selectedCommune, selectedDepartment, regionLabel, communeDepartmentMap])
 
-  const displayFeaturedTutors = useMemo(() => {
+  const featuredTutors = useMemo(() => {
     return activeTeachers.slice(0, 3)
   }, [activeTeachers])
+
+  // "Ecoles d'Excellence"/"Tuteurs a Domicile" below used to always show
+  // the country-wide top-ranked/first-3 list regardless of the map
+  // selection - clicking a department/commune had no visible effect on
+  // the sections a visitor was actually looking at (a separate "Resultats
+  // pour X" block above the map DID filter correctly, but that's not
+  // what "Ecoles d'Excellence not changing" was reporting). These two
+  // now switch to the full region-filtered list once a department/
+  // commune is selected, showing every match (not capped at 3) with an
+  // explicit empty state - matching /schools and /teachers' own
+  // department/commune filtering exactly.
+  const displaySchools = regionLabel ? regionSchools : topSchools
+  const displayTeachers = regionLabel ? regionTeachers : featuredTutors
 
   return (
     <div className="flex flex-col bg-surface">
@@ -154,68 +167,40 @@ export default function Home() {
           </div>
 
           {regionLabel && (
-            <div className="mt-8">
-              <div className="mb-4 flex items-center justify-between">
-                <p className="text-sm text-primary-200">
-                  Resultats pour <span className="font-semibold text-white">{regionLabel}</span>
-                </p>
-                <button
-                  onClick={() => { setSelectedDepartment(null); setSelectedCommune(null) }}
-                  className="text-xs font-semibold text-primary-300 hover:text-primary-200"
-                >
-                  &larr; Effacer la selection
-                </button>
-              </div>
-              <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-                <RegionResultsCard
-                  title={`Écoles - ${regionLabel}`}
-                  items={regionSchools}
-                  emptyLabel={`Aucune école partenaire à ${regionLabel} pour le moment.`}
-                  seeAllHref={schoolsHref}
-                  renderItem={(school) => (
-                    <Link key={school.id} to={`/schools/${school.id}`} className="flex items-center justify-between gap-2 rounded-control border border-border bg-surface p-3 hover:border-primary-200">
-                      <div className="min-w-0">
-                        <p className="truncate text-sm font-medium text-ink">{school.name}</p>
-                        <p className="text-xs text-ink-muted">{school.city}</p>
-                      </div>
-                      {school.successRate != null && <Badge tone="success">{school.successRate}%</Badge>}
-                    </Link>
-                  )}
-                />
-                <RegionResultsCard
-                  title={`Enseignants - ${regionLabel}`}
-                  items={regionTeachers}
-                  emptyLabel={`Aucun enseignant a ${regionLabel} pour le moment.`}
-                  seeAllHref={teachersHref}
-                  renderItem={(teacher) => (
-                    <Link key={teacher.id} to={`/teachers/${teacher.id}`} className="flex items-center justify-between gap-2 rounded-control border border-border bg-surface p-3 hover:border-primary-200">
-                      <div className="min-w-0">
-                        <p className="truncate text-sm font-medium text-ink">{teacher.name}</p>
-                        <p className="text-xs text-ink-muted">{teacher.subject} - {teacher.city}</p>
-                      </div>
-                    </Link>
-                  )}
-                />
-              </div>
+            <div className="mt-6 flex items-center justify-center gap-3 text-sm">
+              <span className="text-primary-200">
+                Filtre actif : <span className="font-semibold text-white">{regionLabel}</span>
+              </span>
+              <button
+                onClick={() => { setSelectedDepartment(null); setSelectedCommune(null) }}
+                className="font-semibold text-primary-300 hover:text-primary-200"
+              >
+                &larr; Effacer
+              </button>
             </div>
           )}
         </div>
       </section>
 
-      {/* Top Ranked Schools Section */}
+      {/* Top Ranked Schools Section (or, once a department/commune is
+          selected on the map above, every school in that region) */}
       <section className="mx-auto max-w-[1600px] px-6 py-24 sm:py-32 lg:px-12">
         <div className="mb-12 flex items-end justify-between">
           <div>
-            <h2 className="text-3xl font-bold tracking-tight text-ink sm:text-4xl">Écoles d'Excellence</h2>
-            <p className="mt-2 text-lg text-ink-muted">Les établissements les mieux classés cette année.</p>
+            <h2 className="text-3xl font-bold tracking-tight text-ink sm:text-4xl">
+              {regionLabel ? `Écoles - ${regionLabel}` : "Écoles d'Excellence"}
+            </h2>
+            <p className="mt-2 text-lg text-ink-muted">
+              {regionLabel ? `Établissements partenaires à ${regionLabel}.` : 'Les établissements les mieux classés cette année.'}
+            </p>
           </div>
-          <Link to={`/schools?country=${activeCountry}`} className="hidden text-sm font-semibold text-primary-600 hover:text-primary-500 sm:block">
-            Voir tout le classement &rarr;
+          <Link to={schoolsHref} className="hidden text-sm font-semibold text-primary-600 hover:text-primary-500 sm:block">
+            {regionLabel ? 'Voir sur la carte des écoles' : 'Voir tout le classement'} &rarr;
           </Link>
         </div>
-        {topSchools.length > 0 ? (
+        {displaySchools.length > 0 ? (
           <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
-            {topSchools.map(school => (
+            {displaySchools.map(school => (
               <Link key={school.id} to={`/schools/${school.id}`} className="group relative flex flex-col overflow-hidden rounded-card border border-border bg-surface-raised shadow-card transition-all hover:shadow-elevated hover:-translate-y-1">
                 <div className="aspect-[16/9] w-full overflow-hidden bg-primary-100">
                   {school.image ? (
@@ -235,25 +220,32 @@ export default function Home() {
             ))}
           </div>
         ) : (
-          <p className="text-sm text-ink-muted">Aucune école enregistrée dans ce pays pour le moment.</p>
+          <p className="text-sm text-ink-muted">
+            {regionLabel ? `Aucune école partenaire à ${regionLabel} pour le moment.` : 'Aucune école enregistrée dans ce pays pour le moment.'}
+          </p>
         )}
       </section>
 
-      {/* Featured Tutors Section */}
+      {/* Featured Tutors Section (or, once a department/commune is
+          selected, every tutor in that region) */}
       <section className="bg-primary-950 py-24 sm:py-32">
         <div className="mx-auto max-w-[1600px] px-6 lg:px-12">
           <div className="mb-12 flex items-end justify-between">
             <div>
-              <h2 className="text-3xl font-bold tracking-tight text-white sm:text-4xl">Tuteurs à Domicile</h2>
-              <p className="mt-2 text-lg text-primary-300">Des professionnels certifiés pour accompagner votre enfant.</p>
+              <h2 className="text-3xl font-bold tracking-tight text-white sm:text-4xl">
+                {regionLabel ? `Enseignants - ${regionLabel}` : 'Tuteurs à Domicile'}
+              </h2>
+              <p className="mt-2 text-lg text-primary-300">
+                {regionLabel ? `Tuteurs à domicile disponibles à ${regionLabel}.` : 'Des professionnels certifiés pour accompagner votre enfant.'}
+              </p>
             </div>
-            <Link to={`/teachers?country=${activeCountry}`} className="hidden text-sm font-semibold text-accent-400 hover:text-accent-300 sm:block">
-              Trouver par matière &rarr;
+            <Link to={teachersHref} className="hidden text-sm font-semibold text-accent-400 hover:text-accent-300 sm:block">
+              {regionLabel ? 'Voir sur la carte des enseignants' : 'Trouver par matière'} &rarr;
             </Link>
           </div>
-          {displayFeaturedTutors.length > 0 ? (
+          {displayTeachers.length > 0 ? (
             <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
-              {displayFeaturedTutors.map(tutor => (
+              {displayTeachers.map(tutor => (
                 <div key={tutor.id} className="group relative flex flex-col rounded-card bg-primary-900 p-6 shadow-elevated ring-1 ring-white/10 transition-all hover:bg-primary-800">
                   <div className="flex items-center gap-4">
                     {tutor.image ? (
@@ -278,30 +270,12 @@ export default function Home() {
               ))}
             </div>
           ) : (
-            <p className="text-sm text-primary-300">Aucun enseignant enregistré dans ce pays pour le moment.</p>
+            <p className="text-sm text-primary-300">
+              {regionLabel ? `Aucun enseignant à ${regionLabel} pour le moment.` : 'Aucun enseignant enregistré dans ce pays pour le moment.'}
+            </p>
           )}
         </div>
       </section>
-    </div>
-  )
-}
-
-function RegionResultsCard({ title, items, emptyLabel, seeAllHref, renderItem }) {
-  return (
-    <div className="rounded-card border border-border bg-surface-raised p-5">
-      <div className="mb-3 flex items-center justify-between gap-2">
-        <h3 className="text-sm font-semibold text-ink">{title}</h3>
-        <Link to={seeAllHref} className="text-xs font-semibold text-primary-600 hover:text-primary-500">
-          Voir tout &rarr;
-        </Link>
-      </div>
-      {items.length === 0 ? (
-        <p className="text-sm text-ink-muted">{emptyLabel}</p>
-      ) : (
-        <div className="space-y-2">
-          {items.slice(0, 4).map((item) => renderItem(item))}
-        </div>
-      )}
     </div>
   )
 }
