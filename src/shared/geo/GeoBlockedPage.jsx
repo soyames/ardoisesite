@@ -20,14 +20,6 @@ export default function GeoBlockedPage() {
           ))}
         </ul>
       </div>
-      <a
-        href="https://docs.ardoiseeduc.com"
-        target="_blank"
-        rel="noreferrer noopener"
-        className="mt-8 text-sm font-semibold text-primary-600 hover:text-primary-500"
-      >
-        En savoir plus sur Ardoise &rarr;
-      </a>
     </div>
   )
 }

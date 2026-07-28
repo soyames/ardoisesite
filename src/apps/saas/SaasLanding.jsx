@@ -1,10 +1,16 @@
 import React, { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { usePwaInstall } from '../../shared/hooks/usePwaInstall.js'
+import { useSeo } from '../../shared/hooks/useSeo.js'
 
 export default function SaasLanding() {
   const { promptInstall, isIOS, canOfferInstall } = usePwaInstall()
   const [showIosInstructions, setShowIosInstructions] = useState(false)
+
+  useSeo({
+    title: 'Logiciel de gestion scolaire gratuit',
+    description: "Ardoise ERP : gestion des élèves, notes, finances et RH pour les écoles de l'espace OHADA. Gratuit, auto-hébergé, sans engagement.",
+  })
 
   const handleInstallClick = () => {
     if (isIOS) {

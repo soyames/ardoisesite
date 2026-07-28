@@ -7,6 +7,7 @@ import CountryMapWrapper from '../../shared/ui/CountryMapWrapper.jsx'
 import Icon from '../../shared/ui/Icon.jsx'
 import { useGeo } from '../../shared/geo/GeoContext.jsx'
 import { OHADA_COUNTRIES } from '../../shared/constants/locations.js'
+import { useSeo } from '../../shared/hooks/useSeo.js'
 
 export default function Home() {
   const [schools, setSchools] = useState([])
@@ -17,6 +18,12 @@ export default function Home() {
   // renders - the visitor's own country, not a user-chosen one.
   const { countryCode: activeCountry } = useGeo()
   const [communeDepartmentMap, setCommuneDepartmentMap] = useState({})
+
+  const activeCountryName = OHADA_COUNTRIES.find((c) => c.code === activeCountry)?.name || activeCountry
+  useSeo({
+    title: `Écoles et tuteurs à ${activeCountryName}`,
+    description: `Trouvez les meilleures écoles et tuteurs à domicile à ${activeCountryName}. Annuaire, classements, mise en relation directe - Ardoise, la plateforme de l'espace OHADA.`,
+  })
 
   // Clear selections when country changes
   useEffect(() => {

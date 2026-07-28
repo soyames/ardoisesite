@@ -9,6 +9,7 @@ import { OHADA_COUNTRIES } from '../../shared/constants/locations.js'
 import { SUBJECTS } from '../../shared/constants/subjects.js'
 import { COUNTRY_CITIES } from '../../shared/constants/cities.js'
 import { useGeo } from '../../shared/geo/GeoContext.jsx'
+import { useSeo } from '../../shared/hooks/useSeo.js'
 
 export default function TeacherList() {
   const [searchParams, setSearchParams] = useSearchParams()
@@ -24,6 +25,12 @@ export default function TeacherList() {
   const { countryCode: country } = useGeo()
   const department = searchParams.get('department')
   const commune = searchParams.get('commune')
+
+  const countryDisplayName = OHADA_COUNTRIES.find((c) => c.code === country)?.name || country
+  useSeo({
+    title: `Tuteurs à domicile - ${countryDisplayName}`,
+    description: `Trouvez un tuteur à domicile qualifié ${countryDisplayName ? `à ${countryDisplayName}` : ''} pour accompagner votre enfant. Filtrez par matière et par région, contactez directement.`,
+  })
 
   useEffect(() => {
     const q = query(collection(db, 'users'), where('role', '==', 'teacher'))

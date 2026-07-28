@@ -6,12 +6,29 @@ import EmptyState from '../../shared/ui/EmptyState.jsx'
 import Spinner from '../../shared/ui/Spinner.jsx'
 import LocationPickerMap from '../../shared/ui/LocationPickerMap.jsx'
 import { openOsmDirections } from '../../shared/geo/osmDirections.js'
+import { useSeo } from '../../shared/hooks/useSeo.js'
 
 export default function SchoolDetail() {
   const { id } = useParams()
   const navigate = useNavigate()
   const [school, setSchool] = useState(undefined) // undefined = loading, null = not found
   const [jobs, setJobs] = useState([])
+
+  useSeo({
+    title: school ? `${school.name} - ${school.city || ''}` : undefined,
+    description: school
+      ? (school.description || `Découvrez ${school.name}${school.city ? ` à ${school.city}` : ''} sur Ardoise : classes disponibles, résultats aux examens, offres d'emploi et demande d'inscription en ligne.`)
+      : undefined,
+    jsonLd: school ? {
+      '@context': 'https://schema.org',
+      '@type': 'School',
+      name: school.name,
+      description: school.description || undefined,
+      image: school.image || undefined,
+      address: school.city ? { '@type': 'PostalAddress', addressLocality: school.city, addressCountry: school.country } : undefined,
+      geo: school.location ? { '@type': 'GeoCoordinates', latitude: school.location.lat, longitude: school.location.lng } : undefined,
+    } : undefined,
+  })
 
   useEffect(() => {
     let cancelled = false

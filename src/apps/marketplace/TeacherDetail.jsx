@@ -4,10 +4,27 @@ import { doc, getDoc } from 'firebase/firestore'
 import { db } from '../../shared/api/firebase.js'
 import EmptyState from '../../shared/ui/EmptyState.jsx'
 import Spinner from '../../shared/ui/Spinner.jsx'
+import { useSeo } from '../../shared/hooks/useSeo.js'
 export default function TeacherDetail() {
   const { id } = useParams()
   const navigate = useNavigate()
   const [teacher, setTeacher] = useState(undefined) // undefined = loading, null = not found
+
+  useSeo({
+    title: teacher ? `${teacher.name} - Tuteur ${teacher.subject || ''}${teacher.city ? ` à ${teacher.city}` : ''}` : undefined,
+    description: teacher
+      ? (teacher.description || `${teacher.name}, tuteur à domicile${teacher.subject ? ` en ${teacher.subject}` : ''}${teacher.city ? ` à ${teacher.city}` : ''}. Contactez-le directement sur Ardoise.`)
+      : undefined,
+    jsonLd: teacher ? {
+      '@context': 'https://schema.org',
+      '@type': 'Person',
+      name: teacher.name,
+      description: teacher.description || undefined,
+      image: teacher.image || undefined,
+      jobTitle: teacher.subject ? `Tuteur en ${teacher.subject}` : 'Tuteur à domicile',
+      address: teacher.city ? { '@type': 'PostalAddress', addressLocality: teacher.city } : undefined,
+    } : undefined,
+  })
 
   useEffect(() => {
     let cancelled = false

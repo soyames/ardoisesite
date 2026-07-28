@@ -8,6 +8,7 @@ import CountryMapWrapper from '../../shared/ui/CountryMapWrapper.jsx'
 import { OHADA_COUNTRIES } from '../../shared/constants/locations.js'
 import { COUNTRY_CITIES } from '../../shared/constants/cities.js'
 import { useGeo } from '../../shared/geo/GeoContext.jsx'
+import { useSeo } from '../../shared/hooks/useSeo.js'
 
 export default function SchoolList() {
   const [searchParams, setSearchParams] = useSearchParams()
@@ -22,6 +23,12 @@ export default function SchoolList() {
   const { countryCode: country } = useGeo()
   const department = searchParams.get('department')
   const commune = searchParams.get('commune')
+
+  const countryDisplayName = OHADA_COUNTRIES.find((c) => c.code === country)?.name || country
+  useSeo({
+    title: `Annuaire des écoles - ${countryDisplayName}`,
+    description: `Découvrez les écoles partenaires ${countryDisplayName ? `à ${countryDisplayName}` : ''}, classées par performance et taux de réussite. Filtrez par région et demandez une inscription en ligne.`,
+  })
 
   useEffect(() => {
     // Deliberately unfiltered by subscriptionActive - a public
