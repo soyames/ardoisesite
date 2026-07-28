@@ -1,0 +1,55 @@
+---
+title: "Partenaires certifiés"
+description: "Trouver ou devenir un partenaire vérifié pour l'installation et la maintenance d'Ardoise."
+---
+
+Ardoise ne facture pas l'installation ni la maintenance - mais toutes les écoles n'ont pas, sur place, quelqu'un à l'aise avec un serveur. Le **réseau de partenaires certifiés** met en relation les écoles avec des développeurs indépendants vérifiés par Ardoise, disponibles pour de l'installation et de la maintenance payante, directement entre l'école et le partenaire.
+
+<Info>
+  Ardoise vérifie l'identité et les coordonnées d'un partenaire avant de l'approuver, mais n'intervient pas
+  dans la relation commerciale école-partenaire (tarifs, contrat, paiement) - exactement comme pour les cours
+  de soutien entre parent et tuteur (voir [Abonnement et tarifs](/plateforme/abonnement)).
+</Info>
+
+## Trouver un partenaire
+
+L'[annuaire des partenaires certifiés](https://ardoiseeduc.com/partenaires) liste tous les partenaires approuvés, filtrable par pays. Chaque profil affiche ses spécialités et ses coordonnées de contact.
+
+## Accorder un accès support à distance
+
+Une fois en contact avec un partenaire, le fondateur peut lui accorder un **accès support à distance limité et temporaire** depuis l'onglet **Activation & Installation** de son tableau de bord :
+
+<Steps>
+  <Step title="Sélectionner le partenaire">
+    Dans la carte **Accès Support à Distance**, choisissez le partenaire dans la liste des partenaires certifiés.
+  </Step>
+  <Step title="Choisir la portée et la durée">
+    Cochez ce que le partenaire peut consulter/déclencher (état du serveur, état des sauvegardes, déclenchement d'une sauvegarde), et pour combien de jours (7 par défaut, 90 maximum).
+  </Step>
+  <Step title="Révoquer à tout moment">
+    L'accès expire automatiquement à la date choisie, ou peut être révoqué immédiatement depuis la même carte.
+  </Step>
+</Steps>
+
+<Warning>
+  Cet accès est **strictement limité** à l'état du serveur et des sauvegardes - jamais aux notes, à la
+  comptabilité ou aux dossiers d'élèves, et jamais par SSH. L'accès SSH à un serveur reste réservé au
+  personnel Ardoise, hors bande, et n'est jamais accordé à un partenaire via ce mécanisme. Voir aussi
+  [Accès à distance](/guide-technique/acces-distant) pour la différence avec votre propre tunnel Cloudflare.
+</Warning>
+
+## Devenir un partenaire certifié
+
+<Steps>
+  <Step title="Créez un compte développeur">
+    Inscrivez-vous sur [saas.ardoiseeduc.com](https://saas.ardoiseeduc.com/register) avec le rôle **Développeur**.
+  </Step>
+  <Step title="Candidatez depuis Espace Développeur">
+    Renseignez votre nom public, pays, spécialités et coordonnées de contact dans la carte **Réseau de Partenaires Certifiés**.
+  </Step>
+  <Step title="Attendez la vérification">
+    Une candidature est examinée par l'équipe Ardoise avant d'apparaître dans l'annuaire public - vous voyez le statut (en attente, approuvé, refusé) directement depuis Espace Développeur.
+  </Step>
+</Steps>
+
+Un partenaire approuvé peut aussi générer une clé API avec la portée `support:access` (voir [API publique](/plateforme/api#portées-scopes)) pour interagir avec les écoles qui lui ont accordé un accès, par programmation plutôt que depuis le tableau de bord.

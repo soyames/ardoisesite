@@ -1,11 +1,11 @@
 ---
 title: "Abonnement et tarifs"
-description: "Ardoise est gratuit - ce que cela couvre, et comment fonctionnent les paiements sur la marketplace."
+description: "Ce qui est gratuit pour toujours, ce qui fait partie d'Ardoise Enterprise, et comment fonctionnent les paiements sur la marketplace."
 ---
 
-Ardoise est gratuit pour les écoles : l'installation, la présence sur le marketplace, la gestion du personnel, et le logiciel de gestion complet (le vrai ERP) - tout est inclus, sans abonnement.
+Ardoise suit un modèle simple : le cœur du logiciel (élèves, notes, présences, marketplace, personnel) est **gratuit pour toujours**, sans limite de durée ni d'élèves. Les modules de gestion avancée de l'établissement (finance, RH & paie, cantine/bibliothèque, analytique) font partie de l'offre **Ardoise Enterprise**, payante.
 
-## Tout est gratuit
+## Gratuit pour toujours
 
 <CardGroup cols={2}>
   <Card title="Installation" icon="server">
@@ -17,22 +17,46 @@ Ardoise est gratuit pour les écoles : l'installation, la présence sur le marke
   <Card title="Gestion du personnel" icon="users">
     Le fondateur/la fondatrice peut ajouter, retirer et attribuer un rôle à un nombre illimité de membres du personnel.
   </Card>
-  <Card title="Logiciel de gestion complet" icon="graduation-cap">
-    Dossiers élèves, notes, bulletins, présences, comptabilité, RH et paie, cantine et bibliothèque - pour tout votre personnel.
+  <Card title="Élèves, notes & présences" icon="graduation-cap">
+    Dossiers élèves, notes, bulletins, présences et discipline - la base de l'ERP, sans restriction.
   </Card>
   <Card title="Traitement marketplace" icon="inbox">
     Accepter une demande d'inscription, traiter une candidature de recrutement, envoyer des notifications WhatsApp.
   </Card>
-  <Card title="Tableau de bord analytique" icon="chart-line">
-    Statistiques agrégées (effectifs, performance par matière, répartition).
+  <Card title="Évaluations des enseignants" icon="star">
+    Notation des enseignants par les parents/élèves - reste gratuit même avec Enterprise inactif.
   </Card>
 </CardGroup>
 
+## Ardoise Enterprise
+
 <Info>
-  Ardoise se réserve le droit d'introduire, à l'avenir, un abonnement payant si cela devient nécessaire pour
-  couvrir durablement les coûts d'exploitation de la plateforme. Un tel changement ferait l'objet d'une
-  communication préalable, avec un délai raisonnable avant toute entrée en vigueur - voir nos
-  [Conditions Générales d'Utilisation](https://ardoiseeduc.com/terms).
+  **50 000 FCFA / an** pour toute l'école - active les quatre modules ci-dessous. Sans Enterprise, ces
+  modules renvoient une erreur `feature_requires_subscription` plutôt que d'être simplement masqués - voir
+  [API publique](/plateforme/api) si vous intégrez directement contre l'API.
+</Info>
+
+<CardGroup cols={2}>
+  <Card title="Finance & Comptabilité" icon="money-bill">
+    Facturation, encaissements, comptabilité conforme SYSCOHADA.
+  </Card>
+  <Card title="RH & Paie" icon="briefcase">
+    Contrats, bulletins de paie, gestion du personnel.
+  </Card>
+  <Card title="Cantine & Bibliothèque" icon="cart-shopping">
+    Point de vente, portefeuille élève, inventaire.
+  </Card>
+  <Card title="Analytique & BI" icon="chart-line">
+    Tableaux de bord d'activité et de performance de l'établissement.
+  </Card>
+</CardGroup>
+
+Le fondateur active Enterprise depuis l'onglet **Activation & Installation** de son tableau de bord - paiement Mobile Money via FedaPay, activation immédiate, renouvelable chaque année.
+
+<Info>
+  Ardoise se réserve le droit de faire évoluer cette offre (tarifs, modules inclus) à l'avenir. Un tel
+  changement ferait l'objet d'une communication préalable, avec un délai raisonnable avant toute entrée en
+  vigueur - voir nos [Conditions Générales d'Utilisation](https://ardoiseeduc.com/terms).
 </Info>
 
 ## Paiements sur le marketplace
@@ -50,10 +74,20 @@ Ardoise est gratuit pour les écoles : l'installation, la présence sur le marke
     La mise en relation entre parent et tuteur est gratuite - Ardoise n'intervient pas dans le paiement et ne
     prélève aucune commission. Le tarif et le mode de règlement sont convenus directement entre les deux parties.
   </Card>
+  <Card title="Profil enseignant boosté" icon="rocket">
+    Un enseignant peut payer pour faire remonter son profil en tête des résultats de recherche sur le
+    marketplace, pendant une durée limitée. Optionnel, sans lien avec les cours de soutien eux-mêmes.
+  </Card>
 </CardGroup>
 
 ## Hors ligne prolongé
 
-Si votre installation ne peut pas joindre la Plateforme pendant plus longtemps que la période de grâce, la
-plateforme le détecte mais aucune fonctionnalité n'est désactivée - l'installation, la présence sur le
-marketplace et le logiciel de gestion restent accessibles.
+L'installation, la présence sur le marketplace et le cœur gratuit du logiciel (élèves, notes, présences)
+restent accessibles indéfiniment, même si votre installation ne peut pas joindre la Plateforme.
+
+<Warning>
+  Les modules **Enterprise**, eux, nécessitent une reconnexion à la Plateforme au moins une fois pendant la
+  période de grâce (14 jours par défaut) - passé ce délai sans reconnexion, ils se verrouillent
+  temporairement jusqu'au prochain contact réussi, même si votre abonnement est à jour. Une simple connexion
+  internet ponctuelle suffit à lever ce verrou.
+</Warning>

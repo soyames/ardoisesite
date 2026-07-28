@@ -34,9 +34,10 @@ L'API publique Ardoise permet a un site ou systeme tiers de lire les donnees pub
 
 | Scope | Donne accès à |
 |---|---|
-| `marketplace:read` | Lecture des écoles, tuteurs et offres d'emploi publiées, filtrable par pays (voir [Pays disponibles](#pays-disponibles)) |
+| `marketplace:read` | Lecture des écoles, tuteurs, offres d'emploi et partenaires certifiés publiés, filtrable par pays (voir [Pays disponibles](#pays-disponibles)) |
 | `leads:write` | Soumission d'un prospect (école ou candidat) vers le CRM Ardoise |
 | `school:profile` | Lecture du profil d'**une seule** école (clé générée par cette école elle-même) |
+| `support:access` | Réservé aux [partenaires certifiés](/plateforme/partenaires-certifies) - accès à l'état serveur/sauvegardes d'une école qui a explicitement accordé cet accès |
 
 Une clé invalide, révoquée, ou n'ayant pas la portée requise reçoit `401`/`403` avec un message expliquant lequel.
 
@@ -113,6 +114,20 @@ Liste les tuteurs indépendants du marketplace. Mêmes paramètres `country`/`li
 
 Liste les offres d'emploi ouvertes, filtrable par `country` et/ou `schoolId`.
 
+### `GET /api/public/partners`
+
+Liste les [partenaires certifiés](/plateforme/partenaires-certifies) approuvés, filtrable par `country`.
+
+**Portée requise :** `marketplace:read`
+
+```json
+{
+  "data": [
+    { "id": "uid123", "publicName": "Jean Dupont", "bio": "...", "specialties": ["Installation", "Maintenance serveur"], "country": "Bénin" }
+  ]
+}
+```
+
 ### `POST /api/public/leads`
 
 Soumet un prospect (école intéressée ou candidat professeur) dans le pipeline commercial Ardoise, pour qu'un membre de l'équipe le recontacte.
@@ -147,6 +162,11 @@ Depuis **Intégrations API** sur le tableau de bord fondateur, une école peut g
 
 ## Voir aussi
 
-<Card title="Serveur MCP" icon="robot" href="/plateforme/mcp">
-  Connecter un assistant IA (Claude, etc.) directement à cette même API via le Model Context Protocol.
-</Card>
+<CardGroup cols={2}>
+  <Card title="Serveur MCP" icon="robot" href="/plateforme/mcp">
+    Connecter un assistant IA (Claude, etc.) directement à cette même API via le Model Context Protocol.
+  </Card>
+  <Card title="Partenaires certifiés" icon="user-check" href="/plateforme/partenaires-certifies">
+    Devenir un partenaire certifié, ou accorder un accès support à un partenaire depuis votre école.
+  </Card>
+</CardGroup>

@@ -2,7 +2,7 @@
   "$schema": "https://mintlify.com/docs.json",
   "theme": "mint",
   "name": "Ardoise",
-  "description": "Documentation d'Ardoise - la gestion scolaire tout-en-un pour les etablissements prives de l'espace OHADA.",
+  "description": "Documentation d'Ardoise - la gestion scolaire tout-en-un pour les etablissements publics et prives de l'espace OHADA.",
   "colors": {
     "primary": "#B37640",
     "light": "#D9A574",
@@ -115,6 +115,12 @@
             "pages": [
               "plateforme/api",
               "plateforme/mcp"
+            ]
+          },
+          {
+            "group": "Partenaires",
+            "pages": [
+              "plateforme/partenaires-certifies"
             ]
           }
         ]
