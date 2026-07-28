@@ -104,10 +104,17 @@
         "tab": "Plateforme",
         "groups": [
           {
-            "group": "Compte et abonnement",
+            "group": "Compte et activation",
             "pages": [
               "plateforme/codes-activation",
               "plateforme/abonnement"
+            ]
+          },
+          {
+            "group": "Intégrations & API",
+            "pages": [
+              "plateforme/api",
+              "plateforme/mcp"
             ]
           }
         ]

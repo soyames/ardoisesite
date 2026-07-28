@@ -1,0 +1,63 @@
+---
+title: "Serveur MCP"
+description: "Connecter un assistant IA (Claude, etc.) au marketplace Ardoise via le Model Context Protocol."
+---
+
+## Qu'est-ce que le MCP ?
+
+Le **Model Context Protocol (MCP)** est un standard ouvert qui permet à un assistant IA (Claude Desktop, Claude Code, ou tout autre client compatible) de se connecter directement à un service externe et d'utiliser ses données et actions comme des "outils", au lieu de se limiter à ce qu'un humain lui colle dans la conversation.
+
+Concrètement, sans MCP, obtenir une réponse d'une IA sur "quelles écoles Ardoise y a-t-il au Bénin ?" demanderait de copier-coller manuellement des données dans la conversation. Avec un serveur MCP, l'assistant appelle lui-même l'outil `search_schools`, reçoit une réponse structurée, et peut raisonner dessus - dans les deux cas la même clé API et les mêmes permissions que l'[API REST](/plateforme/api) s'appliquent, le MCP n'est qu'une autre façon d'appeler la même chose.
+
+<Info>
+  Le serveur MCP d'Ardoise expose exactement les mêmes données et actions que `/api/public/*` (voir [API publique](/plateforme/api)) - mêmes clés, mêmes portées (scopes), mêmes limites. Ce n'est pas une deuxième API séparée, c'est la même API parlée dans un format que les assistants IA comprennent nativement.
+</Info>
+
+## Comment ça marche sur Ardoise
+
+Le serveur MCP tourne à l'adresse `https://api.ardoiseeduc.com/mcp` (protocole Streamable HTTP). Il expose ces outils :
+
+| Outil | Portée requise | Description |
+|---|---|---|
+| `search_schools` | `marketplace:read` | Recherche des écoles par pays |
+| `get_school_profile` | `marketplace:read` ou `school:profile` | Profil détaillé d'une école |
+| `search_teachers` | `marketplace:read` | Recherche des tuteurs par pays |
+| `list_jobs` | `marketplace:read` | Liste les offres d'emploi ouvertes |
+| `submit_lead` | `leads:write` | Soumet un prospect au CRM Ardoise |
+
+## Se connecter avec Claude Desktop ou Claude Code
+
+<Steps>
+  <Step title="Générez une clé API">
+    Comme pour l'API REST - voir [Obtenir une clé](/plateforme/api#obtenir-une-clé) dans la doc API publique.
+  </Step>
+  <Step title="Ajoutez le serveur MCP">
+    Dans la configuration MCP de votre client (`claude_desktop_config.json` pour Claude Desktop, ou via `claude mcp add` pour Claude Code), ajoutez un serveur HTTP distant :
+    ```json
+    {
+      "mcpServers": {
+        "ardoise": {
+          "url": "https://api.ardoiseeduc.com/mcp",
+          "headers": {
+            "Authorization": "Bearer sk_live_..."
+          }
+        }
+      }
+    }
+    ```
+  </Step>
+  <Step title="Utilisez-le dans la conversation">
+    Une fois connecté, demandez simplement à l'assistant, par exemple : *"Cherche les écoles Ardoise au Sénégal"* - il appellera `search_schools` lui-même.
+  </Step>
+</Steps>
+
+<Note>
+  N'importe quel client MCP fonctionne de la même façon (pas seulement Claude) - le protocole est ouvert. Le point important est l'en-tête `Authorization`, exactement comme pour l'API REST.
+</Note>
+
+## Pourquoi un serveur MCP en plus de l'API REST ?
+
+- **Pour un humain qui code une intégration** : l'API REST classique (voir [API publique](/plateforme/api)) reste le bon choix - endpoints prévisibles, testables avec `curl`.
+- **Pour un assistant IA qui doit répondre à des questions sur le marketplace, ou agir dessus (soumettre un lead) au nom d'un utilisateur** : le serveur MCP évite d'avoir à écrire un connecteur sur mesure - l'assistant découvre les outils disponibles automatiquement à la connexion.
+
+Les deux partagent la même logique côté serveur (mêmes fonctions, mêmes règles de sécurité) - aucune donnée n'est disponible via l'un et pas l'autre.

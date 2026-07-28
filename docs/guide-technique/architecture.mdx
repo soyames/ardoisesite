@@ -13,7 +13,7 @@ Ardoise repose sur trois composants distincts :
     Une application web partagee (React), servie a la fois sur ardoiseeduc.com (marketplace public) et saas.ardoiseeduc.com (portail personnel/fondateur), qui parle au serveur de chaque ecole depuis le navigateur.
   </Card>
   <Card title="La Plateforme" icon="cloud">
-    Un service central (Cloudflare Worker) qui ne gere que ce qui doit etre partage entre ecoles : annuaire public, abonnements, codes d'activation, notifications WhatsApp/Mobile Money du cote plateforme.
+    Un service central (Cloudflare Worker) qui ne gere que ce qui doit etre partage entre ecoles : annuaire public, codes d'activation, notifications WhatsApp/Mobile Money du cote plateforme, API publique pour les integrations tierces.
   </Card>
 </CardGroup>
 
@@ -26,6 +26,6 @@ Cela a une consequence directe : le navigateur du personnel de l'ecole communiqu
 ## Ce que la Plateforme sait, et ce qu'elle ne sait jamais
 
 <Check>Nom de l'ecole, coordonnees, effectifs declares (annuaire public)</Check>
-<Check>Etat de l'abonnement et code d'activation</Check>
+<Check>Code d'activation et etat de connexion de l'installation</Check>
 <Check>Profils publics des tuteurs a domicile (marketplace de recrutement)</Check>
 <Danger>Jamais : dossiers eleves, notes, bulletins, montants de frais de scolarite, bulletins de paie</Danger>

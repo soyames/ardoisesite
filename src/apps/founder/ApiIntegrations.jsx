@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { doc, getDoc, updateDoc } from 'firebase/firestore'
-import { db } from '../../shared/api/firebase.js'
+import { db, auth } from '../../shared/api/firebase.js'
+import { getPlatformApiBaseUrl } from '../../config/env.js'
 import { useAuth } from '../../shared/auth/AuthContext.jsx'
 import { api, ApiError } from '../../shared/api/client.js'
 import { Card, CardHeader, CardBody } from '../../shared/ui/Card.jsx'
@@ -36,6 +37,70 @@ export default function ApiIntegrations() {
   const [backendUrlInput, setBackendUrlInput] = useState('')
   const [backendUrlSaving, setBackendUrlSaving] = useState(false)
   const [backendUrlMsg, setBackendUrlMsg] = useState('')
+
+  // school:profile-scoped API keys (ardoise-api's /api/school/api-keys) -
+  // lets THIS school's own site pull its own public marketplace profile
+  // and job postings, nothing more (no grades/finance/student data) -
+  // see docs.ardoiseeduc.com/plateforme/api. Worker-routed rather than a
+  // direct client Firestore write, same reasoning as backendUrl isn't:
+  // api_keys' create rule only allows role=='developer', deliberately -
+  // a founder never gets write access to that collection.
+  const [schoolApiKeys, setSchoolApiKeys] = useState([])
+  const [schoolApiKeysLoading, setSchoolApiKeysLoading] = useState(true)
+  const [newSchoolKeyLabel, setNewSchoolKeyLabel] = useState('')
+  const [creatingSchoolKey, setCreatingSchoolKey] = useState(false)
+  const [justCreatedKey, setJustCreatedKey] = useState(null)
+
+  const authedFetch = async (path, options = {}) => {
+    const idToken = await auth.currentUser.getIdToken()
+    const res = await fetch(`${getPlatformApiBaseUrl()}${path}`, {
+      ...options,
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${idToken}`, ...(options.headers || {}) },
+    })
+    const data = await res.json().catch(() => ({}))
+    if (!res.ok) throw new Error(data.error || `Erreur ${res.status}`)
+    return data
+  }
+
+  const loadSchoolApiKeys = async () => {
+    try {
+      setSchoolApiKeys(await authedFetch('/api/school/api-keys'))
+    } catch (err) {
+      console.error('Failed to load school API keys:', err)
+    } finally {
+      setSchoolApiKeysLoading(false)
+    }
+  }
+  useEffect(() => { loadSchoolApiKeys() }, [])
+
+  const createSchoolApiKey = async (e) => {
+    e.preventDefault()
+    setCreatingSchoolKey(true)
+    setJustCreatedKey(null)
+    try {
+      const created = await authedFetch('/api/school/api-keys', {
+        method: 'POST',
+        body: JSON.stringify({ label: newSchoolKeyLabel || undefined }),
+      })
+      setJustCreatedKey(created.key)
+      setNewSchoolKeyLabel('')
+      await loadSchoolApiKeys()
+    } catch (err) {
+      alert(err.message)
+    } finally {
+      setCreatingSchoolKey(false)
+    }
+  }
+
+  const revokeSchoolApiKey = async (keyId) => {
+    if (!window.confirm('Révoquer cette clé ? Elle cessera de fonctionner immédiatement.')) return
+    try {
+      await authedFetch(`/api/school/api-keys/${keyId}`, { method: 'DELETE' })
+      await loadSchoolApiKeys()
+    } catch (err) {
+      alert(err.message)
+    }
+  }
 
   useEffect(() => {
     if (!user?.schoolId) return
@@ -154,7 +219,7 @@ export default function ApiIntegrations() {
           <div className="bg-surface p-4 rounded-card ring-1 ring-border">
             <h3 className="flex items-center gap-1.5 font-bold text-ink mb-4">
               Passerelle de paiement
-              <InfoTooltip text="Le service qui encaisse les paiements en ligne (Mobile Money, carte...) pour votre école. C'est votre propre compte : les frais de scolarité que les parents paient ici sont votre argent, versé directement sur votre compte - Ardoise ne les touche jamais. Ardoise encaisse uniquement les frais d'inscription lors d'une demande sur le marketplace, avec sa propre clé séparée de celle-ci, et vous en reverse le montant." />
+              <InfoTooltip text="Le service qui encaisse les paiements en ligne (Mobile Money, carte...) pour votre école. C'est votre propre compte : les frais de scolarité que les parents paient ici sont votre argent, versé directement sur votre compte - Ardoise ne les touche jamais. Selon votre pays, Ardoise peut aussi encaisser pour vous les frais d'inscription d'une demande sur le marketplace (avec sa propre clé, séparée de celle-ci) et vous en reverser le montant - voir avec l'équipe Ardoise si c'est activé pour votre école." />
             </h3>
             <div className="space-y-4">
               <div>
@@ -257,6 +322,61 @@ export default function ApiIntegrations() {
             </Button>
             {msg && <p className={`text-sm ${msg.includes('Erreur') ? 'text-danger-600' : 'text-success-600'}`}>{msg}</p>}
           </div>
+        </form>
+      </CardBody>
+    </Card>
+
+    <Card>
+      <CardHeader
+        title="Clé API de votre école"
+        subtitle="Permet à votre propre site d'afficher le profil et les offres d'emploi de votre école, en lisant directement depuis Ardoise."
+      />
+      <CardBody className="space-y-4">
+        <p className="text-sm text-ink-muted">
+          Cette clé ne donne accès qu'aux informations déjà publiques sur le marketplace (profil, offres d'emploi) - jamais aux notes, à la comptabilité ou aux dossiers d'élèves.
+          Voir la <a href="https://docs.ardoiseeduc.com/plateforme/api" target="_blank" rel="noreferrer" className="text-primary-600 hover:underline">documentation de l'API</a>.
+        </p>
+
+        {schoolApiKeysLoading ? (
+          <p className="text-sm text-ink-muted">Chargement...</p>
+        ) : schoolApiKeys.length > 0 && (
+          <ul className="space-y-2">
+            {schoolApiKeys.map((k) => (
+              <li key={k.id} className="flex items-center justify-between p-3 rounded-card border border-border bg-surface-raised">
+                <div>
+                  <p className="text-sm font-medium text-ink">{k.label || 'Clé API école'} <span className="font-mono text-ink-muted">····{k.keySuffix}</span></p>
+                  <p className="text-xs text-ink-muted mt-0.5">
+                    {k.revoked ? <span className="text-danger-600 font-semibold">Révoquée</span> : <span className="text-success-600 font-semibold">Active</span>}
+                    {' · '}Créée le {new Date(k.createdAt).toLocaleDateString()}
+                    {k.requestCount > 0 && <> · {k.requestCount} requête{k.requestCount > 1 ? 's' : ''}</>}
+                  </p>
+                </div>
+                {!k.revoked && (
+                  <Button size="sm" variant="danger" onClick={() => revokeSchoolApiKey(k.id)}>Révoquer</Button>
+                )}
+              </li>
+            ))}
+          </ul>
+        )}
+
+        {justCreatedKey && (
+          <div className="rounded-card bg-primary-50 border border-primary-200 p-4">
+            <p className="text-sm font-semibold text-primary-900 mb-1">Clé créée - copiez-la maintenant, elle ne sera plus affichée :</p>
+            <code className="block bg-white px-3 py-2 rounded border border-primary-200 font-mono text-sm break-all">{justCreatedKey}</code>
+          </div>
+        )}
+
+        <form onSubmit={createSchoolApiKey} className="flex gap-2">
+          <input
+            type="text"
+            value={newSchoolKeyLabel}
+            onChange={(e) => setNewSchoolKeyLabel(e.target.value)}
+            placeholder="Nom (ex: Site de l'école)"
+            className={INPUT_CLASS}
+          />
+          <Button type="submit" disabled={creatingSchoolKey} className="shrink-0">
+            {creatingSchoolKey ? 'Création...' : 'Générer une clé'}
+          </Button>
         </form>
       </CardBody>
     </Card>

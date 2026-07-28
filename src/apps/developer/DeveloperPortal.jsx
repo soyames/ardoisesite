@@ -7,13 +7,29 @@ import { Card, CardHeader, CardBody } from '../../shared/ui/Card.jsx'
 import Button from '../../shared/ui/Button.jsx'
 import Icon from '../../shared/ui/Icon.jsx'
 
+const SCOPES = [
+  { value: 'marketplace:read', label: 'Marketplace (lecture)', description: 'Ecoles, tuteurs, offres d\'emploi publiees' },
+  { value: 'leads:write', label: 'Soumission de leads', description: 'Envoyer un prospect ecole ou une candidature vers le CRM Ardoise' },
+]
+
+// Real entropy (crypto.getRandomValues), unlike the Math.random() this
+// replaces - the Worker's requireApiKey() (ardoise-api/src/api-key-auth.ts)
+// is what actually validates these now; before that existed, a generated
+// key authenticated nothing at all.
+function generateKeySecret() {
+  const bytes = new Uint8Array(24)
+  crypto.getRandomValues(bytes)
+  return Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('')
+}
+
 export default function DeveloperPortal() {
   const { user } = useAuth()
   const [apiKeys, setApiKeys] = useState([])
   const [webhooks, setWebhooks] = useState([])
   const [newWebhookUrl, setNewWebhookUrl] = useState('')
   const [loading, setLoading] = useState(true)
-  
+  const [newKeyScopes, setNewKeyScopes] = useState([])
+
   useEffect(() => {
     if (!user) return
 
@@ -39,15 +55,28 @@ export default function DeveloperPortal() {
   }, [user])
 
   const generateApiKey = async (type) => {
+    if (newKeyScopes.length === 0) {
+      alert('Selectionnez au moins une portee (scope) pour cette cle.')
+      return
+    }
     const prefix = type === 'test' ? 'sk_test_' : 'sk_live_'
-    const newKey = prefix + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15)
-    
+    const newKey = prefix + generateKeySecret()
+
     await addDoc(collection(db, 'api_keys'), {
       developerId: user.uid,
       key: newKey,
-      type: type,
-      createdAt: new Date().toISOString()
+      type,
+      scopes: newKeyScopes,
+      revoked: false,
+      createdAt: new Date().toISOString(),
+      lastUsedAt: null,
+      requestCount: 0,
     })
+    setNewKeyScopes([])
+  }
+
+  const toggleNewKeyScope = (scope) => {
+    setNewKeyScopes((prev) => prev.includes(scope) ? prev.filter((s) => s !== scope) : [...prev, scope])
   }
 
   const deleteApiKey = async (id) => {
@@ -99,7 +128,7 @@ export default function DeveloperPortal() {
 
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
         <Card>
-          <CardHeader title="Clés API" subtitle="Authentifiez vos requêtes vers l'API Ardoise SaaS." />
+          <CardHeader title="Clés API" subtitle="Authentifiez vos requêtes vers l'API publique Ardoise (marketplace + leads)." />
           <CardBody>
             <div className="space-y-4">
               {apiKeys.length === 0 ? (
@@ -111,24 +140,42 @@ export default function DeveloperPortal() {
               ) : (
                 <ul className="space-y-2">
                   {apiKeys.map(key => (
-                    <li key={key.id} className="flex items-center justify-between p-3 rounded-card border border-border bg-surface-raised">
-                      <div>
+                    <li key={key.id} className="p-3 rounded-card border border-border bg-surface-raised">
+                      <div className="flex items-center justify-between">
                         <span className="font-mono text-sm break-all text-ink">{key.key}</span>
-                        <div className="text-xs text-ink-muted mt-1">
-                          {key.type === 'live' ? <span className="text-danger-600 font-bold">LIVE</span> : <span className="text-warning-600 font-bold">TEST</span>} • Créée le {new Date(key.createdAt).toLocaleDateString()}
-                        </div>
+                        <button onClick={() => deleteApiKey(key.id)} className="text-danger-600 hover:text-danger-700 p-2 shrink-0">
+                          <Icon name="delete" />
+                        </button>
                       </div>
-                      <button onClick={() => deleteApiKey(key.id)} className="text-danger-600 hover:text-danger-700 p-2">
-                        <Icon name="delete" />
-                      </button>
+                      <div className="text-xs text-ink-muted mt-1">
+                        {key.type === 'live' ? <span className="text-danger-600 font-bold">LIVE</span> : <span className="text-warning-600 font-bold">TEST</span>} • Créée le {new Date(key.createdAt).toLocaleDateString()}
+                        {key.requestCount > 0 && <> • {key.requestCount} requête{key.requestCount > 1 ? 's' : ''}</>}
+                      </div>
+                      <div className="flex flex-wrap gap-1 mt-2">
+                        {(key.scopes || []).map((s) => (
+                          <span key={s} className="rounded-full bg-primary-100 text-primary-800 text-xs px-2 py-0.5">{SCOPES.find((x) => x.value === s)?.label || s}</span>
+                        ))}
+                      </div>
                     </li>
                   ))}
                 </ul>
               )}
-              
-              <div className="flex gap-2 pt-2">
-                <Button size="sm" variant="secondary" onClick={() => generateApiKey('test')}>+ Clé de test</Button>
-                <Button size="sm" variant="primary" onClick={() => generateApiKey('live')}>+ Clé de production</Button>
+
+              <div className="pt-2 border-t border-border space-y-2">
+                <p className="text-xs font-medium text-ink-muted">Portées de la nouvelle clé</p>
+                {SCOPES.map((s) => (
+                  <label key={s.value} className="flex items-start gap-2 text-sm">
+                    <input type="checkbox" className="mt-0.5" checked={newKeyScopes.includes(s.value)} onChange={() => toggleNewKeyScope(s.value)} />
+                    <span>
+                      <span className="text-ink font-medium">{s.label}</span>
+                      <span className="text-ink-muted"> - {s.description}</span>
+                    </span>
+                  </label>
+                ))}
+                <div className="flex gap-2 pt-1">
+                  <Button size="sm" variant="secondary" onClick={() => generateApiKey('test')}>+ Clé de test</Button>
+                  <Button size="sm" variant="primary" onClick={() => generateApiKey('live')}>+ Clé de production</Button>
+                </div>
               </div>
             </div>
           </CardBody>

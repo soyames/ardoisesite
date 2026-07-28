@@ -1,0 +1,120 @@
+---
+title: "API publique"
+description: "Integrer le marketplace Ardoise (ecoles, tuteurs, offres d'emploi) dans votre propre site ou systeme."
+---
+
+L'API publique Ardoise permet a un site ou systeme tiers de lire les donnees publiques du marketplace (ecoles, tuteurs, offres d'emploi) et de soumettre des prospects, sans avoir besoin d'un compte Ardoise ni d'integrer le SDK Firebase du projet.
+
+<Info>
+  Tout ce que cette API expose est deja visible publiquement, sans connexion, sur [ardoiseeduc.com](https://ardoiseeduc.com) - elle donne juste un point d'entree serveur propre, avec des cles revocables et un suivi d'usage, plutot que d'obliger un partenaire a lire directement notre base Firestore.
+</Info>
+
+## Obtenir une clé
+
+<Steps>
+  <Step title="Créez un compte développeur">
+    Inscrivez-vous sur [saas.ardoiseeduc.com](https://saas.ardoiseeduc.com/register) avec le rôle **Développeur**.
+  </Step>
+  <Step title="Générez une clé">
+    Depuis **Espace Développeur**, section **Clés API** : cochez les portées (scopes) dont vous avez besoin, puis générez une clé de test (`sk_test_...`) ou de production (`sk_live_...`).
+  </Step>
+  <Step title="Authentifiez vos requêtes">
+    Envoyez la clé dans l'en-tête `Authorization` de chaque requête :
+    ```bash
+    curl -H "Authorization: Bearer sk_live_..." https://api.ardoiseeduc.com/api/public/schools
+    ```
+  </Step>
+</Steps>
+
+<Note>
+  Une école qui veut afficher **son propre** profil ou **ses propres** offres d'emploi sur son site n'a pas besoin d'un compte développeur : le fondateur génère une clé dédiée depuis **Intégrations API** sur son tableau de bord - voir [Clé API école](#clé-api-école-scope-schoolprofile) plus bas.
+</Note>
+
+## Portées (scopes)
+
+| Scope | Donne accès à |
+|---|---|
+| `marketplace:read` | Lecture des écoles, tuteurs et offres d'emploi publiées, tous pays |
+| `leads:write` | Soumission d'un prospect (école ou candidat) vers le CRM Ardoise |
+| `school:profile` | Lecture du profil d'**une seule** école (clé générée par cette école elle-même) |
+
+Une clé invalide, révoquée, ou n'ayant pas la portée requise reçoit `401`/`403` avec un message expliquant lequel.
+
+## Endpoints
+
+<Note>
+  Base URL : `https://api.ardoiseeduc.com`
+</Note>
+
+### `GET /api/public/schools`
+
+Liste les écoles inscrites sur le marketplace.
+
+**Portée requise :** `marketplace:read`
+
+| Paramètre | Description |
+|---|---|
+| `country` | Code pays (`BEN`) ou nom français (`Bénin`) - optionnel, sinon tous pays |
+| `limit` | Nombre max de résultats (défaut 50, max 200) |
+
+```json
+{
+  "data": [
+    { "id": "abc123", "name": "École Les Palmiers", "city": "Cotonou", "country": "Bénin", "description": "...", "image": "https://..." }
+  ]
+}
+```
+
+### `GET /api/public/schools/:schoolId`
+
+Profil d'une seule école. Accessible avec une clé `marketplace:read` (n'importe quelle école) ou une clé `school:profile` scopée à cette école précise.
+
+### `GET /api/public/teachers`
+
+Liste les tuteurs indépendants du marketplace. Mêmes paramètres `country`/`limit` que `/schools`.
+
+<Warning>
+  Ardoise ne traite plus aucun paiement pour les cours particuliers - un parent et un tuteur s'arrangent directement une fois mis en relation. Cette route ne retourne donc que des informations de contact/profil, jamais de données financières.
+</Warning>
+
+### `GET /api/public/jobs`
+
+Liste les offres d'emploi ouvertes, filtrable par `country` et/ou `schoolId`.
+
+### `POST /api/public/leads`
+
+Soumet un prospect (école intéressée ou candidat professeur) dans le pipeline commercial Ardoise, pour qu'un membre de l'équipe le recontacte.
+
+**Portée requise :** `leads:write`
+
+```json
+{
+  "type": "school_prospect",
+  "name": "Jean Dupont",
+  "contactEmail": "jean@example.com",
+  "contactPhone": "+229 90 00 00 00",
+  "country": "Bénin",
+  "message": "Intéressé par une démo pour notre établissement."
+}
+```
+
+`type` vaut `school_prospect` ou `candidate`. `name` est requis, ainsi que `contactEmail` ou `contactPhone` (au moins l'un des deux).
+
+## Clé API école (scope `school:profile`)
+
+Depuis **Intégrations API** sur le tableau de bord fondateur, une école peut générer sa propre clé, limitée à son propre profil (`GET /api/public/schools/:sonPropreId`) et ses propres offres d'emploi. Cette clé ne peut rien lire d'une autre école, et ne donne accès à aucune donnée de notes, finances ou élèves - uniquement les mêmes informations déjà publiques sur le marketplace.
+
+<Warning>
+  L'API publique n'expose et n'exposera pas les notes, la comptabilité ou les dossiers d'élèves d'une école sans un cadre de consentement bien plus large que ces clés - ce n'est pas une omission temporaire, c'est une limite volontaire.
+</Warning>
+
+## Limites actuelles
+
+- Pas de limitation de débit stricte (pas encore d'infrastructure dédiée) - une utilisation abusive est surveillée via le compteur de requêtes affiché dans **Espace Développeur**, et une clé peut être révoquée à tout moment.
+- Les webhooks (notifications en temps réel) sont configurables depuis **Espace Développeur** mais ne se déclenchent pas encore automatiquement sur les événements réels - seul le test manuel fonctionne aujourd'hui.
+
+## Voir aussi
+
+<Card title="Serveur MCP" icon="robot" href="/plateforme/mcp">
+  Connecter un assistant IA (Claude, etc.) directement à cette même API via le Model Context Protocol.
+</Card>
