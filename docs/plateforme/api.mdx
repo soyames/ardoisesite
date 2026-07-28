@@ -114,6 +114,8 @@ Liste les tuteurs indépendants du marketplace. Mêmes paramètres `country`/`li
 
 Liste les offres d'emploi ouvertes, filtrable par `country` et/ou `schoolId`.
 
+**Portée requise :** `marketplace:read`
+
 ### `GET /api/public/partners`
 
 Liste les [partenaires certifiés](/plateforme/partenaires-certifies) approuvés, filtrable par `country`.
@@ -146,6 +148,36 @@ Soumet un prospect (école intéressée ou candidat professeur) dans le pipeline
 ```
 
 `type` vaut `school_prospect` ou `candidate`. `name` est requis, ainsi que `contactEmail` ou `contactPhone` (au moins l'un des deux).
+
+## Accès support (scope `support:access`)
+
+Réservé aux [partenaires certifiés](/plateforme/partenaires-certifies) à qui un fondateur a explicitement accordé un accès - voir cette page pour comment un fondateur accorde/révoque cet accès depuis son tableau de bord. Ces routes proxy vers l'installation Django de l'école elle-même (jamais vers des données stockées côté Plateforme) et répondent `403` si aucun accès actif ne couvre l'école ou la portée demandée.
+
+**Portée requise :** `support:access`
+
+### `GET /api/support/schools/:schoolId/health`
+
+```json
+{ "status": "ok" }
+```
+
+### `GET /api/support/schools/:schoolId/backup-status`
+
+```json
+{
+  "isConfigured": true,
+  "isEnabled": true,
+  "lastBackup": { "status": "success", "date": "2026-07-28T02:00:00Z", "error": null }
+}
+```
+
+### `POST /api/support/schools/:schoolId/backup-trigger`
+
+Déclenche une sauvegarde immédiate. Réponse `{ "success": true, "message": "..." }` ou `{ "success": false, "error": "..." }`.
+
+<Warning>
+  Ces trois routes sont strictement limitées à l'état du serveur et des sauvegardes - jamais aux notes, à la comptabilité ou aux dossiers d'élèves, et jamais par SSH (réservé au personnel Ardoise, hors bande).
+</Warning>
 
 ## Clé API école (scope `school:profile`)
 

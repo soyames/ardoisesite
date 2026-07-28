@@ -10,7 +10,7 @@ Le **Model Context Protocol (MCP)** est un standard ouvert qui permet à un assi
 Concrètement, sans MCP, obtenir une réponse d'une IA sur "quelles écoles Ardoise y a-t-il au Bénin ?" demanderait de copier-coller manuellement des données dans la conversation. Avec un serveur MCP, l'assistant appelle lui-même l'outil `search_schools`, reçoit une réponse structurée, et peut raisonner dessus - dans les deux cas la même clé API et les mêmes permissions que l'[API REST](/plateforme/api) s'appliquent, le MCP n'est qu'une autre façon d'appeler la même chose.
 
 <Info>
-  Le serveur MCP d'Ardoise expose exactement les mêmes données et actions que `/api/public/*` (voir [API publique](/plateforme/api)) - mêmes clés, mêmes portées (scopes), mêmes limites. Ce n'est pas une deuxième API séparée, c'est la même API parlée dans un format que les assistants IA comprennent nativement.
+  Le serveur MCP d'Ardoise expose les mêmes clés, portées (scopes) et données publiques `/api/public/*` que l'[API publique](/plateforme/api) - ce n'est pas une deuxième API séparée, c'est la même API parlée dans un format que les assistants IA comprennent nativement. Les routes `support:access` (accès support des partenaires certifiés) ne sont pas exposées ici, uniquement en REST - un agent IA n'a pas vocation à déclencher une sauvegarde sur le serveur d'une école.
 </Info>
 
 ## Comment ça marche sur Ardoise
