@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { useParams, useNavigate, Link } from 'react-router-dom'
+import { useParams, useNavigate, useSearchParams, Link } from 'react-router-dom'
 import { doc, getDoc, collection, addDoc, serverTimestamp } from 'firebase/firestore'
 import { db } from '../../shared/api/firebase.js'
 import { useAuth } from '../../shared/auth/AuthContext.jsx'
@@ -17,6 +17,8 @@ import Spinner from '../../shared/ui/Spinner.jsx'
 export default function SchoolEnrollment() {
   const { id } = useParams()
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const preselectedClassId = searchParams.get('classId')
   const { user, status } = useAuth()
 
   const [school, setSchool] = useState(undefined)
@@ -38,12 +40,24 @@ export default function SchoolEnrollment() {
         const data = snap.data()
         setSchool({ id: snap.id, ...data })
         if (data.classrooms && data.classrooms.length > 0) {
-          // Auto-select first non-full class if possible
-          const firstAvailable = data.classrooms.find(c => (c.capacity || 50) > (c.acceptedCount || 0))
-          if (firstAvailable) {
-            setChildClassId(firstAvailable.id)
+          // Honor the class the parent already picked on the school's
+          // public profile (SchoolDetail.jsx's "Classes et cycles"
+          // section links here with ?classId=...) - only if it's still
+          // a real, non-full class on this school, otherwise fall back
+          // to auto-selecting like before.
+          const preselected = preselectedClassId
+            ? data.classrooms.find(c => c.id === preselectedClassId && (c.capacity || 50) > (c.acceptedCount || 0))
+            : null
+          if (preselected) {
+            setChildClassId(preselected.id)
           } else {
-            setChildClassId(data.classrooms[0].id)
+            // Auto-select first non-full class if possible
+            const firstAvailable = data.classrooms.find(c => (c.capacity || 50) > (c.acceptedCount || 0))
+            if (firstAvailable) {
+              setChildClassId(firstAvailable.id)
+            } else {
+              setChildClassId(data.classrooms[0].id)
+            }
           }
         } else {
           // Fallback for E2E testing

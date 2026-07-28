@@ -136,6 +136,46 @@ export default function SchoolDetail() {
           )}
 
           <section>
+            <h2 className="text-2xl font-bold text-ink">Classes et cycles</h2>
+            {(!school.classrooms || school.classrooms.length === 0) ? (
+              <p className="mt-4 text-sm text-ink-muted">Cette école n'a pas encore publié les classes disponibles pour l'inscription.</p>
+            ) : (
+              <>
+                <p className="mt-2 text-sm text-ink-muted">Cliquez sur une classe pour démarrer une demande d'inscription pour celle-ci.</p>
+                <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {school.classrooms.map((c) => {
+                    const capacity = c.capacity || 50
+                    const acceptedCount = c.acceptedCount || 0
+                    const isFull = acceptedCount >= capacity
+                    const clickable = !school.isDemo && !isFull
+                    return (
+                      <button
+                        key={c.id}
+                        type="button"
+                        disabled={!clickable}
+                        onClick={() => navigate(`/schools/${school.id}/enroll?classId=${encodeURIComponent(c.id)}`)}
+                        className={`flex items-center justify-between rounded-card bg-surface-raised p-5 shadow-card ring-1 ring-border text-left transition ${clickable ? 'hover:shadow-elevated hover:ring-primary-200 cursor-pointer' : 'cursor-not-allowed opacity-75'}`}
+                      >
+                        <div>
+                          <h3 className="font-bold text-ink">{c.name}</h3>
+                          <p className={`mt-1 text-sm ${isFull ? 'text-danger-600 font-semibold' : 'text-ink-muted'}`}>
+                            {isFull ? 'Complet' : `${capacity - acceptedCount} place(s) disponible(s)`}
+                          </p>
+                          {clickable && <p className="mt-2 text-sm font-semibold text-primary-600">Choisir cette classe &rarr;</p>}
+                        </div>
+                        <div className="text-right shrink-0 pl-4">
+                          <p className="text-xs text-ink-muted">Frais d'admission</p>
+                          <p className="font-bold text-primary-600">{Number(c.registrationFee || 0).toLocaleString('fr-FR')} FCFA</p>
+                        </div>
+                      </button>
+                    )
+                  })}
+                </div>
+              </>
+            )}
+          </section>
+
+          <section>
             <h2 className="text-2xl font-bold text-ink">Offres d'emploi</h2>
             <div className="mt-6 space-y-4">
               {jobs.length === 0 && (
