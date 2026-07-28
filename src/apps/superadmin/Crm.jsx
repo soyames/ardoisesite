@@ -78,11 +78,16 @@ export default function Crm() {
 
   const rows = useMemo(() => {
     if (!schools || !leads) return null
+    // A doc in `schools` is, by definition, already registered and live
+    // (Ardoise ERP is free - there's no more paid/unpaid distinction) -
+    // pipelineStage only falls back for a school RegisterPage.jsx hasn't
+    // stamped one onto yet, and that fallback is always 'customer', never
+    // 'prospect' (pre-registration prospects live in the separate `leads`
+    // collection below, not in `schools`).
     const schoolRows = schools.map((s) => ({
       kind: 'school', id: s.id, name: s.name || 'École sans nom',
-      pipelineStage: s.pipelineStage || (s.subscriptionActive ? 'customer' : 'prospect'),
+      pipelineStage: s.pipelineStage || 'customer',
       lastContactedAt: s.lastContactedAt || null,
-      subscriptionActive: !!s.subscriptionActive,
       city: s.city || '',
       country: s.country || '',
       feeCollectionEnabled: s.feeCollectionEnabled !== false,
@@ -91,7 +96,6 @@ export default function Crm() {
       kind: 'lead', id: l.id, name: l.name,
       pipelineStage: l.pipelineStage || 'prospect',
       lastContactedAt: l.lastContactedAt || null,
-      subscriptionActive: false,
       city: l.contactPhone || l.contactEmail || '',
     }))
     let all = [...schoolRows, ...leadRows]
@@ -111,7 +115,7 @@ export default function Crm() {
   const counts = useMemo(() => {
     if (!schools || !leads) return {}
     const all = [
-      ...schools.map((s) => s.pipelineStage || (s.subscriptionActive ? 'customer' : 'prospect')),
+      ...schools.map((s) => s.pipelineStage || 'customer'),
       ...leads.map((l) => l.pipelineStage || 'prospect'),
     ]
     const c = {}

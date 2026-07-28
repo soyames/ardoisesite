@@ -12,7 +12,7 @@ const ROLE_LABELS = {
   support_agent: 'Agent Support',
   school_onboarding: 'Onboarding Écoles',
   dev_onboarding: 'Onboarding Devs',
-  billing_agent: 'Facturation & Abonnements',
+  billing_agent: 'Facturation & Tutorat',
   marketing_agent: 'Marketing'
 }
 

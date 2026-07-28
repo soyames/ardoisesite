@@ -1,104 +1,65 @@
 import React, { useState, useEffect } from 'react'
 import { doc, getDoc } from 'firebase/firestore'
 import { db } from '../../shared/api/firebase'
-import { useAuth } from '../../shared/auth/AuthContext.jsx'
-import { FedaPayButton } from '../../shared/components/FedaPayButton.jsx'
 import { Card, CardHeader, CardBody } from '../../shared/ui/Card.jsx'
 import { usePwaInstall } from '../../shared/hooks/usePwaInstall.js'
 
-// Le paiement lui-meme ne fait plus jamais d'ecriture Firestore cote client
-// -- c'est desormais le webhook FedaPay signe (ardoise-api) qui active
-// l'abonnement server-side, seule ecriture que firestore.rules autorise
-// sur ces champs. Ce composant se contente de rafraichir sa lecture apres
-// un paiement, en patientant que le webhook ait eu le temps d'arriver.
-const CONFIRM_POLL_ATTEMPTS = 6
-const CONFIRM_POLL_DELAY_MS = 2000
-
+// Ardoise ERP is free - no more subscription/payment flow here (see the
+// 2026-07 paywall removal). This panel now only shows the school's
+// activation code (still needed for marketplace/notification identity,
+// not for unlocking anything) and the PWA install prompt.
 export default function SubscriptionPanel({ schoolId }) {
-  const { user } = useAuth()
   const { promptInstall, isIOS, canOfferInstall } = usePwaInstall()
   const [loading, setLoading] = useState(true)
-  const [schoolData, setSchoolData] = useState(null)
   const [activationCode, setActivationCode] = useState(null)
   const [error, setError] = useState(null)
-  const [confirming, setConfirming] = useState(false)
-
-  const fetchSchoolData = async () => {
-    try {
-      const docRef = doc(db, 'schools', String(schoolId))
-      const docSnap = await getDoc(docRef)
-      // activationCode lives in schools/{id}/secrets/config now, not on
-      // this public doc (firestore.rules restricts that subcollection
-      // to the founder of this exact school, which is who's viewing
-      // this panel) - see the security-review note in firestore.rules.
-      const secretsSnap = await getDoc(doc(db, 'schools', String(schoolId), 'secrets', 'config'))
-      setActivationCode(secretsSnap.exists() ? secretsSnap.data().activationCode || null : null)
-      if (docSnap.exists()) {
-        setSchoolData(docSnap.data())
-      }
-      return docSnap.exists() ? docSnap.data() : null
-    } catch (err) {
-      setError("Erreur lors du chargement des informations de l'école.")
-      console.error(err)
-      return null
-    }
-  }
 
   useEffect(() => {
     if (!schoolId) return
     setLoading(true)
-    fetchSchoolData().finally(() => setLoading(false))
+    // activationCode lives in schools/{id}/secrets/config (firestore.rules
+    // restricts that subcollection to the founder of this exact school,
+    // which is who's viewing this panel) - see the security-review note
+    // in firestore.rules.
+    getDoc(doc(db, 'schools', String(schoolId), 'secrets', 'config'))
+      .then((secretsSnap) => setActivationCode(secretsSnap.exists() ? secretsSnap.data().activationCode || null : null))
+      .catch((err) => {
+        setError("Erreur lors du chargement des informations de l'école.")
+        console.error(err)
+      })
+      .finally(() => setLoading(false))
   }, [schoolId])
 
-  const handlePaymentComplete = async () => {
-    setConfirming(true)
-    for (let attempt = 0; attempt < CONFIRM_POLL_ATTEMPTS; attempt++) {
-      await new Promise((resolve) => setTimeout(resolve, CONFIRM_POLL_DELAY_MS))
-      const data = await fetchSchoolData()
-      if (data?.subscriptionActive) {
-        setConfirming(false)
-        alert("Paiement confirme ! Votre abonnement est actif. Recuperez votre cle d'activation ci-dessous.")
-        return
-      }
-    }
-    setConfirming(false)
-    alert("Paiement recu, en attente de confirmation. Rafraichissez cette page dans une minute si le statut ne change pas.")
-  }
-
   if (loading) {
-    return <div className="p-8 text-center text-ink-muted">Chargement de l'abonnement...</div>
+    return <div className="p-8 text-center text-ink-muted">Chargement...</div>
   }
 
   if (error) {
     return <div className="p-4 bg-error-50 text-error-800 rounded-card">{error}</div>
   }
 
-  const isActive = schoolData?.subscriptionActive === true
-  const PRICE_FCFA = 50000
-
   return (
     <div className="space-y-6">
       <Card>
-        <CardHeader title="Votre Abonnement Ardoise ERP" />
+        <CardHeader title="Ardoise ERP" />
         <CardBody>
           <div className="flex flex-col md:flex-row items-start gap-8">
             <div className="flex-1 w-full">
-              <h3 className="text-xl font-bold text-ink mb-2">Statut de la licence</h3>
               <div className="flex items-center gap-3 mb-4">
-                <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-semibold ${isActive ? 'bg-success-100 text-success-800' : 'bg-warning-100 text-warning-800'}`}>
-                  <span className={`h-2 w-2 rounded-full ${isActive ? 'bg-success-500' : 'bg-warning-500'}`}></span>
-                  {isActive ? 'Actif' : 'Inactif / En attente de paiement'}
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-semibold bg-success-100 text-success-800">
+                  <span className="h-2 w-2 rounded-full bg-success-500"></span>
+                  Gratuit - toutes les fonctionnalités actives
                 </span>
               </div>
               <p className="text-ink-muted text-sm leading-relaxed mb-6">
-                L'abonnement Ardoise ERP vous donne accès à notre <strong>logiciel à installer sur place</strong> pour une sécurité maximale, 
+                Ardoise vous donne accès à notre <strong>logiciel à installer sur place</strong> pour une sécurité maximale,
                 ainsi qu'une vitrine publique sur notre Marketplace pour recruter les meilleurs professeurs. Vos données ne quittent jamais votre école !
               </p>
-              
+
               <div className="bg-primary-50 p-6 rounded-xl border border-primary-200 mb-6">
                 <h4 className="font-bold text-primary-900 mb-2">Logiciel prêt à installer !</h4>
                 <p className="text-sm text-primary-800 mb-4">
-                  L'installation locale et l'utilisation de base sont <strong>entièrement gratuites</strong>. Voici votre clé d'activation secrète à insérer lors du premier démarrage de l'ERP dans votre école :
+                  L'installation locale et toutes les fonctionnalités sont <strong>entièrement gratuites</strong>. Voici votre clé d'activation à insérer lors du premier démarrage de l'ERP dans votre école :
                 </p>
                 <div className="bg-white p-3 rounded border border-primary-200 font-mono text-center text-lg text-primary-700 tracking-wider mb-6 break-all">
                   {activationCode || 'Génération en cours...'}
@@ -121,35 +82,6 @@ export default function SubscriptionPanel({ schoolId }) {
                   </p>
                 </div>
               </div>
-
-              {!isActive && (
-                <div className="bg-surface-raised p-4 rounded-xl border border-border">
-                  <h4 className="font-bold text-ink mb-2">Débloquer les fonctionnalités avancées</h4>
-                  <p className="text-sm text-ink-muted mb-4">
-                    Passez à l'abonnement Premium pour débloquer le <strong>Recrutement Marketplace</strong>, le <strong>Traitement des Inscriptions</strong>, et la <strong>Gestion du Personnel</strong>.
-                  </p>
-                  <div className="flex justify-between items-center mb-4">
-                    <span className="font-semibold text-ink">Licence Annuelle</span>
-                    <span className="text-xl font-bold text-primary-600">{PRICE_FCFA.toLocaleString('fr-FR')} FCFA</span>
-                  </div>
-                  
-                  {/* On force la clé publique globale de la plateforme */}
-                  <FedaPayButton
-                    publicKey={import.meta.env.VITE_FEDAPAY_PUBLIC_KEY}
-                    amount={PRICE_FCFA}
-                    description={`Abonnement SaaS ERP pour l'école ${schoolData?.name || schoolId}`}
-                    customerEmail={user?.email}
-                    customerFirstname={user?.firstName}
-                    customerLastname={user?.lastName}
-                    customerPhoneNumber={user?.phone || schoolData?.phone}
-                    customMetadata={{ type: 'school_subscription_payment', schoolId: String(schoolId) }}
-                    onComplete={handlePaymentComplete}
-                    className="w-full rounded-control bg-primary-600 px-4 py-2 text-sm font-bold text-white transition hover:bg-primary-500 disabled:opacity-60"
-                  >
-                    {confirming ? 'Confirmation du paiement...' : "Payer l'abonnement annuel"}
-                  </FedaPayButton>
-                </div>
-              )}
             </div>
 
             <div className="hidden md:block w-[1px] bg-border h-full min-h-[250px]"></div>

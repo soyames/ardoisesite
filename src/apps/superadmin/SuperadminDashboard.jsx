@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react'
-import { collection, query, where, orderBy, onSnapshot, doc, updateDoc, deleteDoc } from 'firebase/firestore'
+import { collection, query, orderBy, onSnapshot } from 'firebase/firestore'
 import { db, auth } from '../../shared/api/firebase.js'
-import { getApiBaseUrl } from '../../config/env.js'
 import { useAuth } from '../../shared/auth/AuthContext.jsx'
 import { Card, CardHeader, CardBody } from '../../shared/ui/Card.jsx'
 import Button from '../../shared/ui/Button.jsx'
@@ -81,7 +80,7 @@ export default function SuperadminDashboard() {
             onClick={() => setActiveTab('payments')}
             className={activeTab === 'payments' ? '' : 'text-ink-muted hover:text-ink'}
           >
-            Paiements & Abonnements
+            Contrats Tutorat
           </Button>
         )}
         {availableTabs.includes('users') && (
@@ -118,7 +117,7 @@ export default function SuperadminDashboard() {
         {activeTab === 'crm' && availableTabs.includes('crm') && <Crm />}
         {activeTab === 'tickets' && availableTabs.includes('tickets') && <SupportTickets />}
         {activeTab === 'schools' && availableTabs.includes('schools') && <SchoolsRegistry />}
-        {activeTab === 'payments' && availableTabs.includes('payments') && <PaymentsAndSubscriptions />}
+        {activeTab === 'payments' && availableTabs.includes('payments') && <TutoringContracts />}
         {activeTab === 'users' && availableTabs.includes('users') && <UsersRegistry />}
         {activeTab === 'team' && availableTabs.includes('team') && <TeamManagement />}
         {activeTab === 'settings' && availableTabs.includes('settings') && <MarketplaceAccountSettings />}
@@ -127,117 +126,61 @@ export default function SuperadminDashboard() {
   )
 }
 
-const PLAN_CODES = [
-  { value: 'trial', label: 'Essai (Trial)' },
-  { value: 'starter', label: 'Starter' },
-  { value: 'premium', label: 'Premium' },
-]
-const DURATION_OPTIONS = [
-  { value: 7, label: '7 jours' },
-  { value: 14, label: '14 jours' },
-  { value: 30, label: '30 jours' },
-  { value: 90, label: '90 jours' },
-]
-
-function isExpired(school) {
-  const expiresAt = school.subscriptionExpiresAt ? (school.subscriptionExpiresAt.toDate ? school.subscriptionExpiresAt.toDate() : new Date(school.subscriptionExpiresAt)) : null
-  return expiresAt !== null && expiresAt.getTime() < Date.now()
-}
-
-function subscriptionBadge(school) {
-  if (!school.subscriptionActive) return <Badge tone="neutral">Gratuit</Badge>
-  if (isExpired(school)) return <Badge tone="danger">Expiré</Badge>
-  return <Badge tone="success">Actif</Badge>
-}
-
-function SubscriptionManager({ school, onChanged }) {
-  const [planCode, setPlanCode] = useState(school.planCode || 'trial')
-  const [durationDays, setDurationDays] = useState(14)
-  const [whatsapp, setWhatsapp] = useState((school.features || []).includes('whatsapp_notifications'))
+// Ardoise ERP is free for every school (see the 2026-07 paywall
+// removal) - there's no more plan/subscription to grant or revoke.
+// The one thing a superadmin still legitimately manages here is the
+// activation code itself (lost-code support tickets), since it lives
+// in the founder-only schools/{id}/secrets/config subcollection that
+// firestore.rules keeps unreadable to a superadmin directly.
+function ActivationCodeManager({ school }) {
+  const [activationCode, setActivationCode] = useState(null)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState(null)
-  // activationCode no longer lives on the public `schools/{id}` doc
-  // (it moved to the founder-only schools/{id}/secrets/config
-  // subcollection - see firestore.rules), so a superadmin can't read
-  // it via a real-time listener. The grant/revoke Worker route is
-  // already superadmin-authorized and returns just this one field
-  // alongside its response - this local state is the only place it's
-  // ever held client-side.
-  const [activationCode, setActivationCode] = useState(null)
 
-  const call = async (body) => {
+  const call = async (regenerate) => {
     setSubmitting(true)
     setError(null)
     try {
       const idToken = await auth.currentUser.getIdToken()
-      const res = await fetch(`${getPlatformApiBaseUrl()}/api/admin/schools/${school.id}/subscription`, {
+      const res = await fetch(`${getPlatformApiBaseUrl()}/api/admin/schools/${school.id}/activation-code`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${idToken}` },
-        body: JSON.stringify(body),
+        body: JSON.stringify({ regenerate }),
       })
       const data = await res.json()
       if (!res.ok) {
-        setError(data.error || 'Erreur lors de la mise a jour.')
+        setError(data.error || 'Erreur lors de la récupération du code.')
         return
       }
-      if (data.activationCode) setActivationCode(data.activationCode)
-      onChanged()
+      setActivationCode(data.activationCode)
     } catch (err) {
       console.error(err)
-      setError('Erreur reseau.')
+      setError('Erreur réseau.')
     } finally {
       setSubmitting(false)
     }
   }
 
-  const grant = () => call({
-    active: true, plan_code: planCode, duration_days: durationDays,
-    features: whatsapp ? ['whatsapp_notifications'] : [],
-  })
-  const revoke = () => call({ active: false })
-
   return (
     <div className="mt-3 rounded-control bg-primary-50/50 p-4 space-y-3">
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-        <select
-          className="rounded-control border-0 py-2 px-3 text-sm ring-1 ring-inset ring-border"
-          value={planCode} onChange={(e) => setPlanCode(e.target.value)}
-        >
-          {PLAN_CODES.map((p) => <option key={p.value} value={p.value}>{p.label}</option>)}
-        </select>
-        <select
-          className="rounded-control border-0 py-2 px-3 text-sm ring-1 ring-inset ring-border"
-          value={durationDays} onChange={(e) => setDurationDays(Number(e.target.value))}
-        >
-          {DURATION_OPTIONS.map((d) => <option key={d.value} value={d.value}>{d.label}</option>)}
-        </select>
-        <label className="flex items-center gap-2 text-sm text-ink">
-          <input type="checkbox" checked={whatsapp} onChange={(e) => setWhatsapp(e.target.checked)} />
-          WhatsApp
-        </label>
-      </div>
-
-      {activationCode && (
+      {activationCode ? (
         <p className="text-xs text-ink-muted">
           Code d'activation : <code className="rounded bg-surface-raised px-1.5 py-0.5">{activationCode}</code>
-          {' '}(a fournir a l'ecole pour ARDOISE_ACTIVATION_CODE)
+          {' '}(à fournir à l'école pour ARDOISE_ACTIVATION_CODE)
         </p>
-      )}
-      {!activationCode && (
-        <p className="text-xs text-ink-muted">
-          Le code d'activation s'affiche ici apres avoir accorde ou revoque l'acces.
-        </p>
+      ) : (
+        <p className="text-xs text-ink-muted">Cliquez pour afficher le code d'activation de cette école.</p>
       )}
 
       {error && <p className="text-sm text-danger-600">{error}</p>}
 
       <div className="flex gap-2">
-        <Button size="sm" onClick={grant} disabled={submitting}>
-          {submitting ? 'En cours...' : "Accorder l'acces"}
+        <Button size="sm" onClick={() => call(false)} disabled={submitting}>
+          {submitting ? 'En cours...' : 'Afficher le code'}
         </Button>
-        {school.subscriptionActive && (
-          <Button size="sm" variant="danger" onClick={revoke} disabled={submitting}>Revoquer</Button>
-        )}
+        <Button size="sm" variant="secondary" onClick={() => call(true)} disabled={submitting}>
+          Régénérer
+        </Button>
       </div>
     </div>
   )
@@ -296,8 +239,7 @@ function SchoolsRegistry() {
                   </p>
                 </div>
                 <div className="flex items-center gap-3">
-                  {subscriptionBadge(school)}
-                  <Badge tone="info">{school.planCode || 'free'}</Badge>
+                  {school.feeCollectionEnabled === false && <Badge tone="neutral">Sans collecte de frais</Badge>}
                   <Icon name="chevron_right" className="text-ink-muted" />
                 </div>
               </div>
@@ -406,98 +348,59 @@ function UsersRegistry() {
   )
 }
 
-function PaymentsAndSubscriptions() {
-  const [schools, setSchools] = useState([])
+// Ardoise no longer intermediates parent-to-tutor payments (see the
+// 2026-07 pivot - a parent and tutor now contract and pay each other
+// directly), so this only tracks who connected with whom, not money -
+// tutoring_contracts is written by TutoringBookingFlow.jsx without a
+// total/commission/transactionId (firestore.rules blocks those fields
+// on create), so there's nothing financial left to surface here.
+function TutoringContracts() {
   const [contracts, setContracts] = useState([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     let active = true
-    const sQuery = query(collection(db, 'schools'), orderBy('createdAt', 'desc'))
     const cQuery = query(collection(db, 'tutoring_contracts'), orderBy('createdAt', 'desc'))
-
-    const unsubscribeSchools = onSnapshot(sQuery, (snapshot) => {
-      if (!active) return
-      const s = []
-      snapshot.forEach((doc) => s.push({ id: doc.id, ...doc.data() }))
-      setSchools(s)
-      setLoading(false)
-    })
 
     const unsubscribeContracts = onSnapshot(cQuery, (snapshot) => {
       if (!active) return
       const c = []
       snapshot.forEach((doc) => c.push({ id: doc.id, ...doc.data() }))
       setContracts(c)
+      setLoading(false)
     })
 
     return () => {
       active = false
-      unsubscribeSchools()
       unsubscribeContracts()
     }
   }, [])
 
   if (loading) return <div className="text-sm text-ink-muted">Chargement des données...</div>
 
-  const premiumSchools = schools.filter(s => s.subscriptionActive)
-
   return (
-    <div className="space-y-8">
-      <Card>
-        <CardHeader title="Abonnements SaaS (Écoles)" subtitle="Suivi des abonnements actifs au logiciel de gestion." />
-        <CardBody className="p-0">
-          {premiumSchools.length === 0 ? (
-            <div className="p-6">
-              <EmptyState title="Aucun abonnement" description="Aucune école n'a d'abonnement SaaS actif." />
-            </div>
-          ) : (
-            <ul className="divide-y divide-border">
-              {premiumSchools.map(school => (
-                <li key={school.id} className="p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                  <div>
-                    <p className="text-sm font-bold text-ink">{school.name}</p>
-                    <p className="text-xs text-ink-muted mt-1">Plan: <span className="font-semibold uppercase">{school.planCode}</span></p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-sm text-ink">Expire le {school.subscriptionExpiresAt ? (school.subscriptionExpiresAt.toDate ? school.subscriptionExpiresAt.toDate() : new Date(school.subscriptionExpiresAt)).toLocaleDateString() : 'N/A'}</p>
-                    <p className="text-xs text-success-600 font-medium">Actif</p>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          )}
-        </CardBody>
-      </Card>
-
-      <Card>
-        <CardHeader title="Contrats de Tutorat (Marketplace)" subtitle="Suivi des réservations de tuteurs par les parents." />
-        <CardBody className="p-0">
-          {contracts.length === 0 ? (
-            <div className="p-6">
-              <EmptyState title="Aucun contrat" description="Aucun tuteur n'a encore été réservé via la plateforme." />
-            </div>
-          ) : (
-            <ul className="divide-y divide-border">
-              {contracts.map(c => (
-                <li key={c.id} className="p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                  <div>
-                    <p className="text-sm font-bold text-ink">{c.parentName} &rarr; {c.teacherName}</p>
-                    <p className="text-xs text-ink-muted mt-1">{c.hoursPerWeek}h/semaine · Début: {c.startDate}</p>
-                    <p className="text-xs text-ink-muted">Contact Parent: {c.parentEmail}</p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-sm font-bold text-primary-600">{c.total?.toLocaleString() || 0} F / mois</p>
-                    <p className="text-xs text-ink-muted">Commission: {c.commission?.toLocaleString() || 0} F</p>
-                    <Badge tone="success" className="mt-1">Prélevé le {c.paymentDate}</Badge>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          )}
-        </CardBody>
-      </Card>
-    </div>
+    <Card>
+      <CardHeader title="Mises en relation Tuteur-Parent (Marketplace)" subtitle="Ardoise ne collecte plus aucun paiement sur ces mises en relation - parent et tuteur s'arrangent directement." />
+      <CardBody className="p-0">
+        {contracts.length === 0 ? (
+          <div className="p-6">
+            <EmptyState title="Aucune mise en relation" description="Aucun tuteur n'a encore été réservé via la plateforme." />
+          </div>
+        ) : (
+          <ul className="divide-y divide-border">
+            {contracts.map(c => (
+              <li key={c.id} className="p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                  <p className="text-sm font-bold text-ink">{c.parentName} &rarr; {c.teacherName}</p>
+                  <p className="text-xs text-ink-muted mt-1">{c.hoursPerWeek}h/semaine · Début: {c.startDate}</p>
+                  <p className="text-xs text-ink-muted">Contact Parent: {c.parentEmail}</p>
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+      </CardBody>
+    </Card>
   )
 }
 
@@ -534,8 +437,6 @@ function HealthPing({ backendUrl }) {
 }
 
 function SchoolDetailView({ school, onBack }) {
-  const [managing, setManaging] = useState(false)
-
   return (
     <div className="space-y-6">
       <button onClick={onBack} className="flex items-center gap-1 text-sm font-medium text-primary-600 hover:text-primary-700">
@@ -550,8 +451,8 @@ function SchoolDetailView({ school, onBack }) {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          {subscriptionBadge(school)}
-          <Badge tone="info">{school.planCode || 'free'}</Badge>
+          <Badge tone="success">Gratuit</Badge>
+          {school.feeCollectionEnabled === false && <Badge tone="neutral">Sans collecte de frais</Badge>}
         </div>
       </div>
 
@@ -615,43 +516,9 @@ function SchoolDetailView({ school, onBack }) {
       </div>
 
       <Card>
-        <CardHeader 
-          title="Abonnement & Licences" 
-          action={
-            <Button size="sm" variant={managing ? 'ghost' : 'secondary'} onClick={() => setManaging(!managing)}>
-              {managing ? 'Fermer' : 'Gérer l\'abonnement'}
-            </Button>
-          } 
-        />
+        <CardHeader title="Code d'activation" subtitle="L'ERP est gratuit pour toutes les écoles - seul le code d'activation reste géré ici (support en cas de perte)." />
         <CardBody>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <span className="block text-xs font-semibold text-ink-muted uppercase">Plan Actuel</span>
-              <p className="text-sm font-medium text-ink mt-1 capitalize">{school.planCode || 'Gratuit (Free)'}</p>
-            </div>
-            <div>
-              <span className="block text-xs font-semibold text-ink-muted uppercase">Expiration</span>
-              <p className="text-sm text-ink mt-1">
-                {school.subscriptionExpiresAt ? (school.subscriptionExpiresAt.toDate ? school.subscriptionExpiresAt.toDate() : new Date(school.subscriptionExpiresAt)).toLocaleDateString() : 'Jamais'}
-              </p>
-            </div>
-            <div>
-              <span className="block text-xs font-semibold text-ink-muted uppercase">Fonctionnalités</span>
-              <div className="flex flex-wrap gap-1 mt-1">
-                {school.features && school.features.length > 0 ? (
-                  school.features.map(f => <Badge key={f} tone="neutral">{f}</Badge>)
-                ) : (
-                  <span className="text-sm text-ink-muted">Aucune fonctionnalité Premium</span>
-                )}
-              </div>
-            </div>
-          </div>
-
-          {managing && (
-            <div className="mt-6 pt-6 border-t border-border">
-              <SubscriptionManager school={school} onChanged={() => setManaging(false)} />
-            </div>
-          )}
+          <ActivationCodeManager school={school} />
         </CardBody>
       </Card>
     </div>

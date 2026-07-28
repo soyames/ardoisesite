@@ -171,8 +171,8 @@ export default function InstallGuide() {
           <p className="text-ink-muted mb-4">
             Chaque école reçoit un code d'activation dès son inscription sur le portail - forfait gratuit inclus.
             C'est le seul moyen pour votre installation de se faire connaître de la Plateforme (pour que le
-            marketplace puisse vous joindre) ; il n'accorde aucune fonctionnalité payante par lui-même, celles-ci
-            restent gérées séparément par votre abonnement.
+            marketplace puisse vous joindre). Ardoise est entièrement gratuit - ce code identifie simplement
+            votre école, il ne débloque rien de payant.
           </p>
           {activationCode ? (
             <CodeBlock>{activationCode}</CodeBlock>

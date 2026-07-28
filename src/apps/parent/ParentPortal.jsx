@@ -124,48 +124,42 @@ export default function ParentPortal() {
   )
 }
 
-const PAYMENT_TYPE_ICON = { tuition: 'school', tutoring: 'menu_book', enrollment: 'how_to_reg' }
+const PAYMENT_TYPE_ICON = { tuition: 'school', enrollment: 'how_to_reg' }
 
 /**
  * Parents had no single place to see everything they've paid Ardoise
- * for - tuition (Django, per-child), tutoring subscriptions and
- * enrollment fees (Firestore) each lived in their own section with no
- * shared view. This merges all three into one reverse-chronological
- * list. Tuition needs the Django-side numeric guardian id (only set
- * once a school has actually accepted an enrollment and created a
- * Django user for this parent) - skipped entirely until that exists,
- * same gating ChildDetail already uses for invoices.
+ * for - tuition (Django, per-child) and enrollment fees (Firestore,
+ * only for schools with feeCollectionEnabled) each lived in their own
+ * section with no shared view. This merges both into one
+ * reverse-chronological list. Tuition needs the Django-side numeric
+ * guardian id (only set once a school has actually accepted an
+ * enrollment and created a Django user for this parent) - skipped
+ * entirely until that exists, same gating ChildDetail already uses
+ * for invoices. Tutoring contracts are deliberately absent - Ardoise
+ * no longer intermediates parent-to-tutor payments (2026-07 pivot),
+ * so there's no Ardoise payment to show for them; see the separate
+ * "Mes tuteurs" section below for those.
  */
 function PaymentHistory({ parentId, djangoParentId }) {
   const invoices = useApiGet(djangoParentId ? `/api/finance/invoices/?parent=${djangoParentId}` : null, {
     skip: !djangoParentId,
   })
-  const [contracts, setContracts] = useState([])
   const [enrollments, setEnrollments] = useState([])
   const [loadingFirestore, setLoadingFirestore] = useState(true)
 
   useEffect(() => {
     if (!parentId) return
-    const unsubContracts = onSnapshot(
-      query(collection(db, 'tutoring_contracts'), where('parentId', '==', parentId)),
-      (snap) => {
-        const rows = []
-        snap.forEach((d) => rows.push({ id: d.id, ...d.data() }))
-        setContracts(rows)
-        setLoadingFirestore(false)
-      },
-      (err) => { console.error('tutoring_contracts read failed:', err); setLoadingFirestore(false) }
-    )
     const unsubEnrollments = onSnapshot(
       query(collection(db, 'school_enrollment_requests'), where('parentId', '==', parentId), where('paymentStatus', '==', 'paid_on_ardoise')),
       (snap) => {
         const rows = []
         snap.forEach((d) => rows.push({ id: d.id, ...d.data() }))
         setEnrollments(rows)
+        setLoadingFirestore(false)
       },
-      (err) => console.error('school_enrollment_requests (paid) read failed:', err)
+      (err) => { console.error('school_enrollment_requests (paid) read failed:', err); setLoadingFirestore(false) }
     )
-    return () => { unsubContracts(); unsubEnrollments() }
+    return () => { unsubEnrollments() }
   }, [parentId])
 
   const rows = useMemo(() => {
@@ -180,15 +174,6 @@ function PaymentHistory({ parentId, djangoParentId }) {
         dateLabel: inv.dueDate ? new Date(inv.dueDate).toLocaleDateString('fr-FR') : '-',
         badge: inv.status === 'paid' ? { tone: 'success', label: 'Payé' } : { tone: 'warning', label: 'Partiel' },
       }))
-    const tutoringRows = contracts.map((c) => ({
-      id: `contract-${c.id}`,
-      type: 'tutoring',
-      label: `Tutorat - ${c.teacherName || 'Tuteur'}`,
-      amount: c.total,
-      dateMs: c.createdAt?.toMillis?.() || 0,
-      dateLabel: c.createdAt?.toDate?.().toLocaleDateString('fr-FR') || '-',
-      badge: { tone: c.status === 'active' ? 'success' : 'neutral', label: c.status === 'active' ? 'Abonnement actif (mensuel)' : c.status },
-    }))
     const enrollmentRows = enrollments.map((e) => ({
       id: `enroll-${e.id}`,
       type: 'enrollment',
@@ -198,8 +183,8 @@ function PaymentHistory({ parentId, djangoParentId }) {
       dateLabel: e.createdAt?.toDate?.().toLocaleDateString('fr-FR') || '-',
       badge: { tone: 'success', label: 'Payé' },
     }))
-    return [...tuitionRows, ...tutoringRows, ...enrollmentRows].sort((a, b) => b.dateMs - a.dateMs)
-  }, [invoices.data, contracts, enrollments])
+    return [...tuitionRows, ...enrollmentRows].sort((a, b) => b.dateMs - a.dateMs)
+  }, [invoices.data, enrollments])
 
   const loading = invoices.loading || loadingFirestore
   const total = rows.reduce((sum, r) => sum + (Number(r.amount) || 0), 0)

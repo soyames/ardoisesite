@@ -88,6 +88,7 @@ export default function RegisterPage() {
           country,
           isFull: false,
           referrerId, // Store who referred this school for commissions
+          feeCollectionEnabled: !FEE_CAPPED_COUNTRIES.includes(country),
           createdAt: new Date().toISOString()
         });
         schoolId = schoolDocRef.id;

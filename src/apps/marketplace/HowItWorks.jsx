@@ -55,7 +55,7 @@ const faqs = [
   },
   {
     question: "Quels sont les frais d'utilisation ?",
-    answer: "L'inscription est gratuite et couvre la gestion des élèves, présences et frais de base. Certaines fonctionnalités avancées (paiement Mobile Money, notifications WhatsApp automatiques) nécessitent un abonnement payant. Aucune fonctionnalité payante ne s'active sans votre accord explicite.",
+    answer: "Ardoise est entièrement gratuit pour les écoles : installation, présence sur le marketplace, et le logiciel de gestion complet (élèves, notes, finances, RH, Mobile Money, notifications WhatsApp). Pour les cours de soutien à domicile, la mise en relation entre parents et tuteurs est également gratuite - Ardoise ne prélève aucune commission.",
   },
   {
     question: 'Puis-je payer la scolarité de mon enfant depuis l\'étranger ?',

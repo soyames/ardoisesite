@@ -29,7 +29,7 @@ export default function FounderDashboard() {
     { key: 'departments', label: 'Départements (Personnel)' },
     { key: 'system', label: 'Système & Audit' },
     { key: 'integrations', label: 'Intégrations API' },
-    { key: 'subscription', label: 'Facturation & Abonnement' },
+    { key: 'subscription', label: 'Activation & Installation' },
     { key: 'support', label: 'Support & Aide' }
   ]
 

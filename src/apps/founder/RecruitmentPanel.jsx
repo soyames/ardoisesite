@@ -1,12 +1,11 @@
-import { useState, useEffect } from 'react'
-import { doc, updateDoc } from 'firebase/firestore'
+import { useState, useEffect, useMemo } from 'react'
+import { doc, getDoc, updateDoc } from 'firebase/firestore'
 import { db } from '../../shared/api/firebase.js'
 import { api, ApiError } from '../../shared/api/client.js'
 import { Card, CardHeader, CardBody } from '../../shared/ui/Card.jsx'
 import Button from '../../shared/ui/Button.jsx'
 import Spinner from '../../shared/ui/Spinner.jsx'
 import EmptyState from '../../shared/ui/EmptyState.jsx'
-import { useSchoolSubscription } from '../../shared/hooks/useSchoolSubscription.js'
 import { useAuth } from '../../shared/auth/AuthContext.jsx'
 
 /**
@@ -22,37 +21,55 @@ export default function RecruitmentPanel() {
   const canDecide = user?.role === 'founder' || user?.role === 'director'
   const [applications, setApplications] = useState([])
   const [loading, setLoading] = useState(true)
-  const [locked, setLocked] = useState(false)
   const [posting, setPosting] = useState(false)
   const [acceptingId, setAcceptingId] = useState(null)
   const [jobForm, setJobForm] = useState({ title: '', type: 'Temps Plein', description: '' })
-  const { isPremium } = useSchoolSubscription()
+  const [countryFilter, setCountryFilter] = useState('Toutes')
+  const [subjectFilter, setSubjectFilter] = useState('Toutes')
 
   useEffect(() => {
     let active = true
     api.get('/api/auth/marketplace/applications/')
-      .then(data => {
+      .then(async (data) => {
+        if (!active) return
+        // Applications don't carry the applicant's country themselves
+        // (job_applications is written by JobApplicationFlow.jsx with no
+        // country field) - it lives on the teacher's own users/{uid} doc,
+        // same field TeacherList.jsx filters the public marketplace by.
+        const teacherIds = [...new Set(data.map((a) => a.teacherId).filter(Boolean))]
+        const countryById = {}
+        await Promise.all(teacherIds.map(async (teacherId) => {
+          try {
+            const snap = await getDoc(doc(db, 'users', teacherId))
+            countryById[teacherId] = snap.exists() ? snap.data().country || '' : ''
+          } catch {
+            countryById[teacherId] = ''
+          }
+        }))
         if (active) {
-          setApplications(data)
+          setApplications(data.map((a) => ({ ...a, country: countryById[a.teacherId] || '' })))
           setLoading(false)
         }
       })
       .catch(err => {
         console.error(err)
-        if (active) {
-          // A subscription-gated 403 (feature_requires_subscription) means
-          // real candidatures may exist but the backend never even queried
-          // Firestore for them - rendering the same "Aucune candidature"
-          // empty state as a true zero-applications school made a founder
-          // with real, hidden demand think their posting got no interest.
-          if (err instanceof ApiError && err.status === 403 && err.data?.error === 'feature_requires_subscription') {
-            setLocked(true)
-          }
-          setLoading(false)
-        }
+        if (active) setLoading(false)
       })
     return () => { active = false }
   }, [])
+
+  const countries = useMemo(
+    () => ['Toutes', ...[...new Set(applications.map((a) => a.country).filter(Boolean))].sort()],
+    [applications]
+  )
+  const subjects = useMemo(
+    () => ['Toutes', ...[...new Set(applications.map((a) => a.jobTitle).filter(Boolean))].sort()],
+    [applications]
+  )
+  const filteredApplications = applications.filter((a) => (
+    (countryFilter === 'Toutes' || a.country === countryFilter) &&
+    (subjectFilter === 'Toutes' || a.jobTitle === subjectFilter)
+  ))
 
   const handleJobSubmit = async (e) => {
     e.preventDefault()
@@ -126,39 +143,48 @@ export default function RecruitmentPanel() {
         <CardHeader
           title="Candidatures reçues"
           subtitle={canDecide ? "Professeurs intéressés par vos annonces" : "Lecture seule - la decision finale revient au Fondateur ou au Directeur"}
+          action={applications.length > 0 && (
+            <div className="flex gap-2">
+              <select
+                value={countryFilter}
+                onChange={(e) => setCountryFilter(e.target.value)}
+                className="rounded-control border border-border bg-surface px-2 py-1.5 text-xs"
+              >
+                {countries.map((c) => <option key={c} value={c}>{c}</option>)}
+              </select>
+              <select
+                value={subjectFilter}
+                onChange={(e) => setSubjectFilter(e.target.value)}
+                className="rounded-control border border-border bg-surface px-2 py-1.5 text-xs"
+              >
+                {subjects.map((s) => <option key={s} value={s}>{s}</option>)}
+              </select>
+            </div>
+          )}
         />
         <CardBody>
-          {locked ? (
-            <div className="rounded-card bg-accent-50 p-4 border border-accent-200">
-              <p className="text-sm text-accent-800">
-                <strong>Mise a niveau requise :</strong> des professeurs peuvent deja avoir postule a vos annonces, mais un abonnement actif est necessaire pour les consulter. <a href="https://saas.ardoiseeduc.com/pricing" className="underline font-semibold" target="_blank" rel="noreferrer">Passez a la version Premium</a> pour voir vos candidatures.
-              </p>
-            </div>
-          ) : applications.length === 0 ? (
+          {applications.length === 0 ? (
             <EmptyState title="Aucune candidature" description="Vos annonces d'emploi n'ont pas encore reçu de candidatures récentes." />
+          ) : filteredApplications.length === 0 ? (
+            <EmptyState title="Aucun résultat" description="Aucune candidature ne correspond à ces filtres." />
           ) : (
             <ul className="space-y-4">
-              {applications.map(a => (
+              {filteredApplications.map(a => (
                 <li key={a.id} className="flex flex-col rounded-card border border-border p-4 shadow-card bg-surface-raised">
                   <div className="flex justify-between items-start mb-4">
                     <div>
                       <p className="font-bold text-ink text-lg">{a.teacherName}</p>
-                      <p className="text-sm text-ink-muted">Postule pour : <span className="font-semibold text-ink">{a.jobTitle}</span></p>
-                      {isPremium ? (
-                        <p className="text-sm text-ink-muted">Email : <a href={"mailto:" + a.email} className="text-primary-600 hover:underline">{a.email}</a></p>
-                      ) : (
-                        <div className="mt-2 rounded-card bg-accent-50 p-3 border border-accent-200">
-                          <p className="text-sm text-accent-800">
-                            <strong>Mise a niveau requise :</strong> <a href="https://saas.ardoiseeduc.com/pricing" className="underline font-semibold" target="_blank" rel="noreferrer">Passez a la version Premium</a> pour voir les coordonnees et contacter ce candidat.
-                          </p>
-                        </div>
-                      )}
+                      <p className="text-sm text-ink-muted">
+                        Postule pour : <span className="font-semibold text-ink">{a.jobTitle}</span>
+                        {a.country && <span className="text-ink-muted"> · {a.country}</span>}
+                      </p>
+                      <p className="text-sm text-ink-muted">Email : <a href={"mailto:" + a.email} className="text-primary-600 hover:underline">{a.email}</a></p>
                     </div>
                     <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary-100 text-primary-800">
                       {new Date(a.createdAt).toLocaleDateString()}
                     </span>
                   </div>
-                  
+
                   {a.motivation && (
                     <div className="mt-2 text-sm text-ink bg-surface p-3 rounded border border-border whitespace-pre-wrap">
                       <p className="text-xs font-semibold text-ink-muted mb-1 uppercase tracking-wider">Lettre de Motivation / CV</p>
@@ -168,7 +194,7 @@ export default function RecruitmentPanel() {
 
                   {canDecide && (
                     <div className="mt-3 flex justify-end">
-                      <Button size="sm" onClick={() => handleAccept(a)} disabled={acceptingId === a.id || !isPremium}>
+                      <Button size="sm" onClick={() => handleAccept(a)} disabled={acceptingId === a.id}>
                         {acceptingId === a.id ? 'Acceptation...' : 'Accepter'}
                       </Button>
                     </div>

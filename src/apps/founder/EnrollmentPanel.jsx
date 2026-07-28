@@ -9,7 +9,6 @@ import EmptyState from '../../shared/ui/EmptyState.jsx'
 import StatCard from '../../shared/ui/StatCard.jsx'
 import Icon from '../../shared/ui/Icon.jsx'
 import AppointmentSlotsPanel from '../../shared/components/AppointmentSlotsPanel.jsx'
-import { useSchoolSubscription } from '../../shared/hooks/useSchoolSubscription.js'
 
 const QUEUE_STATUSES = [
   { value: 'pending_review', label: 'Nouvelle demande', tone: 'danger' },
@@ -34,7 +33,6 @@ export default function EnrollmentPanel() {
   const [loading, setLoading] = useState(true)
   const [selectedId, setSelectedId] = useState(null)
   const [search, setSearch] = useState('')
-  const { isPremium } = useSchoolSubscription()
 
   useEffect(() => {
     let active = true
@@ -183,14 +181,6 @@ export default function EnrollmentPanel() {
                   </div>
                 )}
 
-                {!isPremium && (
-                  <div className="rounded-card bg-accent-50 p-4 border border-accent-200">
-                    <p className="text-sm text-accent-800">
-                      <strong>Mise a niveau requise :</strong> Votre plan actuel ne permet pas de traiter les demandes d'inscription. <a href="https://saas.ardoiseeduc.com/pricing" className="underline" target="_blank" rel="noreferrer">Passez a la version Premium</a> pour continuer.
-                    </p>
-                  </div>
-                )}
-
                 {selected.status === 'accepted' && (
                   <div className="rounded-control bg-surface border border-border p-3 text-sm space-y-1">
                     <p className="text-ink">
@@ -230,15 +220,15 @@ export default function EnrollmentPanel() {
                   <div className="flex-1"></div>
                   {selected.status !== 'accepted' ? (
                     <>
-                      <Button size="sm" variant="secondary" onClick={() => handleStatusUpdate(selected.id, 'rejected')} disabled={!isPremium}>
+                      <Button size="sm" variant="secondary" onClick={() => handleStatusUpdate(selected.id, 'rejected')}>
                         Refuser
                       </Button>
-                      <Button size="sm" onClick={() => handleStatusUpdate(selected.id, 'accepted')} disabled={!isPremium}>
+                      <Button size="sm" onClick={() => handleStatusUpdate(selected.id, 'accepted')}>
                         Accepter la demande
                       </Button>
                     </>
                   ) : (
-                    <Button size="sm" onClick={() => handleFinalize(selected.id)} disabled={!isPremium || !canFinalize(selected)}>
+                    <Button size="sm" onClick={() => handleFinalize(selected.id)} disabled={!canFinalize(selected)}>
                       Finaliser l'inscription
                     </Button>
                   )}

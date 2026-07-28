@@ -26,35 +26,57 @@ export default function Terms() {
 
         <h2 className="text-xl font-bold text-ink mt-8">3. Place de marché des Tuteurs</h2>
         <p>
-          Les tuteurs inscrits sur la plateforme fixent librement leurs tarifs. 
-          En réservant un tuteur, le parent s'engage à payer via la plateforme Ardoise, qui agit comme intermédiaire de paiement de confiance. 
-        </p>
-        <div className="my-4 rounded-card bg-danger-50 p-4 border border-danger-200">
-          <p className="text-danger-800 font-semibold mb-2">Avertissement Légal : Interdiction stricte de contournement</p>
-          <p className="text-sm text-danger-900">
-            <strong>Il est formellement interdit de contourner la plateforme pour rémunérer un tuteur directement.</strong> Tout paiement doit obligatoirement transiter par Ardoise. En cas de non-respect de cette clause, <strong>les comptes du Parent et du Tuteur pourront être suspendus</strong> après notification, et Ardoise se réserve le droit de réclamer la commission due sur le contrat concerné.
-          </p>
-        </div>
-        <p>
-          Une commission de 10% est prélevée par la plateforme sur les contrats de tutorat pour couvrir les frais de fonctionnement. Les contrats ont une durée d'engagement minimale de 6 mois pour protéger les tuteurs.
+          Les tuteurs inscrits sur la plateforme fixent librement leurs tarifs. La mise en relation entre un parent
+          et un tuteur est gratuite : Ardoise n'intervient pas dans le paiement et ne prélève aucune commission sur
+          les cours de soutien. Le parent et le tuteur conviennent directement entre eux des horaires, du tarif, et
+          du mode de règlement, en dehors de la plateforme. Ardoise peut permettre l'enregistrement des modalités
+          convenues (durée, volume horaire, tarif) afin que les deux parties les retrouvent dans leur espace, mais
+          cet enregistrement ne constitue ni un contrat entre Ardoise et l'une des parties, ni une garantie de
+          paiement ou d'exécution.
         </p>
 
-        <h2 className="text-xl font-bold text-ink mt-8">4. Litiges</h2>
+        <h2 className="text-xl font-bold text-ink mt-8">4. Frais d'inscription scolaire</h2>
         <p>
-          En cas de litige entre un parent et un tuteur, Ardoise fera office de médiateur mais ne pourra être tenue responsable des manquements pédagogiques.
+          Selon l'école et le pays, les frais d'inscription réglés par un parent lors d'une demande d'admission
+          acceptée sont soit collectés directement par l'école elle-même (moyen de paiement de son choix), soit,
+          lorsque l'école l'a activé et que la réglementation locale le permet, collectés par Ardoise pour le
+          compte de l'école via son propre prestataire de paiement, puis reversés à l'école. Ardoise ne prélève
+          aucune commission sur ce transfert. La scolarité elle-même (frais périodiques) n'est jamais collectée
+          par Ardoise : elle relève exclusivement de la relation entre l'école et le parent, y compris lorsque
+          l'école utilise sa propre intégration de paiement mobile au sein du logiciel Ardoise.
         </p>
 
-        <h2 className="text-xl font-bold text-ink mt-8">5. Résiliation</h2>
+        <h2 className="text-xl font-bold text-ink mt-8">5. Litiges</h2>
+        <p>
+          En cas de litige entre un parent et un tuteur, ou entre un parent et une école, Ardoise n'étant pas
+          partie à la transaction financière sous-jacente (voir articles 3 et 4), elle ne pourra être tenue
+          responsable des manquements contractuels, pédagogiques, ou de paiement entre ces parties.
+        </p>
+
+        <h2 className="text-xl font-bold text-ink mt-8">6. Résiliation</h2>
         <p>
           Vous pouvez demander la clôture de votre compte à tout moment via <a href="/contact" className="underline text-primary-600">notre formulaire de contact</a>. Ardoise peut suspendre ou résilier un compte en cas de violation des présentes conditions, après notification sauf urgence (fraude, atteinte à la sécurité de la plateforme ou d'autres utilisateurs). La résiliation d'un compte École n'affecte pas les données hébergées localement par cette école, qui restent sous son entière responsabilité.
         </p>
 
-        <h2 className="text-xl font-bold text-ink mt-8">6. Limitation de responsabilité</h2>
+        <h2 className="text-xl font-bold text-ink mt-8">7. Limitation de responsabilité</h2>
         <p>
           Dans les limites permises par la loi applicable, la responsabilité d'Ardoise au titre des présentes conditions est limitée aux sommes effectivement perçues par la plateforme au titre du service concerné au cours des douze (12) derniers mois. Ardoise ne pourra être tenue responsable des dommages indirects (perte de chance, préjudice commercial, etc.).
         </p>
 
-        <h2 className="text-xl font-bold text-ink mt-8">7. Droit applicable et juridiction</h2>
+        <h2 className="text-xl font-bold text-ink mt-8">8. Évolution du modèle économique</h2>
+        <p>
+          Le logiciel de gestion scolaire Ardoise est actuellement fourni gratuitement à toute école inscrite,
+          sans abonnement ni condition de paiement. Ardoise se réserve toutefois le droit d'introduire, pour
+          l'avenir, un abonnement payant ou toute autre forme de contribution financière applicable aux écoles,
+          notamment si cela devient nécessaire pour couvrir durablement les coûts d'exploitation, d'hébergement,
+          ou de développement de la plateforme. Un tel changement ne serait ni rétroactif ni appliqué sans
+          préavis : il ferait l'objet d'une communication préalable aux écoles concernées, avec un délai
+          raisonnable leur permettant d'exporter leurs données ou de mettre fin à leur utilisation du service
+          avant l'entrée en vigueur de toute nouvelle condition tarifaire. Les présentes conditions générales
+          seraient mises à jour en conséquence, avec indication de la date de la nouvelle version.
+        </p>
+
+        <h2 className="text-xl font-bold text-ink mt-8">9. Droit applicable et juridiction</h2>
         <p>
           {/* TODO(legal): confirm the exact operating entity and its place of
               incorporation before publishing - this clause needs a real,

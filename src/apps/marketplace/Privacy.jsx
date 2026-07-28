@@ -21,7 +21,7 @@ export default function Privacy() {
           L'opérateur de la plateforme Ardoise (nous) agit strictement en tant que <strong>Sous-traitant (Data Processor)</strong> pour ces données scolaires. Nous fournissons uniquement l'infrastructure logicielle et d'authentification et <strong>n'hébergeons, sur nos propres serveurs, aucune donnée scolaire opérationnelle</strong> (dossiers élèves, notes, présences, paiements de scolarité). Nous n'y avons aucun accès. Toute demande relative aux données d'un élève ou d'un membre du personnel (droit d'accès, de rectification, de suppression) doit être adressée directement à l'administration de son école.
         </p>
         <p>
-          Cette absence d'hébergement concerne uniquement les données opérationnelles internes de chaque école. La plateforme centrale (annuaire, tutorat, abonnements) traite bien, elle, certaines données à caractère personnel en tant que Responsable de Traitement à part entière - voir la section 2.
+          Cette absence d'hébergement concerne uniquement les données opérationnelles internes de chaque école. La plateforme centrale (annuaire, mise en relation avec des tuteurs, demandes d'inscription) traite bien, elle, certaines données à caractère personnel en tant que Responsable de Traitement à part entière - voir la section 2.
         </p>
 
         <h2 className="text-xl font-bold text-ink mt-8">2. Données traitées par la Plateforme centrale</h2>
@@ -30,9 +30,9 @@ export default function Privacy() {
         </p>
         <ul className="list-disc pl-6 space-y-2">
           <li>L'annuaire public des écoles partenaires (nom, coordonnées, effectifs déclarés).</li>
-          <li>L'état des abonnements et les codes d'activation des écoles.</li>
+          <li>Les codes d'activation des écoles et, le cas échéant, l'historique de leur relation commerciale avec Ardoise.</li>
           <li>Les profils publics des tuteurs à domicile (nom, matières, tarifs, disponibilités).</li>
-          <li>Les contrats de tutorat conclus via la plateforme et les paiements associés.</li>
+          <li>Les modalités des cours de soutien convenues entre un parent et un tuteur via la plateforme (durée, volume horaire, tarif convenu) - Ardoise n'intervient pas dans le paiement de ces cours et ne traite donc aucune donnée de paiement à ce titre (voir Conditions Générales d'Utilisation, article 3).</li>
           <li>Les demandes d'inscription qu'un parent soumet à une école via la plateforme (nom et âge de l'enfant, coordonnées du parent) et les offres d'emploi/candidatures publiées par les écoles, jusqu'à leur traitement par l'école concernée.</li>
           <li>Les comptes utilisateurs (adresse email, nom, téléphone) nécessaires à l'authentification, quel que soit le rôle (parent, enseignant, fondateur d'école, etc.).</li>
         </ul>
@@ -44,7 +44,7 @@ export default function Privacy() {
         <ul className="list-disc pl-6 space-y-2">
           <li><strong>Firebase Authentication et Firestore</strong> (Google) : gestion des comptes et des données de la plateforme centrale (annuaire, tutorat, demandes d'inscription).</li>
           <li><strong>Cloudflare</strong> (Workers) : infrastructure technique reliant chaque installation école à la plateforme centrale, sans jamais exposer les données scolaires internes.</li>
-          <li><strong>FedaPay</strong> : traitement des paiements Mobile Money pour les contrats de tutorat et les abonnements écoles.</li>
+          <li><strong>FedaPay</strong> : traitement des paiements Mobile Money pour les frais d'inscription scolaire, lorsque l'école a activé la collecte via Ardoise (voir Conditions Générales d'Utilisation, article 4). Une école peut aussi configurer son propre compte FedaPay pour collecter sa scolarité directement ; dans ce cas, ces paiements ne transitent jamais par la plateforme centrale.</li>
           <li><strong>WhatsApp Business API</strong> (Meta) : envoi de notifications aux parents, uniquement pour les écoles ayant configuré et activé cette fonctionnalité.</li>
         </ul>
         <p>
