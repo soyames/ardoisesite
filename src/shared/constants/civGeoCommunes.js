@@ -72,18 +72,18 @@ export const CIV_COMMUNE_DEPARTMENT = {
 };
 
 export const CIV_DEPARTMENT_BOUNDS = {
-  "Bas-Sassandra": [129.3, 512.2, 305.8, 301.5],
-  "Denguele": [64.9, 23.9, 214.8, 269.7],
-  "District Autonome D\'Abidjan": [529.1, 642.5, 101.7, 53.0],
-  "District Autonome De Yamoussoukro": [397.2, 457.5, 78.8, 72.6],
-  "Goh-Djiboua": [282.4, 505.1, 201.6, 204.6],
-  "Lacs": [369.3, 327.8, 297.8, 256.2],
-  "Montagnes": [11.9, 310.2, 220.0, 348.9],
-  "Sassandra-Marahoue": [197.4, 360.5, 230.3, 212.2],
-  "Savanes": [202.8, 0.0, 433.3, 305.7],
-  "Valle Du Bandama": [359.3, 152.4, 255.7, 303.6],
-  "Woroba": [46.3, 183.1, 396.6, 230.0],
-  "Zanzan": [541.6, 81.2, 247.8, 400.6],
-  "Lagunes": [390.0, 505.5, 301.6, 213.3],
-  "Comoe": [602.3, 411.8, 153.9, 313.4]
+  "Bas-Sassandra": [120.9, 503.7, 322.5, 318.6],
+  "Denguele": [55, 16.5, 234.5, 284.4],
+  "District Autonome D\'Abidjan": [526.3, 637.5, 107.3, 63],
+  "District Autonome De Yamoussoukro": [369.1, 380.6, 155.5, 199.5],
+  "Goh-Djiboua": [276.6, 499.5, 213, 215.8],
+  "Lacs": [450.6, 320.8, 221.5, 270.2],
+  "Montagnes": [-3.5, 300.7, 250.7, 368],
+  "Sassandra-Marahoue": [191.1, 353.4, 242.9, 226.4],
+  "Savanes": [191, -31.5, 456.9, 340.9],
+  "Valle Du Bandama": [348.9, 144.1, 276.6, 320.1],
+  "Woroba": [35.5, 164.7, 418.3, 266.8],
+  "Zanzan": [523.7, 70.2, 283.6, 422.5],
+  "Lagunes": [381.8, 493.3, 318.1, 237.8],
+  "Comoe": [586.5, 403.3, 185.5, 330.5]
 };

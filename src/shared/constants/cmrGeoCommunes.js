@@ -118,7 +118,7 @@ export const CMR_COMMUNE_DEPARTMENT = {
   "Lebialem": "South-West",
   "Manyu": "South-West",
   "Meme": "South-West",
-  "Ndian": "Unknown"
+  "Ndian": "South-West"
 };
 
 export const CMR_DEPARTMENT_BOUNDS = {

@@ -48,7 +48,7 @@ export const GNB_COMMUNE_DEPARTMENT = {
   "Setor de Bedanda": "Tombali",
   "Setor de Bigene": "Cacheu",
   "Setor de Bissora": "Oio",
-  "Setor de Bolama": "Unknown",
+  "Setor de Bolama": "Bolama",
   "Setor de Madina do Bo˒": "Gabu",
   "Setor de Buba": "Quinara",
   "Setor de Bula": "Cacheu",
@@ -77,9 +77,9 @@ export const GNB_COMMUNE_DEPARTMENT = {
   "Setor de Sto Domingos": "Cacheu",
   "Setor de Tite": "Quinara",
   "Setor de Xitole": "Bafatá",
-  "Setor de Bubaque": "Unknown",
-  "Setor de Caravela": "Unknown",
-  "Setor de Uno": "Unknown",
+  "Setor de Bubaque": "Bolama",
+  "Setor de Caravela": "Bolama",
+  "Setor de Uno": "Bolama",
   "Bissau Autonomous Sector": "Bissau"
 };
 

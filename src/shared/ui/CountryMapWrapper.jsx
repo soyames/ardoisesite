@@ -63,12 +63,12 @@ function GenericCountryMap({
         {isCommuneView && (
           <button
             onClick={() => { setDrilledInto(null); setHovered(null) }}
-            className="mb-2 text-xs font-semibold text-primary-600 hover:text-primary-500 absolute -top-6 left-0 z-10"
+            className="mb-2 text-xs font-bold text-primary-600 hover:text-primary-500 absolute -top-6 left-0 z-10"
           >
             &larr; Retour national
           </button>
         )}
-        <svg viewBox={activeViewBox} className="w-full h-auto mx-auto transition-all duration-500 ease-in-out" role="img">
+        <svg viewBox={activeViewBox} className="w-full h-auto mx-auto" role="img">
           {!isCommuneView && Object.keys(departmentPaths).map((name) => {
             const count = departmentCounts[name] || 0
             const intensity = count / maxDeptCount
@@ -120,7 +120,7 @@ function GenericCountryMap({
         {!isCommuneView && (
           <button
             onClick={() => setDrilledInto(selectedDepartment || DEPARTMENT_ORDER[0])}
-            className="mt-2 text-xs font-semibold text-primary-600 hover:text-primary-500 block text-center mx-auto"
+            className="mt-2 text-xs font-bold text-primary-600 hover:text-primary-500 block text-center mx-auto"
           >
             Zoomer sur les communes &rarr;
           </button>

@@ -53,7 +53,7 @@ export const GNQ_COMMUNE_DEPARTMENT = {
   "BITICA": "Litoral Province",
   "COGO": "Litoral Province",
   "ELOBEY GRANDE": "Litoral Province",
-  "ELOBEY CHICO": "Unknown",
+  "ELOBEY CHICO": "Litoral Province",
   "ANNOBON": "Annobón",
   "MALABO": "Bioko Norte",
   "BANEY": "Bioko Norte",
@@ -62,11 +62,11 @@ export const GNQ_COMMUNE_DEPARTMENT = {
 };
 
 export const GNQ_DEPARTMENT_BOUNDS = {
-  "Annobón": [0.0, 753.8, 5.9, 10.0],
-  "Bioko Norte": [411.5, 34.7, 49.7, 43.1],
-  "Bioko Sur": [383.7, 53.2, 65.1, 66.6],
-  "Litoral Province": [502.7, 225.8, 145.2, 222.0],
-  "Kié-Ntem Province": [653.7, 256.9, 146.5, 67.9],
-  "Centro Sur Province": [584.1, 251.9, 165.7, 178.2],
-  "Wele-Nzas Province": [673.1, 278.9, 125.3, 149.9]
+  "Annobón": [-0.8, 752.9, 7.4, 10.7],
+  "Bioko Norte": [410, 33.6, 52.6, 43],
+  "Bioko Sur": [382.4, 55.9, 69.9, 66],
+  "Litoral Province": [493.3, 220.3, 164.8, 233.4],
+  "Kié-Ntem Province": [636, 244.7, 175.6, 96.8],
+  "Centro Sur Province": [590, 245.9, 163.7, 189.5],
+  "Wele-Nzas Province": [666.6, 269.8, 144.7, 163.8]
 };
