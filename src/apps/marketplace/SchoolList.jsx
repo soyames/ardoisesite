@@ -110,6 +110,12 @@ export default function SchoolList() {
           </div>
         </div>
 
+        {filteredSchools.some((s) => s.isDemo) && (
+          <div className="mt-6 rounded-control border border-warning-200 bg-warning-50 px-4 py-3 text-sm text-warning-800">
+            Certains profils marqués <strong>« Démonstration »</strong> ci-dessous sont des exemples fictifs créés pour illustrer le fonctionnement de l'annuaire - ils ne correspondent à aucun établissement réel et ne signifient aucune inscription ou affiliation de leur part.
+          </div>
+        )}
+
         <div className="mt-10 grid grid-cols-1 gap-8 lg:grid-cols-[280px_1fr]">
           {/* Region map */}
           <div className="rounded-card border border-border bg-surface-raised p-5 shadow-card lg:sticky lg:top-6 lg:self-start">
@@ -168,11 +174,16 @@ export default function SchoolList() {
               <div className="mt-8 grid grid-cols-1 gap-8 sm:grid-cols-2">
                 {filteredSchools.map((school) => (
                   <Link key={school.id} to={`/schools/${school.id}`} className="group flex flex-col overflow-hidden rounded-card border border-border bg-surface-raised shadow-card transition-all hover:shadow-elevated hover:-translate-y-1 hover:border-primary-200">
-                    <div className="aspect-[16/9] w-full overflow-hidden bg-primary-100">
+                    <div className="relative aspect-[16/9] w-full overflow-hidden bg-primary-100">
                       {school.image ? (
                         <img src={school.image} alt={school.name} className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
                       ) : (
                         <div className="flex h-full w-full items-center justify-center text-4xl">🏫</div>
+                      )}
+                      {school.isDemo && (
+                        <span className="absolute left-2 top-2 rounded-full bg-warning-500 px-2.5 py-1 text-xs font-semibold text-white shadow">
+                          Démonstration
+                        </span>
                       )}
                     </div>
                     <div className="flex flex-1 flex-col justify-between p-6">

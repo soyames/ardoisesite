@@ -82,16 +82,30 @@ export default function SchoolDetail() {
               </div>
               <h1 className="text-4xl font-extrabold text-white sm:text-5xl">{school.name}</h1>
             </div>
-            <button
-              onClick={() => navigate(`/schools/${school.id}/enroll`)}
-              disabled={school.isFull}
-              className={`whitespace-nowrap rounded-control px-8 py-4 text-sm font-bold shadow-elevated transition ${school.isFull ? 'bg-primary-400 text-white cursor-not-allowed' : 'bg-accent-500 text-primary-950 hover:bg-accent-400 hover:scale-105'}`}
-            >
-              {school.isFull ? 'Capacité Atteinte (Complet)' : 'Demander l\'inscription'}
-            </button>
+            {school.isDemo ? (
+              <span className="whitespace-nowrap rounded-control bg-warning-500 px-6 py-3 text-sm font-bold text-white shadow-elevated">
+                Profil de démonstration
+              </span>
+            ) : (
+              <button
+                onClick={() => navigate(`/schools/${school.id}/enroll`)}
+                disabled={school.isFull}
+                className={`whitespace-nowrap rounded-control px-8 py-4 text-sm font-bold shadow-elevated transition ${school.isFull ? 'bg-primary-400 text-white cursor-not-allowed' : 'bg-accent-500 text-primary-950 hover:bg-accent-400 hover:scale-105'}`}
+              >
+                {school.isFull ? 'Capacité Atteinte (Complet)' : 'Demander l\'inscription'}
+              </button>
+            )}
           </div>
         </div>
       </div>
+
+      {school.isDemo && (
+        <div className="mx-auto max-w-[1600px] px-6 lg:px-12 mt-6">
+          <div className="rounded-control border border-warning-200 bg-warning-50 px-4 py-3 text-sm text-warning-800">
+            Ce profil est un exemple fictif créé pour illustrer le fonctionnement du marketplace Ardoise - il ne correspond à aucun établissement réel et ne signifie aucune inscription ou affiliation de sa part. Les inscriptions ne sont pas disponibles pour ce profil.
+          </div>
+        </div>
+      )}
 
       <div className="mx-auto max-w-[1600px] px-6 lg:px-12 mt-12 grid grid-cols-1 lg:grid-cols-3 gap-12">
         {/* Main Content */}

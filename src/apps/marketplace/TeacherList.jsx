@@ -37,6 +37,7 @@ export default function TeacherList() {
           price: data.price != null ? `${data.price} F / mois` : null,
           description: data.bio || '',
           image: data.image || null,
+          isDemo: data.isDemo || false,
         })
       })
       setTeachers(rows)
@@ -108,6 +109,12 @@ export default function TeacherList() {
           </div>
         </div>
 
+        {filteredTeachers.some((t) => t.isDemo) && (
+          <div className="mt-6 rounded-control border border-warning-200 bg-warning-50 px-4 py-3 text-sm text-warning-800">
+            Certains profils marqués <strong>« Démonstration »</strong> ci-dessous sont des exemples fictifs créés pour illustrer le fonctionnement de l'annuaire - ils ne correspondent à aucune personne réelle.
+          </div>
+        )}
+
         <div className="mt-10 grid grid-cols-1 gap-8 lg:grid-cols-[280px_1fr]">
           <div className="rounded-card border border-border bg-surface-raised p-5 shadow-card lg:sticky lg:top-6 lg:self-start">
             <h3 className="text-sm font-semibold text-ink">Parcourir par département</h3>
@@ -174,11 +181,16 @@ export default function TeacherList() {
               <div className="mt-12 grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
                 {filteredTeachers.map((teacher) => (
                   <Link key={teacher.id} to={`/teachers/${teacher.id}`} className="group relative flex flex-col overflow-hidden rounded-card bg-surface-raised shadow-card ring-1 ring-border transition-all hover:shadow-elevated hover:-translate-y-1 hover:ring-primary-200">
-                    <div className="aspect-[4/3] w-full overflow-hidden bg-primary-100">
+                    <div className="relative aspect-[4/3] w-full overflow-hidden bg-primary-100">
                       {teacher.image ? (
                         <img src={teacher.image} alt={teacher.name} className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
                       ) : (
                         <div className="flex h-full w-full items-center justify-center text-4xl">👤</div>
+                      )}
+                      {teacher.isDemo && (
+                        <span className="absolute left-2 top-2 rounded-full bg-warning-500 px-2.5 py-1 text-xs font-semibold text-white shadow">
+                          Démonstration
+                        </span>
                       )}
                     </div>
                     <div className="flex flex-1 flex-col justify-between p-6">

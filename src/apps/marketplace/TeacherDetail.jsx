@@ -26,6 +26,7 @@ export default function TeacherDetail() {
         price: data.price || null,
         description: data.bio || '',
         image: data.image || null,
+        isDemo: data.isDemo || false,
       })
 
       // Deliberately not fetching /api/hr/teacher-ratings/ here - that's a
@@ -75,6 +76,11 @@ export default function TeacherDetail() {
               </div>
               <h1 className="text-4xl font-extrabold tracking-tight text-white sm:text-5xl">{teacher.name}</h1>
               {teacher.description && <p className="mt-4 text-lg text-primary-300 max-w-2xl">{teacher.description}</p>}
+              {teacher.isDemo && (
+                <span className="mt-3 inline-block rounded-full bg-warning-500 px-3 py-1 text-xs font-bold text-white">
+                  Profil de démonstration
+                </span>
+              )}
             </div>
 
             <div className="bg-surface-raised rounded-card p-6 shadow-elevated text-center md:text-left min-w-[280px]">
@@ -82,21 +88,27 @@ export default function TeacherDetail() {
               <p className="mt-1 text-3xl font-bold text-ink">
                 {teacher.price ? <>{Number(teacher.price).toLocaleString()} F <span className="text-lg font-normal text-ink-muted">/ mois</span></> : 'Sur demande'}
               </p>
-              <div className="mt-6 space-y-3">
-                <button
-                  onClick={() => navigate(`/teachers/${teacher.id}/book`)}
-                  className="w-full rounded-control bg-accent-500 px-4 py-3 text-sm font-bold text-primary-950 shadow-card transition hover:bg-accent-400 hover:scale-[1.02]"
-                >
-                  Réserver et proposer un contrat
-                </button>
-                <button
-                  onClick={() => navigate(`/live-room/teacher-${teacher.id}`)}
-                  className="w-full flex justify-center items-center rounded-control bg-primary-100 px-4 py-3 text-sm font-bold text-primary-800 shadow-card transition hover:bg-primary-200 hover:scale-[1.02]"
-                >
-                  <span className="material-symbols-outlined align-middle mr-2 text-[18px]">video_call</span>
-                  Appel Vidéo
-                </button>
-              </div>
+              {teacher.isDemo ? (
+                <p className="mt-6 rounded-control border border-warning-200 bg-warning-50 px-4 py-3 text-sm text-warning-800">
+                  Ce profil est un exemple fictif - la réservation n'est pas disponible.
+                </p>
+              ) : (
+                <div className="mt-6 space-y-3">
+                  <button
+                    onClick={() => navigate(`/teachers/${teacher.id}/book`)}
+                    className="w-full rounded-control bg-accent-500 px-4 py-3 text-sm font-bold text-primary-950 shadow-card transition hover:bg-accent-400 hover:scale-[1.02]"
+                  >
+                    Réserver et proposer un contrat
+                  </button>
+                  <button
+                    onClick={() => navigate(`/live-room/teacher-${teacher.id}`)}
+                    className="w-full flex justify-center items-center rounded-control bg-primary-100 px-4 py-3 text-sm font-bold text-primary-800 shadow-card transition hover:bg-primary-200 hover:scale-[1.02]"
+                  >
+                    <span className="material-symbols-outlined align-middle mr-2 text-[18px]">video_call</span>
+                    Appel Vidéo
+                  </button>
+                </div>
+              )}
               <p className="mt-4 text-xs text-ink-muted">Le tarif final et les conditions seront convenus ensemble dans le contrat.</p>
             </div>
           </div>
