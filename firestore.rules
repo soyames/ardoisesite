@@ -173,10 +173,19 @@ service cloud.firestore {
       // devtools. Only the signed FedaPay webhook (Worker Admin SDK,
       // bypasses these rules) may set it - see ardoise-api/src/index.ts's
       // teacher_boost webhook branch.
+      // parentId links a marketplace_student (child) account to the
+      // parent who manages them - set once, server-side, by
+      // /api/marketplace/child-profile at creation. Without blocking it
+      // here, a child account that ever authenticates on its own
+      // (createChildProfile hands out real Firebase Auth credentials,
+      // chosen by the parent but usable independently) could reassign
+      // itself to an arbitrary uid, letting a different/attacker
+      // -controlled "parent" account manage them without the real
+      // parent's consent. Found in this session's security audit.
       allow update: if isSignedIn()
                     && request.auth.uid == userId
                     && !request.resource.data.diff(resource.data).affectedKeys()
-                          .hasAny(['role', 'schoolId', 'subscriptionActive', 'boostedUntil']);
+                          .hasAny(['role', 'schoolId', 'subscriptionActive', 'boostedUntil', 'parentId']);
     }
 
     // Offres d'emploi -- tableau public du marketplace, lecture libre.
@@ -193,16 +202,27 @@ service cloud.firestore {
     }
 
     // Candidatures -- un professeur crée la sienne (JobApplicationFlow.jsx) ;
-    // seuls le candidat lui-même et le fondateur de l'école concernée
-    // peuvent la lire/la mettre à jour (FounderDashboard.jsx).
+    // le candidat et le fondateur de l'école concernée peuvent la lire.
+    // Seul le fondateur peut la modifier (RecruitmentPanel.jsx passe
+    // status a 'accepted'), et seulement ce champ - TeacherMarketplace
+    // Dashboard.jsx ne fait jamais d'update() sur sa propre candidature,
+    // seulement une lecture. Avant ce correctif, `allow update` etait
+    // ouvert au candidat lui-meme sans aucune restriction de champ : un
+    // candidat pouvait s'auto-approuver (status: 'accepted') depuis les
+    // devtools, sans aucune action de l'ecole. Trouve en revue de
+    // securite (audit complet ardoise-api + firestore.rules, 2026-07-28).
     match /job_applications/{applicationId} {
       allow create: if isSignedIn()
                     && getUserData().role == 'teacher'
                     && request.resource.data.teacherId == request.auth.uid;
-      allow read, update: if isSignedIn() && (
+      allow read: if isSignedIn() && (
         request.auth.uid == resource.data.teacherId ||
         (getUserData().role == 'founder' && getUserData().schoolId == resource.data.schoolId)
       );
+      allow update: if isSignedIn()
+                    && getUserData().role == 'founder'
+                    && getUserData().schoolId == resource.data.schoolId
+                    && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status']);
     }
 
     // Demandes d'inscription -- un parent crée la sienne, encore non
