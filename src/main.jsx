@@ -3,6 +3,10 @@ import { createRoot } from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'
 import * as Sentry from "@sentry/react";
 import './index.css'
+// Registers the beforeinstallprompt listener as early as this module
+// graph can run -- it fires once per page load, so any later registration
+// (e.g. inside a component's useEffect) risks missing it entirely.
+import './shared/hooks/pwaInstallStore.js'
 import App from './App.jsx'
 
 if (import.meta.env.VITE_SENTRY_DSN) {

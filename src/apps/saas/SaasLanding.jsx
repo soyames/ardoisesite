@@ -4,7 +4,7 @@ import { usePwaInstall } from '../../shared/hooks/usePwaInstall.js'
 import { useSeo } from '../../shared/hooks/useSeo.js'
 
 export default function SaasLanding() {
-  const { promptInstall, isIOS, canOfferInstall } = usePwaInstall()
+  const { promptInstall, isIOS, isStandalone, canOfferInstall } = usePwaInstall()
   const [showIosInstructions, setShowIosInstructions] = useState(false)
 
   useSeo({
@@ -101,9 +101,13 @@ export default function SaasLanding() {
                 </svg>
                 Installer sur cet appareil
               </button>
-            ) : (
+            ) : isStandalone ? (
               <div className="w-full p-4 bg-surface-raised border-l-4 border-success-500 rounded-r-lg text-sm text-ink font-medium">
-                ✅ L'application est installée ou votre navigateur ne supporte pas l'installation automatique.
+                ✅ L'application est déjà installée sur cet appareil.
+              </div>
+            ) : (
+              <div className="w-full p-4 bg-surface-raised border-l-4 border-primary-400 rounded-r-lg text-sm text-ink-muted">
+                Installation automatique indisponible pour l'instant. Utilisez le menu de votre navigateur : icône d'installation dans la barre d'adresse, ou menu <strong>⋮ → Installer l'application</strong>.
               </div>
             )}
 

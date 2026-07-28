@@ -29,7 +29,7 @@ const ENTERPRISE_MODULES = [
 // activation code (identity, not a feature gate) and the PWA install
 // prompt, plus - new - the Enterprise upgrade itself.
 export default function SubscriptionPanel({ schoolId }) {
-  const { promptInstall, isIOS, canOfferInstall } = usePwaInstall()
+  const { promptInstall, isIOS, isStandalone, canOfferInstall } = usePwaInstall()
   const [loading, setLoading] = useState(true)
   const [activationCode, setActivationCode] = useState(null)
   const [school, setSchool] = useState(null)
@@ -163,18 +163,24 @@ export default function SubscriptionPanel({ schoolId }) {
                   {activationCode || 'Génération en cours...'}
                 </div>
                 <div className="flex flex-col gap-3">
-                  <button onClick={() => {
-                    if (isIOS) {
-                      alert("Pour installer sur iOS, appuyez sur l'icône de partage puis 'Sur l'écran d'accueil'.")
-                    } else if (canOfferInstall) {
-                      promptInstall()
-                    } else {
-                      alert("L'application est déjà installée, ou votre navigateur ne permet pas l'installation automatique.")
-                    }
-                  }} className="w-full rounded-control bg-primary-600 px-4 py-3 text-sm font-bold text-white transition hover:bg-primary-500 flex justify-center items-center gap-2">
-                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
-                    Installer Ardoise Serveur
-                  </button>
+                  {isStandalone ? (
+                    <div className="w-full p-3 bg-success-50 border-l-4 border-success-500 rounded-r-lg text-sm text-ink font-medium text-center">
+                      ✅ L'application est déjà installée sur cet appareil.
+                    </div>
+                  ) : (
+                    <button onClick={() => {
+                      if (isIOS) {
+                        alert("Pour installer sur iOS, appuyez sur l'icône de partage puis 'Sur l'écran d'accueil'.")
+                      } else if (canOfferInstall) {
+                        promptInstall()
+                      } else {
+                        alert("Installation automatique indisponible pour l'instant. Utilisez le menu de votre navigateur : icône d'installation dans la barre d'adresse, ou menu ⋮ → Installer l'application.")
+                      }
+                    }} className="w-full rounded-control bg-primary-600 px-4 py-3 text-sm font-bold text-white transition hover:bg-primary-500 flex justify-center items-center gap-2">
+                      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                      Installer l'application
+                    </button>
+                  )}
                   <p className="text-xs text-center text-primary-600 mt-2">
                     Ou branchez simplement votre <strong>Ardoise Box</strong> si vous en avez commandé une.
                   </p>
