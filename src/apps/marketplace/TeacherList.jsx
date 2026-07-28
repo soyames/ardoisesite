@@ -8,6 +8,7 @@ import CountryMapWrapper from '../../shared/ui/CountryMapWrapper.jsx'
 import { OHADA_COUNTRIES } from '../../shared/constants/locations.js'
 import { SUBJECTS } from '../../shared/constants/subjects.js'
 import { COUNTRY_CITIES } from '../../shared/constants/cities.js'
+import { useGeo } from '../../shared/geo/GeoContext.jsx'
 
 export default function TeacherList() {
   const [searchParams, setSearchParams] = useSearchParams()
@@ -18,7 +19,9 @@ export default function TeacherList() {
   const [subjectFilter, setSubjectFilter] = useState('Toutes')
   const [communeDepartmentMap, setCommuneDepartmentMap] = useState({})
 
-  const country = searchParams.get('country') || 'BEN'
+  // GeoGate already guarantees a resolved OHADA country before this page
+  // ever renders - the visitor's own country, not a user-chosen one.
+  const { countryCode: country } = useGeo()
   const department = searchParams.get('department')
   const commune = searchParams.get('commune')
 
@@ -96,19 +99,9 @@ export default function TeacherList() {
             </p>
           </div>
           <div className="w-full md:w-auto shrink-0 pt-2">
-            <label htmlFor="country-select" className="sr-only">Choisir un pays</label>
-            <select
-              id="country-select"
-              value={country}
-              onChange={(e) => setSearchParams({ country: e.target.value })}
-              className="w-full md:w-48 rounded-control border-0 bg-primary-50 px-4 py-2.5 text-sm font-semibold text-primary-900 shadow-sm ring-1 ring-inset ring-primary-200 focus:ring-2 focus:ring-primary-600"
-            >
-              {OHADA_COUNTRIES.map((c) => (
-                <option key={c.code} value={c.code}>
-                  {c.name}
-                </option>
-              ))}
-            </select>
+            <div className="inline-flex w-full items-center justify-center gap-1.5 rounded-control bg-primary-50 px-4 py-2.5 text-sm font-semibold text-primary-900 shadow-sm ring-1 ring-inset ring-primary-200 md:w-auto">
+              {OHADA_COUNTRIES.find((c) => c.code === country)?.name || country}
+            </div>
           </div>
         </div>
 
@@ -129,13 +122,13 @@ export default function TeacherList() {
                 schoolCounts={cityCounts}
                 selectedDepartment={department}
                 selectedCommune={commune}
-                onSelectDepartment={(dept) => setSearchParams(dept ? { country, department: dept } : { country })}
-                onSelectCommune={(c) => setSearchParams(c ? { country, commune: c } : { country })}
+                onSelectDepartment={(dept) => setSearchParams(dept ? { department: dept } : {})}
+                onSelectCommune={(c) => setSearchParams(c ? { commune: c } : {})}
               />
             </div>
             {(department || commune) && (
               <button
-                onClick={() => setSearchParams({ country })}
+                onClick={() => setSearchParams({})}
                 className="mt-3 text-xs font-semibold text-primary-600 hover:text-primary-500"
               >
                 &larr; Effacer le filtre régional ({commune || department})
@@ -236,7 +229,7 @@ export default function TeacherList() {
                   }
                   action={
                     <button
-                      onClick={() => { setSearch(''); setCityFilter('Toutes'); setSubjectFilter('Toutes'); setSearchParams({ country }) }}
+                      onClick={() => { setSearch(''); setCityFilter('Toutes'); setSubjectFilter('Toutes'); setSearchParams({}) }}
                       className="text-sm font-semibold text-primary-600 hover:text-primary-500"
                     >
                       Réinitialiser les filtres

@@ -6,8 +6,10 @@ import { auth, db } from '../api/firebase.js'
 import { useAuth } from './AuthContext.jsx'
 import { isSaasHost } from './domainRedirect.js'
 import { getPlatformApiBaseUrl } from '../../config/env.js'
+import { useGeo } from '../geo/GeoContext.jsx'
 
-import { FRANCOPHONE_AFRICA_DATA as WEST_AFRICA_DATA } from '../constants/locations.js'
+import { OHADA_COUNTRIES } from '../constants/locations.js'
+import { COUNTRY_CITIES } from '../constants/cities.js'
 
 const INPUT_CLASS = "relative block w-full rounded-control border-0 bg-surface-raised py-2.5 px-3 text-ink ring-1 ring-inset ring-border placeholder:text-ink-muted focus:z-10 focus:ring-2 focus:ring-inset focus:ring-primary-500 sm:text-sm sm:leading-6"
 
@@ -31,8 +33,13 @@ export default function RegisterPage() {
   // and never see the right dashboard.
   const isSaas = isSaasHost()
   const [role, setRole] = useState(isSaas ? 'founder' : 'parent')
-  const [country, setCountry] = useState('Benin')
-  const [city, setCity] = useState(WEST_AFRICA_DATA['Benin'][0])
+  // GeoGate already guarantees a resolved OHADA country before this page
+  // ever renders - the country is the visitor's own detected one, not a
+  // free choice, so there's no setter for it here.
+  const { countryCode } = useGeo()
+  const country = OHADA_COUNTRIES.find((c) => c.code === countryCode)?.name || countryCode
+  const availableCities = COUNTRY_CITIES[countryCode] || []
+  const [city, setCity] = useState(availableCities[0] || '')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
@@ -308,18 +315,9 @@ export default function RegisterPage() {
             </div>
             <div>
               <label className="block text-sm font-medium text-ink mb-1">Pays</label>
-              <select
-                value={country}
-                onChange={(e) => {
-                  setCountry(e.target.value)
-                  setCity(WEST_AFRICA_DATA[e.target.value][0])
-                }}
-                className={INPUT_CLASS}
-              >
-                {Object.keys(WEST_AFRICA_DATA).map(c => (
-                  <option key={c} value={c}>{c}</option>
-                ))}
-              </select>
+              <div className={`${INPUT_CLASS} flex items-center bg-surface text-ink-muted`}>
+                {country} <span className="ml-2 text-xs">(détecté automatiquement)</span>
+              </div>
             </div>
 
             <div>
@@ -329,7 +327,7 @@ export default function RegisterPage() {
                 onChange={(e) => setCity(e.target.value)}
                 className={INPUT_CLASS}
               >
-                {WEST_AFRICA_DATA[country].map(c => (
+                {availableCities.map(c => (
                   <option key={c} value={c}>{c}</option>
                 ))}
               </select>

@@ -1,9 +1,11 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Link, useSearchParams } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { collection, onSnapshot, query, where } from 'firebase/firestore'
 import { db } from '../../shared/api/firebase.js'
 import Badge from '../../shared/ui/Badge.jsx'
 import CountryMapWrapper from '../../shared/ui/CountryMapWrapper.jsx'
+import Icon from '../../shared/ui/Icon.jsx'
+import { useGeo } from '../../shared/geo/GeoContext.jsx'
 import { OHADA_COUNTRIES } from '../../shared/constants/locations.js'
 
 export default function Home() {
@@ -11,8 +13,9 @@ export default function Home() {
   const [teachers, setTeachers] = useState([])
   const [selectedDepartment, setSelectedDepartment] = useState(null)
   const [selectedCommune, setSelectedCommune] = useState(null)
-  const [searchParams, setSearchParams] = useSearchParams()
-  const activeCountry = searchParams.get('country') || 'BEN'
+  // GeoGate already guarantees a resolved OHADA country before Home ever
+  // renders - the visitor's own country, not a user-chosen one.
+  const { countryCode: activeCountry } = useGeo()
   const [communeDepartmentMap, setCommuneDepartmentMap] = useState({})
 
   // Clear selections when country changes
@@ -119,20 +122,9 @@ export default function Home() {
         <div className="mx-auto max-w-[1600px] px-6 lg:px-12">
           <div className="grid grid-cols-1 gap-10 rounded-card border border-white/10 bg-surface-raised p-8 shadow-elevated lg:grid-cols-[1fr_450px] lg:items-center xl:grid-cols-[1fr_550px]">
             <div>
-              <div className="mb-6 inline-block">
-                <label htmlFor="country-select" className="sr-only">Choisir un pays</label>
-                <select
-                  id="country-select"
-                  value={activeCountry}
-                  onChange={(e) => setSearchParams({ country: e.target.value })}
-                  className="rounded-control border border-white/20 bg-primary-900/50 py-2 pl-3 pr-10 text-sm font-semibold text-white shadow-sm focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500"
-                >
-                  {OHADA_COUNTRIES.map((c) => (
-                    <option key={c.code} value={c.code}>
-                      {c.name}
-                    </option>
-                  ))}
-                </select>
+              <div className="mb-6 inline-flex items-center gap-1.5 rounded-control border border-white/20 bg-primary-900/50 py-2 pl-3 pr-4 text-sm font-semibold text-white shadow-sm">
+                <Icon name="location_on" className="text-base" />
+                {OHADA_COUNTRIES.find((c) => c.code === activeCountry)?.name || activeCountry}
               </div>
               <h1 className="font-display text-4xl font-extrabold tracking-tight text-ink sm:text-5xl">
                 L'excellence éducative, <span className="text-accent-600">à portée de clic</span>

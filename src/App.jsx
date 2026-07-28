@@ -1,5 +1,7 @@
 import { Navigate, Route, Routes } from 'react-router-dom'
 import { AuthProvider, useAuth } from './shared/auth/AuthContext.jsx'
+import { GeoProvider } from './shared/geo/GeoContext.jsx'
+import GeoGate from './shared/geo/GeoGate.jsx'
 import RequireRole from './shared/auth/RequireRole.jsx'
 import LoginPage from './shared/auth/LoginPage.jsx'
 import RegisterPage from './shared/auth/RegisterPage.jsx'
@@ -144,13 +146,14 @@ function DomainRouter() {
 export default function App() {
   return (
     <AuthProvider>
+      <GeoProvider>
       <Routes>
         <Route path="/login" element={<LoginPage />} />
-        <Route path="/register" element={<RegisterPage />} />
+        <Route path="/register" element={<GeoGate><RegisterPage /></GeoGate>} />
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-        
+
         {/* Public Marketplace Routes */}
-        <Route element={<PublicLayout />}>
+        <Route element={<GeoGate><PublicLayout /></GeoGate>}>
           <Route path="/" element={<DomainRouter />} />
           <Route path="/schools" element={<SchoolList />} />
           <Route path="/schools/:id" element={<SchoolDetail />} />
@@ -211,6 +214,7 @@ export default function App() {
 
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
+      </GeoProvider>
     </AuthProvider>
   )
 }

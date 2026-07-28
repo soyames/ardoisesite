@@ -1,23 +1,26 @@
 import { useState } from 'react'
-import { Link, Outlet, useSearchParams } from 'react-router-dom'
+import { Link, Outlet } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext.jsx'
 import { isSaasHost } from '../auth/domainRedirect.js'
 import EmailVerificationBanner from '../auth/EmailVerificationBanner.jsx'
 import { usePwaInstall } from '../hooks/usePwaInstall.js'
 import Icon from '../ui/Icon.jsx'
 import { OFFICIAL_RESOURCES } from '../constants/officialResources.js'
+import { useGeo } from '../geo/GeoContext.jsx'
 
 export default function PublicLayout() {
   const { user, logout } = useAuth()
   const { promptInstall, isIOS, canOfferInstall } = usePwaInstall()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [showIosInstructions, setShowIosInstructions] = useState(false)
-  const [searchParams] = useSearchParams()
+  const { countryCode: geoCountryCode } = useGeo()
 
   const isSaas = isSaasHost()
-  
-  const urlCountry = searchParams.get('country')
-  const activeCountryCode = isSaas ? (user?.school?.country || 'BEN') : (urlCountry || 'BEN')
+
+  // GeoGate already guarantees a resolved OHADA country before this
+  // layout ever renders - the || 'BEN' fallbacks here are just
+  // defensive, not the normal path.
+  const activeCountryCode = isSaas ? (user?.school?.country || 'BEN') : (geoCountryCode || 'BEN')
   const countryResources = OFFICIAL_RESOURCES[activeCountryCode] || OFFICIAL_RESOURCES['BEN']
 
   const handleInstallClick = () => {
