@@ -128,8 +128,9 @@ export default function TeacherList() {
                 onMapDataLoaded={(data) => setCommuneDepartmentMap(data?.communeDepartmentMap || {})}
                 schoolCounts={cityCounts}
                 selectedDepartment={department}
+                selectedCommune={commune}
                 onSelectDepartment={(dept) => setSearchParams(dept ? { country, department: dept } : { country })}
-                onSelectCommune={(c) => setSearchParams({ country, commune: c })}
+                onSelectCommune={(c) => setSearchParams(c ? { country, commune: c } : { country })}
               />
             </div>
             {(department || commune) && (

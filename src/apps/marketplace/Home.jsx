@@ -4,7 +4,6 @@ import { collection, onSnapshot, query, where } from 'firebase/firestore'
 import { db } from '../../shared/api/firebase.js'
 import Badge from '../../shared/ui/Badge.jsx'
 import CountryMapWrapper from '../../shared/ui/CountryMapWrapper.jsx'
-import ConstellationParticles from '../../shared/components/ConstellationParticles.jsx'
 import { OHADA_COUNTRIES } from '../../shared/constants/locations.js'
 
 export default function Home() {
@@ -117,14 +116,6 @@ export default function Home() {
           aria-hidden="true"
         />
         
-        {/* Animated Particles Background */}
-        <ConstellationParticles 
-          particleCount={60} 
-          particleColor="rgba(255, 255, 255, 0.5)" 
-          lineColor="rgba(255, 255, 255, 0.15)" 
-          maxDistance={120} 
-        />
-
         <div className="mx-auto max-w-[1600px] px-6 lg:px-12">
           <div className="grid grid-cols-1 gap-10 rounded-card border border-white/10 bg-surface-raised p-8 shadow-elevated lg:grid-cols-[1fr_450px] lg:items-center xl:grid-cols-[1fr_550px]">
             <div>
@@ -156,8 +147,9 @@ export default function Home() {
                 onMapDataLoaded={(data) => setCommuneDepartmentMap(data?.communeDepartmentMap || {})}
                 schoolCounts={cityCounts}
                 selectedDepartment={selectedDepartment}
+                selectedCommune={selectedCommune}
                 onSelectDepartment={(dept) => { setSelectedDepartment(dept); setSelectedCommune(null) }}
-                onSelectCommune={(commune) => setSelectedCommune(commune)}
+                onSelectCommune={(commune) => setSelectedCommune((c) => (c === commune ? null : commune))}
               />
             </div>
           </div>

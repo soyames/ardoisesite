@@ -8,6 +8,7 @@ function GenericCountryMap({
   departmentBounds,
   schoolCounts = {},
   selectedDepartment = null,
+  selectedCommune = null,
   onSelectDepartment,
   onSelectCommune
 }) {
@@ -41,7 +42,7 @@ function GenericCountryMap({
 
   const detail = useMemo(() => {
     if (isCommuneView) {
-      const name = hovered
+      const name = hovered || selectedCommune
       if (!name) return null
       const count = schoolCounts[name] || 0
       const deptTotal = departmentCounts[drilledInto] || 0
@@ -55,15 +56,15 @@ function GenericCountryMap({
     const share = total > 0 ? Math.round((count / total) * 100) : 0
     const rank = [...DEPARTMENT_ORDER].sort((a, b) => (departmentCounts[b] || 0) - (departmentCounts[a] || 0)).indexOf(name) + 1
     return { label: name, sublabel: `Région (${rank}/${DEPARTMENT_ORDER.length})`, count, share, shareLabel: 'Part du réseau' }
-  }, [isCommuneView, hovered, activeName, drilledInto, schoolCounts, departmentCounts, DEPARTMENT_ORDER])
+  }, [isCommuneView, hovered, selectedCommune, activeName, drilledInto, schoolCounts, departmentCounts, DEPARTMENT_ORDER])
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="shrink-0 relative">
+      <div className="shrink-0">
         {isCommuneView && (
           <button
             onClick={() => { setDrilledInto(null); setHovered(null) }}
-            className="mb-2 text-xs font-bold text-primary-600 hover:text-primary-500 absolute -top-6 left-0 z-10"
+            className="mb-3 mt-1 block text-sm font-extrabold tracking-wide text-primary-600 hover:text-primary-500"
           >
             &larr; Retour national
           </button>
@@ -89,7 +90,7 @@ function GenericCountryMap({
                       : 'fill-surface-raised stroke-border hover:fill-surface'
                 }`}
                 style={count > 0 && !isSelected ? { fillOpacity: 0.4 + intensity * 0.6 } : undefined}
-                strokeWidth={isSelected ? 1.5 : 0.75}
+                strokeWidth={isSelected ? 2.25 : 1.1}
               />
             )
           })}
@@ -97,30 +98,32 @@ function GenericCountryMap({
             const count = schoolCounts[name] || 0
             const intensity = count / maxCommuneCount
             const isHovered = hovered === name
+            const isSelected = selectedCommune === name
+            const isActive = isHovered || isSelected
             return (
               <path
                 key={name}
                 d={communePaths[name]}
-                onClick={() => { setHovered((h) => (h === name ? null : name)); onSelectCommune?.(name) }}
+                onClick={() => onSelectCommune?.(selectedCommune === name ? null : name)}
                 onMouseEnter={() => setHovered(name)}
                 onMouseLeave={() => setHovered((h) => (h === name ? null : h))}
                 className={`cursor-pointer transition-colors ${
-                  isHovered
+                  isActive
                     ? 'fill-accent-500 stroke-accent-600'
                     : count > 0
                       ? 'fill-primary-700 stroke-primary-900 hover:fill-primary-600'
                       : 'fill-surface-raised stroke-border hover:fill-surface'
                 }`}
-                style={count > 0 && !isHovered ? { fillOpacity: 0.4 + intensity * 0.6 } : undefined}
-                strokeWidth={isHovered ? 1 : 0.5}
+                style={count > 0 && !isActive ? { fillOpacity: 0.4 + intensity * 0.6 } : undefined}
+                strokeWidth={isActive ? 1.9 : 0.9}
               />
             )
           })}
         </svg>
         {!isCommuneView && (
           <button
-            onClick={() => setDrilledInto(selectedDepartment || DEPARTMENT_ORDER[0])}
-            className="mt-2 text-xs font-bold text-primary-600 hover:text-primary-500 block text-center mx-auto"
+            onClick={() => setDrilledInto(selectedDepartment || communeDepartmentMap[selectedCommune] || DEPARTMENT_ORDER[0])}
+            className="mt-4 text-sm font-extrabold tracking-wide text-primary-600 hover:text-primary-500 block text-center mx-auto"
           >
             Zoomer sur les communes &rarr;
           </button>
