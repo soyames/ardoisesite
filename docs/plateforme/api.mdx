@@ -34,17 +34,49 @@ L'API publique Ardoise permet a un site ou systeme tiers de lire les donnees pub
 
 | Scope | Donne accès à |
 |---|---|
-| `marketplace:read` | Lecture des écoles, tuteurs et offres d'emploi publiées, tous pays |
+| `marketplace:read` | Lecture des écoles, tuteurs et offres d'emploi publiées, filtrable par pays (voir [Pays disponibles](#pays-disponibles)) |
 | `leads:write` | Soumission d'un prospect (école ou candidat) vers le CRM Ardoise |
 | `school:profile` | Lecture du profil d'**une seule** école (clé générée par cette école elle-même) |
 
 Une clé invalide, révoquée, ou n'ayant pas la portée requise reçoit `401`/`403` avec un message expliquant lequel.
+
+## Pays disponibles
+
+Le paramètre `country` (sur `/schools`, `/teachers`, `/jobs`, `/leads`) accepte soit le code, soit le nom français exact - les deux fonctionnent de façon identique. Sans ce paramètre, une route retourne tous les pays confondus.
+
+| Code | Pays |
+|---|---|
+| `BEN` | Bénin |
+| `BFA` | Burkina Faso |
+| `CMR` | Cameroun |
+| `CAF` | Centrafrique |
+| `COM` | Comores |
+| `COG` | Congo |
+| `COD` | RDC |
+| `CIV` | Côte d'Ivoire |
+| `GAB` | Gabon |
+| `GIN` | Guinée |
+| `GNB` | Guinée-Bissau |
+| `GNQ` | Guinée équatoriale |
+| `MLI` | Mali |
+| `NER` | Niger |
+| `SEN` | Sénégal |
+| `TCD` | Tchad |
+| `TGO` | Togo |
+
+<Tip>
+  Cette liste est aussi disponible par API (voir `GET /api/public/countries` ci-dessous), pratique pour construire un sélecteur de pays sans la recopier à la main.
+</Tip>
 
 ## Endpoints
 
 <Note>
   Base URL : `https://api.ardoiseeduc.com`
 </Note>
+
+### `GET /api/public/countries`
+
+Retourne la liste des 17 pays ci-dessus (`{ "data": [{ "code": "BEN", "name": "Bénin" }, ...] }`). Aucune clé requise - ce sont des données de référence statiques, pas des données du marketplace.
 
 ### `GET /api/public/schools`
 
@@ -54,7 +86,7 @@ Liste les écoles inscrites sur le marketplace.
 
 | Paramètre | Description |
 |---|---|
-| `country` | Code pays (`BEN`) ou nom français (`Bénin`) - optionnel, sinon tous pays |
+| `country` | Code ou nom français - voir [Pays disponibles](#pays-disponibles) - optionnel, sinon tous pays |
 | `limit` | Nombre max de résultats (défaut 50, max 200) |
 
 ```json

@@ -30,7 +30,6 @@ import { LiveRoom } from './apps/shared/LiveRoom.jsx'
 // Public Marketplace Layout & Pages
 import PublicLayout from './shared/layout/PublicLayout.jsx'
 import SaasLanding from './apps/saas/SaasLanding.jsx'
-import SaasPricing from './apps/saas/SaasPricing.jsx'
 import Home from './apps/marketplace/Home.jsx'
 import SchoolList from './apps/marketplace/SchoolList.jsx'
 import SchoolDetail from './apps/marketplace/SchoolDetail.jsx'
@@ -152,7 +151,6 @@ export default function App() {
         {/* Public Marketplace Routes */}
         <Route element={<PublicLayout />}>
           <Route path="/" element={<DomainRouter />} />
-          <Route path="/pricing" element={<SaasPricing />} />
           <Route path="/schools" element={<SchoolList />} />
           <Route path="/schools/:id" element={<SchoolDetail />} />
           <Route path="/schools/:id/enroll" element={<SchoolEnrollment />} />

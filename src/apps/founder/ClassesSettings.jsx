@@ -12,15 +12,18 @@ export default function ClassesSettings() {
   // For the form
   const [editingId, setEditingId] = useState(null)
   const [formData, setFormData] = useState({
-    name: '',
-    level: '6e',
+    level: 'ps',
     series: '',
+    section: '',
     capacity: 50,
     registration_fee: 0,
     required_documents: ''
   })
-  
+
   const LEVELS = [
+    { value: 'ps', label: "Petite Section (PS)" },
+    { value: 'ms', label: "Moyenne Section (MS)" },
+    { value: 'gs', label: "Grande Section (GS)" },
     { value: 'ci', label: "Cours d'Initiation (CI)" },
     { value: 'cp', label: "Cours Préparatoire (CP)" },
     { value: 'ce1', label: "Cours Élémentaire 1 (CE1)" },
@@ -35,14 +38,18 @@ export default function ClassesSettings() {
     { value: '1ere', label: "Première" },
     { value: 'tle', label: "Terminale" },
   ]
-  
+
+  // Only Seconde/Première/Terminale split by série - matches
+  // ClassRoom.SERIES_LEVELS on the backend (apps/students/models.py),
+  // which rejects a series set on any other level.
+  const SERIES_LEVELS = ['2nde', '1ere', 'tle']
+
   const SERIES = [
     { value: '', label: "-" },
-    { value: 'A', label: "Série A" },
-    { value: 'B', label: "Série B" },
+    { value: 'AB', label: "Série AB" },
     { value: 'C', label: "Série C" },
     { value: 'D', label: "Série D" },
-    { value: 'G', label: "Série G" },
+    { value: 'EF', label: "Série EF" },
   ]
 
   const fetchClasses = async () => {
@@ -63,10 +70,14 @@ export default function ClassesSettings() {
 
   const handleChange = (e) => {
     const { name, value, type } = e.target
-    setFormData(prev => ({
-      ...prev,
-      [name]: type === 'number' ? Number(value) : value
-    }))
+    setFormData(prev => {
+      const next = { ...prev, [name]: type === 'number' ? Number(value) : value }
+      // Série only applies to Seconde/Première/Terminale (see backend
+      // validate()) - clear a stale série when switching to a level
+      // that doesn't have one, rather than submitting a rejected combo.
+      if (name === 'level' && !SERIES_LEVELS.includes(value)) next.series = ''
+      return next
+    })
   }
 
   const handleSubmit = async (e) => {
@@ -90,9 +101,9 @@ export default function ClassesSettings() {
   const handleEdit = (cls) => {
     setEditingId(cls.id)
     setFormData({
-      name: cls.name,
       level: cls.level,
       series: cls.series || '',
+      section: cls.section || '',
       capacity: cls.capacity,
       registration_fee: cls.registration_fee || 0,
       required_documents: cls.required_documents || ''
@@ -112,9 +123,9 @@ export default function ClassesSettings() {
   const resetForm = () => {
     setEditingId(null)
     setFormData({
-      name: '',
-      level: '6e',
+      level: 'ps',
       series: '',
+      section: '',
       capacity: 50,
       registration_fee: 0,
       required_documents: ''
@@ -135,24 +146,26 @@ export default function ClassesSettings() {
             <h3 className="text-lg font-bold text-ink mb-4">{editingId ? 'Modifier la classe' : 'Ajouter une classe'}</h3>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-ink">Nom (ex: 6ème A)</label>
-                <input required type="text" name="name" value={formData.name} onChange={handleChange} className="mt-1 block w-full rounded-md border-border shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm px-3 py-2 border bg-surface" />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-ink">Niveau / Cycle</label>
+                <label className="block text-sm font-medium text-ink">Niveau</label>
                 <select name="level" value={formData.level} onChange={handleChange} className="mt-1 block w-full rounded-md border-border shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm px-3 py-2 border bg-surface">
                   {LEVELS.map(l => <option key={l.value} value={l.value}>{l.label}</option>)}
                 </select>
               </div>
 
+              {SERIES_LEVELS.includes(formData.level) && (
+                <div>
+                  <label className="block text-sm font-medium text-ink">Série</label>
+                  <select name="series" value={formData.series} onChange={handleChange} className="mt-1 block w-full rounded-md border-border shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm px-3 py-2 border bg-surface">
+                    {SERIES.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
+                  </select>
+                </div>
+              )}
+
               <div>
-                <label className="block text-sm font-medium text-ink">Série (Lycée)</label>
-                <select name="series" value={formData.series} onChange={handleChange} className="mt-1 block w-full rounded-md border-border shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm px-3 py-2 border bg-surface">
-                  {SERIES.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
-                </select>
+                <label className="block text-sm font-medium text-ink">Section (optionnel)</label>
+                <input type="text" name="section" value={formData.section} onChange={handleChange} placeholder="Ex: A, 2, Nord - si l'école a plusieurs classes à ce niveau" className="mt-1 block w-full rounded-md border-border shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm px-3 py-2 border bg-surface" />
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-ink">Capacité maximale</label>
                 <input required type="number" name="capacity" value={formData.capacity} onChange={handleChange} min="1" className="mt-1 block w-full rounded-md border-border shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm px-3 py-2 border bg-surface" />
