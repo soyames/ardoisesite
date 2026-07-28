@@ -416,15 +416,22 @@ function TutoringContracts() {
 }
 
 function HealthPing({ backendUrl }) {
-  const [status, setStatus] = useState('loading') // loading, up, down
+  // 'unconfigured' (no URL to even try) is a distinct state from 'down'
+  // (a URL exists but didn't answer) - collapsing them into one 'down'
+  // status made every never-linked school (every current demo school,
+  // and any real school before its founder installs Ardoise) show
+  // "Injoignable (Erreur de connexion)", reading as an active failure
+  // when nothing was ever attempted.
+  const [status, setStatus] = useState(backendUrl ? 'loading' : 'unconfigured')
 
   useEffect(() => {
     let active = true
     if (!backendUrl) {
-      setStatus('down')
+      setStatus('unconfigured')
       return
     }
 
+    setStatus('loading')
     // Ping the backend API root or health endpoint
     // We assume there's an /api/auth/ or something responding, we'll just try to fetch it.
     fetch(`${backendUrl}/api/auth/firebase-login/`, { method: 'OPTIONS' })
@@ -443,6 +450,7 @@ function HealthPing({ backendUrl }) {
       {status === 'loading' && <span className="text-sm text-ink-muted">Ping en cours...</span>}
       {status === 'up' && <Badge tone="success">Connecté (Backend Actif)</Badge>}
       {status === 'down' && <Badge tone="danger">Injoignable (Erreur de connexion)</Badge>}
+      {status === 'unconfigured' && <Badge tone="neutral">Non configuré</Badge>}
     </div>
   )
 }

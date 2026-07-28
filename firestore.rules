@@ -134,10 +134,17 @@ service cloud.firestore {
       // creer server-side - onSnapshot echouait en permission-denied
       // en boucle, le compte enfant restait invisible indefiniment
       // malgre une creation reussie.
+      // Platform-role read (ops.ardoiseeduc.com's "Utilisateurs" tab and
+      // Overview stats) was missing entirely here, unlike every other
+      // admin-facing collection in this file (schools, job_applications,
+      // etc. all already grant it) - a superadmin listing all users hit
+      // permission-denied on every document that wasn't their own, a
+      // public teacher profile, or their own school's founder scope.
       allow read: if (isSignedIn() && request.auth.uid == userId)
                   || resource.data.role == 'teacher'
                   || (isSignedIn() && resource.data.role == 'marketplace_student' && resource.data.parentId == request.auth.uid)
-                  || (isSignedIn() && getUserData().role == 'founder' && resource.data.schoolId == getUserData().schoolId);
+                  || (isSignedIn() && getUserData().role == 'founder' && resource.data.schoolId == getUserData().schoolId)
+                  || (isSignedIn() && getUserData().role in ['superadmin', 'support_agent', 'school_onboarding', 'dev_onboarding', 'billing_agent', 'marketing_agent']);
 
       // La création (inscription - RegisterPage.jsx) est le tout premier
       // write sur ce document : resource n'existe pas encore, donc
@@ -285,9 +292,14 @@ service cloud.firestore {
         request.auth.uid == resource.data.parentId ||
         request.auth.uid == resource.data.teacherId
       );
+      // Same platform-role gap as users/{userId} above - ops.ardoiseeduc.com's
+      // Overview stats query this collection wholesale (getDocs(collection(...)),
+      // not a scoped query), which needs every document to individually
+      // satisfy this rule.
       allow read: if isSignedIn() && (
         request.auth.uid == resource.data.parentId ||
-        request.auth.uid == resource.data.teacherId
+        request.auth.uid == resource.data.teacherId ||
+        getUserData().role in ['superadmin', 'support_agent', 'school_onboarding', 'dev_onboarding', 'billing_agent', 'marketing_agent']
       );
     }
 
@@ -298,9 +310,11 @@ service cloud.firestore {
     // ignore ces regles) ; seul le fondateur de l'ecole concernee peut
     // consulter ce qui lui est du.
     match /school_payouts_owed/{payoutId} {
+      // Same platform-role gap as users/{userId} above - ops.ardoiseeduc.com's
+      // Overview stats query this collection wholesale.
       allow read: if isSignedIn()
-                  && getUserData().role == 'founder'
-                  && getUserData().schoolId == resource.data.schoolId;
+                  && ((getUserData().role == 'founder' && getUserData().schoolId == resource.data.schoolId)
+                      || getUserData().role in ['superadmin', 'support_agent', 'school_onboarding', 'dev_onboarding', 'billing_agent', 'marketing_agent']);
       allow create, update, delete: if false;
     }
 
