@@ -15,22 +15,7 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.png', 'icons/icon-192.png', 'icons/icon-512.png'],
-      manifest: {
-        name: 'Ardoise',
-        short_name: 'Ardoise',
-        description: 'Gestion scolaire tout-en-un pour les etablissements publics et prives de l\'espace OHADA.',
-        lang: 'fr',
-        theme_color: '#2B2621',
-        background_color: '#F7F3EA',
-        display: 'standalone',
-        start_url: '/',
-        scope: '/',
-        icons: [
-          { src: '/icons/icon-192.png', sizes: '192x192', type: 'image/png' },
-          { src: '/icons/icon-512.png', sizes: '512x512', type: 'image/png' },
-          { src: '/icons/icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
-        ],
-      },
+      manifest: false,
       workbox: {
         // Never cache API calls with a stale-while-revalidate-style
         // strategy -- a cached "pending approvals" list or account
