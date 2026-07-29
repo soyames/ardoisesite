@@ -357,8 +357,24 @@ service cloud.firestore {
       allow create: if isSignedIn() 
                     && getUserData().role == 'developer'
                     && request.resource.data.developerId == request.auth.uid;
-      allow read, update, delete: if isSignedIn() 
+      // read/delete stay on the pre-write document. update is split out
+      // because it ALSO has to pin developerId: `resource` is the state
+      // BEFORE the write, so a rule that only checks resource.data.developerId
+      // lets the owner hand the document to someone else - write your own uid,
+      // then update developerId to an approved partner's uid while keeping
+      // your own keyHash. requireApiKey (ardoise-api/src/api-key-auth.ts)
+      // matches purely on keyHash and then trusts this field as the caller's
+      // identity, so proxyToSchoolSupport would resolve the VICTIM's
+      // supportGrants and reach their schools' self-hosted backends. Approved
+      // partner uids are public - they are the certifiedPartners document ids.
+      // delete must not carry this check at all: request.resource is null on a
+      // delete, so the comparison would fail and block every legitimate one.
+      // Found in the 2026-07-29 security audit.
+      allow read, delete: if isSignedIn()
                     && resource.data.developerId == request.auth.uid;
+      allow update: if isSignedIn()
+                    && resource.data.developerId == request.auth.uid
+                    && request.resource.data.developerId == resource.data.developerId;
     }
 
     // Programme Développeur : Webhooks
@@ -366,8 +382,24 @@ service cloud.firestore {
       allow create: if isSignedIn() 
                     && getUserData().role == 'developer'
                     && request.resource.data.developerId == request.auth.uid;
-      allow read, update, delete: if isSignedIn() 
+      // read/delete stay on the pre-write document. update is split out
+      // because it ALSO has to pin developerId: `resource` is the state
+      // BEFORE the write, so a rule that only checks resource.data.developerId
+      // lets the owner hand the document to someone else - write your own uid,
+      // then update developerId to an approved partner's uid while keeping
+      // your own keyHash. requireApiKey (ardoise-api/src/api-key-auth.ts)
+      // matches purely on keyHash and then trusts this field as the caller's
+      // identity, so proxyToSchoolSupport would resolve the VICTIM's
+      // supportGrants and reach their schools' self-hosted backends. Approved
+      // partner uids are public - they are the certifiedPartners document ids.
+      // delete must not carry this check at all: request.resource is null on a
+      // delete, so the comparison would fail and block every legitimate one.
+      // Found in the 2026-07-29 security audit.
+      allow read, delete: if isSignedIn()
                     && resource.data.developerId == request.auth.uid;
+      allow update: if isSignedIn()
+                    && resource.data.developerId == request.auth.uid
+                    && request.resource.data.developerId == resource.data.developerId;
     }
 
     // Programme Développeur : Paramètres (Payout, etc)
