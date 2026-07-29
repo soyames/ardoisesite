@@ -99,6 +99,13 @@ export default function DeveloperPortal() {
       appliedAt: new Date().toISOString(),
     })
   }
+  const hashApiKey = async (rawKey) => {
+    const encoder = new TextEncoder()
+    const data = encoder.encode(rawKey)
+    const hashBuffer = await crypto.subtle.digest('SHA-256', data)
+    const hashArray = Array.from(new Uint8Array(hashBuffer))
+    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('')
+  }
 
   const generateApiKey = async (type) => {
     if (newKeyScopes.length === 0) {
@@ -107,10 +114,12 @@ export default function DeveloperPortal() {
     }
     const prefix = type === 'test' ? 'sk_test_' : 'sk_live_'
     const newKey = prefix + generateKeySecret()
+    const hashedKey = await hashApiKey(newKey)
 
     await addDoc(collection(db, 'api_keys'), {
       developerId: user.uid,
-      key: newKey,
+      keyHash: hashedKey,
+      keyPreview: newKey.substring(0, 12) + '...' + newKey.substring(newKey.length - 4),
       type,
       scopes: newKeyScopes,
       revoked: false,
@@ -119,6 +128,7 @@ export default function DeveloperPortal() {
       requestCount: 0,
     })
     setNewKeyScopes([])
+    alert(`Votre nouvelle clé API : ${newKey}\n\nCopiez-la maintenant ! Elle ne sera plus affichée.`)
   }
 
   const toggleNewKeyScope = (scope) => {
@@ -188,7 +198,7 @@ export default function DeveloperPortal() {
                   {apiKeys.map(key => (
                     <li key={key.id} className="p-3 rounded-card border border-border bg-surface-raised">
                       <div className="flex items-center justify-between">
-                        <span className="font-mono text-sm break-all text-ink">{key.key}</span>
+                        <span className="font-mono text-sm break-all text-ink">{key.keyPreview || key.key}</span>
                         <button onClick={() => deleteApiKey(key.id)} className="text-danger-600 hover:text-danger-700 p-2 shrink-0">
                           <Icon name="delete" />
                         </button>

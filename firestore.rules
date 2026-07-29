@@ -35,6 +35,7 @@ service cloud.firestore {
       // fondateur) - RegisterPage.jsx l'y ecrit juste apres avoir cree
       // ce document et le document users/{uid} du fondateur.
       allow create: if isSignedIn()
+                    && request.resource.data.founderId == request.auth.uid
                     && !request.resource.data.keys().hasAny(
                           ['subscriptionActive', 'subscriptionExpiresAt', 'subscriptionStatus',
                            'planCode', 'features',
@@ -172,7 +173,7 @@ service cloud.firestore {
                     && request.resource.data.role in ['parent', 'teacher', 'founder', 'developer']
                     && (request.resource.data.role == 'founder'
                           ? ('schoolId' in request.resource.data
-                              && exists(/databases/$(database)/documents/schools/$(request.resource.data.schoolId)))
+                              && get(/databases/$(database)/documents/schools/$(request.resource.data.schoolId)).data.founderId == request.auth.uid)
                           : !('schoolId' in request.resource.data));
       // boostedUntil (2026-07-28 marketplace teacher-boost pivot) - same
       // self-grant risk as subscriptionActive: without this, a teacher
@@ -191,8 +192,8 @@ service cloud.firestore {
       // parent's consent. Found in this session's security audit.
       allow update: if isSignedIn()
                     && request.auth.uid == userId
-                    && !request.resource.data.diff(resource.data).affectedKeys()
-                          .hasAny(['role', 'schoolId', 'subscriptionActive', 'boostedUntil', 'parentId']);
+                    && request.resource.data.diff(resource.data).affectedKeys()
+                          .hasOnly(['firstName', 'lastName', 'phone', 'city', 'country', 'email', 'updatedAt', 'subject', 'bio', 'price', 'experiences', 'education', 'referrerId']);
     }
 
     // Offres d'emploi -- tableau public du marketplace, lecture libre.

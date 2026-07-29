@@ -95,6 +95,7 @@ export default function RegisterPage() {
           country,
           isFull: false,
           referrerId, // Store who referred this school for commissions
+          founderId: user.uid, // Tie the school to the founder who created it
           feeCollectionEnabled: !FEE_CAPPED_COUNTRIES.includes(country),
           createdAt: new Date().toISOString()
         });
