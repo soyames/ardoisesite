@@ -1,8 +1,6 @@
 import { useState } from 'react'
 import { useAuth } from '../../shared/auth/AuthContext.jsx'
 import SchoolSettings from './SchoolSettings.jsx'
-import RecruitmentPanel from './RecruitmentPanel.jsx'
-import EnrollmentPanel from './EnrollmentPanel.jsx'
 import ApiIntegrations from './ApiIntegrations.jsx'
 import SubscriptionPanel from './SubscriptionPanel.jsx'
 import AnalyticsDashboard from './AnalyticsDashboard.jsx'
@@ -22,8 +20,6 @@ export default function FounderDashboard() {
 
   const tabs = [
     { key: 'dashboard', label: 'Tableau de bord' },
-    { key: 'overview', label: "Vue d'ensemble (Inscriptions)" },
-    { key: 'recruitment', label: 'Recrutement' },
     { key: 'settings', label: "Paramètres de l'école" },
     { key: 'cycles', label: 'Cycles & Niveaux' },
     { key: 'departments', label: 'Départements (Personnel)' },
@@ -46,8 +42,6 @@ export default function FounderDashboard() {
 
       <div className="mt-6">
         {activeTab === 'dashboard' && <AnalyticsDashboard onNavigate={setActiveTab} />}
-        {activeTab === 'overview' && <EnrollmentPanel />}
-        {activeTab === 'recruitment' && <RecruitmentPanel />}
         {activeTab === 'settings' && <SchoolSettings />}
         {activeTab === 'cycles' && <CyclesPanel />}
         {activeTab === 'departments' && <DepartmentsHub />}

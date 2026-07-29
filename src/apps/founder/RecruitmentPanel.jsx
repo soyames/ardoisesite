@@ -18,7 +18,7 @@ import { useAuth } from '../../shared/auth/AuthContext.jsx'
  */
 export default function RecruitmentPanel() {
   const { user } = useAuth()
-  const canDecide = user?.role === 'founder' || user?.role === 'director'
+  const canDecide = user?.role === 'founder' || user?.role === 'director' || user?.role === 'hr'
   const [applications, setApplications] = useState([])
   const [loading, setLoading] = useState(true)
   const [posting, setPosting] = useState(false)
