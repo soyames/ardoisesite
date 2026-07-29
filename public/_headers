@@ -1,0 +1,70 @@
+# Security response headers for the ardoise-saas Cloudflare Pages
+# project, which serves BOTH ardoiseeduc.com (marketplace) and
+# saas.ardoiseeduc.com (school portal) off the same build - see
+# .github/workflows/deploy-saas.yml. Vite copies public/ verbatim into
+# dist/, and Cloudflare Pages reads dist/_headers at deploy time, so
+# this file is the single place these headers are set. There is no
+# origin server to configure: nothing here can be done in code.
+#
+# Added after an external scan (appscan.dev, 2026-07-29) found the
+# apex serving only x-content-type-options and referrer-policy.
+#
+# Syntax: https://developers.cloudflare.com/pages/configuration/headers
+
+/*
+  # Force HTTPS for a year. includeSubDomains is safe here: every
+  # ardoiseeduc.com subdomain in use (api, saas, ops, docs, media,
+  # livekit) is HTTPS-only behind Cloudflare. `preload` is
+  # deliberately NOT set - once a domain is submitted to the browser
+  # preload list, removal takes months to propagate, and a school
+  # ever needing a plaintext host under this domain would be stuck.
+  Strict-Transport-Security: max-age=31536000; includeSubDomains
+
+  # connect-src is intentionally broad (https:/wss: rather than an
+  # allowlist): every school self-hosts its own Django backend on its
+  # own domain, and the portal learns that domain at runtime from
+  # schools/{schoolId}.backendUrl in Firestore (see
+  # src/config/env.js). An origin allowlist would break every
+  # self-hosted school. It still blocks plaintext http: exfiltration.
+  # The XSS value here comes from script-src/object-src/base-uri.
+  #
+  # 'unsafe-inline' in script-src is a known weakening kept for now
+  # because cdn.fedapay.com's checkout.js writes inline handlers;
+  # tightening it needs a nonce plumbed through the Vite build.
+  # style-src needs it for React inline styles, Tailwind and Leaflet.
+  #
+  # frame-src: Desmos calculators embedded in the student portal
+  # (src/apps/marketplace/MarketplaceStudentPortal.jsx), FedaPay's
+  # checkout overlay, and Firebase Auth's helper iframe.
+  # img-src https: covers OpenStreetMap tiles, Leaflet marker assets
+  # and school logos served from arbitrary self-hosted backends.
+  Content-Security-Policy: default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'self'; form-action 'self' https://*.fedapay.com; script-src 'self' 'unsafe-inline' https://cdn.fedapay.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https:; media-src 'self' blob: https:; worker-src 'self' blob:; manifest-src 'self'; frame-src 'self' https://www.desmos.com https://*.fedapay.com https://ardoise-8cbf6.firebaseapp.com; connect-src 'self' https: wss:
+
+  # Clickjacking. SAMEORIGIN rather than DENY so the marketplace and
+  # the portal can frame each other's pages if a flow ever needs it;
+  # frame-ancestors is the directive modern browsers actually honour.
+  X-Frame-Options: SAMEORIGIN
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+
+  # camera/microphone/display-capture: LiveKit classrooms
+  # (src/apps/shared/LiveRoom.jsx) and the QR scanner
+  # (src/shared/components/QrScanner.jsx).
+  # geolocation: school directions (src/shared/geo/osmDirections.js).
+  # Everything else this app never uses is switched off outright.
+  Permissions-Policy: camera=(self), microphone=(self), display-capture=(self), geolocation=(self), fullscreen=(self), payment=(self "https://checkout.fedapay.com"), accelerometer=(), gyroscope=(), magnetometer=(), usb=(), serial=(), midi=(), bluetooth=(), idle-detection=(), local-fonts=()
+
+  # same-origin-allow-popups, not same-origin: FedaPay checkout can
+  # open a payment window that needs its opener reference back.
+  Cross-Origin-Opener-Policy: same-origin-allow-popups
+
+  # COEP is explicitly unsafe-none (the default) rather than absent so
+  # the choice is on the record: require-corp would block Google
+  # Fonts, Desmos, OpenStreetMap tiles and FedaPay, none of which send
+  # a CORP header back. Revisit only if this app ever needs
+  # crossOriginIsolated (SharedArrayBuffer / wasm threads).
+  Cross-Origin-Embedder-Policy: unsafe-none
+
+  # same-site, not same-origin: ops./saas./docs. are sibling hosts on
+  # ardoiseeduc.com and may legitimately load assets from here.
+  Cross-Origin-Resource-Policy: same-site

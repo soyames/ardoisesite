@@ -1,0 +1,35 @@
+# Security response headers for the ardoise-ops Cloudflare Pages
+# project (ops.ardoiseeduc.com, internal team tooling). Separate from
+# public/_headers because ops is a separate build with a separate
+# deploy (see .github/workflows/deploy-ops.yml) - vite.ops.config.js
+# sets root: 'ops', so Vite's publicDir resolves to ops/public/ and
+# this file lands at the root of ops-dist/.
+#
+# Stricter than the customer-facing policy: ops loads no FedaPay
+# checkout, no Desmos embeds and no payment flow, so none of those
+# exceptions are carried over here.
+#
+# Syntax: https://developers.cloudflare.com/pages/configuration/headers
+
+/*
+  Strict-Transport-Security: max-age=31536000; includeSubDomains
+
+  # connect-src stays broad for the same reason as the customer app:
+  # ops queries individual schools' self-hosted backends by URL read
+  # at runtime, so no fixed origin allowlist is possible.
+  Content-Security-Policy: default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https:; media-src 'self' blob:; worker-src 'self' blob:; manifest-src 'self'; frame-src 'self' https://ardoise-8cbf6.firebaseapp.com; connect-src 'self' https: wss:
+
+  # Nothing should ever frame internal tooling.
+  X-Frame-Options: DENY
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+
+  # Internal dashboards need no device APIs at all.
+  Permissions-Policy: camera=(), microphone=(), display-capture=(), geolocation=(), payment=(), accelerometer=(), gyroscope=(), magnetometer=(), usb=(), serial=(), midi=(), bluetooth=(), idle-detection=(), local-fonts=()
+
+  Cross-Origin-Opener-Policy: same-origin
+  Cross-Origin-Embedder-Policy: unsafe-none
+  Cross-Origin-Resource-Policy: same-origin
+
+  # Belt-and-braces alongside the meta robots tag in ops/index.html.
+  X-Robots-Tag: noindex, nofollow
