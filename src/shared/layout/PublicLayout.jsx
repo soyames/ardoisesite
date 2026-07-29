@@ -113,16 +113,16 @@ export default function PublicLayout() {
               </button>
             </div>
           ) : (
-            <div className="hidden md:flex items-center gap-2">
+            <div className="flex items-center gap-2">
               <Link
                 to="/register"
-                className="rounded-control px-4 py-2.5 text-sm font-semibold text-ink-muted hover:bg-primary-50 transition"
+                className="rounded-control bg-primary-600 px-3 py-1.5 text-sm font-semibold text-white shadow-card transition hover:bg-primary-700 md:bg-transparent md:px-4 md:py-2.5 md:text-ink-muted md:shadow-none md:hover:bg-primary-50"
               >
                 S'inscrire
               </Link>
               <Link
                 to="/login"
-                className="rounded-control bg-primary-600 px-5 py-2.5 text-sm font-semibold text-white shadow-card transition hover:bg-primary-700 hover:shadow-elevated"
+                className="hidden md:flex rounded-control bg-primary-600 px-5 py-2.5 text-sm font-semibold text-white shadow-card transition hover:bg-primary-700 hover:shadow-elevated"
               >
                 Connexion
               </Link>
