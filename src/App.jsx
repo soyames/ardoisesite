@@ -28,6 +28,7 @@ import CollabHub from './shared/collab/CollabHub.jsx'
 import SettingsPage from './shared/settings/SettingsPage.jsx'
 import LiveKitRoomUI from './shared/ui/LiveKitRoomUI.jsx'
 import { LiveRoom } from './apps/shared/LiveRoom.jsx'
+import ReloadPrompt from './shared/ui/ReloadPrompt.jsx'
 
 // Public Marketplace Layout & Pages
 import PublicLayout from './shared/layout/PublicLayout.jsx'
@@ -147,6 +148,7 @@ export default function App() {
   return (
     <AuthProvider>
       <GeoProvider>
+      <ReloadPrompt />
       <Routes>
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<GeoGate><RegisterPage /></GeoGate>} />
