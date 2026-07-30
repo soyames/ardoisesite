@@ -34,3 +34,10 @@ e2e
 
 !readme.md
 *.md
+# Playwright output - regenerated on every run, never source
+playwright-report/
+test-results/
+
+# Stray build logs
+build*.log
+build_output.txt
