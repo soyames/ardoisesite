@@ -4,7 +4,7 @@ import { useAuth } from '../../shared/auth/AuthContext.jsx'
 import { doc, getDoc, updateDoc, collection, query, where, onSnapshot } from 'firebase/firestore'
 import { db, auth } from '../../shared/api/firebase.js'
 import { getPlatformApiBaseUrl } from '../../config/env.js'
-import { FedaPayButton } from '../../shared/components/FedaPayButton.jsx'
+import { GatewayRouterButton } from '../../shared/components/GatewayRouterButton.jsx'
 import { useApiGet } from '../../shared/hooks/useApi.js'
 import { Card, CardHeader, CardBody } from '../../shared/ui/Card.jsx'
 import Button from '../../shared/ui/Button.jsx'
@@ -831,32 +831,33 @@ function InvoiceDetailModal({ invoiceId, onClose }) {
   )
 }
 
-// Composant interne qui va chercher la clé de l'école avant d'afficher le bouton FedaPay
+// Composant interne qui va chercher la clé de l'école avant d'afficher le bouton de paiement
 function SchoolPaymentButton({ schoolId, invoice, parent, studentMatricule }) {
-  const [pubKey, setPubKey] = useState(null)
+  const [keys, setKeys] = useState(null)
   
   useEffect(() => {
     async function fetchKey() {
       try {
         const snap = await getDoc(doc(db, 'schools', String(schoolId)))
-        if (snap.exists() && snap.data().fedaPayPublicKey) {
-          setPubKey(snap.data().fedaPayPublicKey)
+        if (snap.exists()) {
+          setKeys(snap.data())
         } else {
-          // Fallback on global if school has no key configured yet
-          setPubKey(import.meta.env.VITE_FEDAPAY_PUBLIC_KEY)
+          setKeys({ fedaPayPublicKey: import.meta.env.VITE_FEDAPAY_PUBLIC_KEY })
         }
       } catch (e) {
-        setPubKey(import.meta.env.VITE_FEDAPAY_PUBLIC_KEY)
+        setKeys({ fedaPayPublicKey: import.meta.env.VITE_FEDAPAY_PUBLIC_KEY })
       }
     }
     fetchKey()
   }, [schoolId])
 
-  if (!pubKey) return <span className="text-xs text-ink-muted">Chargement du paiement...</span>
+  if (!keys) return <span className="text-xs text-ink-muted">Chargement du paiement...</span>
 
   return (
-    <FedaPayButton
-      publicKey={pubKey}
+    <GatewayRouterButton
+      fedaPayPublicKey={keys.fedaPayPublicKey}
+      cinetpaySiteId={keys.cinetpaySiteId}
+      cinetpayApikey={keys.cinetpayApikey}
       amount={Number(invoice.amountDue) - Number(invoice.amountPaid || 0)}
       description={`Scolarité: ${invoice.trancheLabel || 'Facture'}`}
       customerEmail={parent?.email}
@@ -871,18 +872,14 @@ function SchoolPaymentButton({ schoolId, invoice, parent, studentMatricule }) {
       }}
       className="inline-flex items-center justify-center gap-2 rounded-control px-4 py-2 text-sm font-medium transition-all duration-200 ease-out active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 disabled:cursor-not-allowed disabled:opacity-50 disabled:active:scale-100 bg-primary-600 text-white hover:bg-primary-700 hover:shadow-md shadow-sm border border-transparent focus-visible:ring-primary-500/30"
       onComplete={() => {
-        // The school's own signed FedaPay webhook (apps/finance/webhooks.py)
-        // is now the only writer of the Payment/Invoice record - the client
-        // used to self-report success straight to /api/finance/sandbox-payment/,
-        // an insecure endpoint that trusted whatever the browser POSTed with
-        // no server-to-server verification at all.
         alert("Paiement envoyé ! Le reçu sera visible ici dès la confirmation du paiement (quelques secondes).")
         window.location.reload()
       }}
     >
-    </FedaPayButton>
+    </GatewayRouterButton>
   )
 }
+
 
 function ChildProfiles({ parentId }) {
   const [children, setChildren] = useState([])

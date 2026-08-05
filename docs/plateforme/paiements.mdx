@@ -1,0 +1,68 @@
+---
+title: "Intégration des Paiements"
+description: "Configuration et dépannage des passerelles de paiement (FedaPay, CinetPay, Opérateurs Télécom)"
+---
+
+# Intégration des Paiements
+
+Ardoise est conçu pour s'adapter à la réalité des paiements mobiles dans l'espace OHADA. Pour garantir une expérience sans friction, la plateforme utilise un système de **Routage Dynamique des Paiements** qui déduplique intelligemment les passerelles selon le pays de l'école.
+
+## Passerelles Supportées et Couverture
+
+Le système partitionne strictement les pays entre les agrégateurs et les intégrations directes :
+
+1. **FedaPay (Agrégateur Principal)**
+   - **Pays couverts** : Bénin (BEN), Burkina Faso (BFA), Côte d'Ivoire (CIV), Guinée (GIN), Niger (NER), Sénégal (SEN), Togo (TGO).
+   - **Avantage** : Interface unifiée pour le Mobile Money et les cartes bancaires dans l'espace UEMOA.
+
+2. **CinetPay (Agrégateur Secondaire)**
+   - **Pays couverts** : Cameroun (CMR), Congo-Brazzaville (COG), RDC (COD), Mali (MLI), Tchad (TCD).
+   - **Avantage** : Forte présence en zone CEMAC.
+
+3. **Intégrations Télécom Directes (Push USSD & Web)**
+   - **Pays couverts** : Centrafrique (CAF), Comores (COM), Gabon (GAB), Guinée-Bissau (GNB), Guinée équatoriale (GNQ).
+   - **Avantage** : Contourne l'absence d'agrégateurs dans ces régions en se connectant directement aux API des opérateurs locaux (ex: Airtel Gabon, Orange Money Centrafrique).
+
+---
+
+## Configuration pour les Fondateurs
+
+Les fondateurs d'école doivent configurer leurs clés API pour que les fonds soient directement versés sur leurs propres comptes marchands (et non ceux d'Ardoise).
+
+### Étape 1 : Obtenir vos clés API
+- **FedaPay / CinetPay** : Créez un compte marchand sur leurs sites respectifs, passez en mode "Live" et copiez vos clés publiques et secrètes.
+- **Opérateurs Télécom** : Vous devez signer un contrat avec votre opérateur local (ex: Airtel, Orange) pour obtenir vos identifiants (Merchant ID, API Key).
+
+### Étape 2 : Saisir les clés dans Ardoise
+1. Connectez-vous à votre **Portail Fondateur**.
+2. Allez dans **Paramètres Système** > **Intégrations API**.
+3. Saisissez vos clés dans les sections correspondantes.
+4. Pour les opérateurs Télécom, renseignez également le **Nom de l'opérateur** (ex: "Airtel Gabon") et le **Secret Webhook**.
+
+---
+
+## Fonctionnement du Routage Dynamique
+
+Lorsqu'un parent clique sur "Payer la scolarité" :
+1. Ardoise détecte le pays de l'école.
+2. Si le pays est couvert par FedaPay, le module FedaPay s'ouvre (CinetPay est ignoré).
+3. Si le pays est couvert par les Télécoms (ex: Gabon), un modal propriétaire Ardoise s'ouvre pour demander le numéro de téléphone.
+4. Ardoise envoie un **Push USSD** direct sur le téléphone du parent (ex: Airtel Money) ou le redirige vers le portail web de l'opérateur (ex: Orange Money).
+
+---
+
+## Dépannage (Troubleshooting)
+
+### Le paiement n'aboutit pas (Erreur 401 Unauthorized)
+**Problème** : Lors de l'utilisation d'une intégration Télécom directe, le paiement échoue immédiatement.
+**Solution** : Les clés API Télécom renseignées sont incorrectes ou absentes. Contrairement aux agrégateurs, les Télécoms africains n'ont pas de bac à sable (sandbox) public. Vous devez utiliser des clés de production validées par l'opérateur.
+
+### Le statut de la facture reste "En attente"
+**Problème** : Le parent a payé sur son téléphone, mais la facture n'est pas marquée comme payée dans Ardoise.
+**Solution** : 
+1. **Vérifiez l'URL du Webhook** : Assurez-vous que l'URL affichée dans votre Portail Fondateur (ex: `https://votre-ecole.com/api/finance/webhooks/telco/`) est bien configurée chez votre agrégateur ou opérateur.
+2. **Signature HMAC** : Ardoise bloque les webhooks non signés. Vérifiez que votre "Secret Webhook" est correctement saisi.
+
+### FedaPay et CinetPay s'affichent en même temps
+**Problème** : Confusion de l'interface utilisateur.
+**Solution** : Ce comportement a été résolu via le Routage Dynamique. Si vous observez cela, assurez-vous que l'application a bien été mise à jour vers la dernière version et que le pays de l'école est correctement défini dans les paramètres.

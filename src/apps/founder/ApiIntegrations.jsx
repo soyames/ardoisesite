@@ -20,8 +20,15 @@ export default function ApiIntegrations() {
     fedaPayPublicKey: '',
     fedaPaySecretKey: '',
     fedaPayWebhookSecret: '',
+    cinetpaySiteId: '',
+    cinetpayApikey: '',
+    cinetpaySecretKey: '',
     whatsappToken: '',
-    whatsappPhoneNumberId: ''
+    whatsappPhoneNumberId: '',
+    telcoProviderName: '',
+    telcoApiKey: '',
+    telcoMerchantId: '',
+    telcoWebhookSecret: ''
   })
 
   // Deliberately separate from `config`/handleSave below: this writes
@@ -142,8 +149,15 @@ export default function ApiIntegrations() {
           fedaPayPublicKey: data.fedapayPublicKey || '',
           fedaPaySecretKey: data.fedapaySecretKey || '',
           fedaPayWebhookSecret: data.fedapayWebhookSecret || '',
+          cinetpaySiteId: data.cinetpaySiteId || '',
+          cinetpayApikey: data.cinetpayApikey || '',
+          cinetpaySecretKey: data.cinetpaySecretKey || '',
           whatsappToken: data.whatsappToken || '',
-          whatsappPhoneNumberId: data.whatsappPhoneNumberId || ''
+          whatsappPhoneNumberId: data.whatsappPhoneNumberId || '',
+          telcoProviderName: data.telcoProviderName || '',
+          telcoApiKey: data.telcoApiKey || '',
+          telcoMerchantId: data.telcoMerchantId || '',
+          telcoWebhookSecret: data.telcoWebhookSecret || ''
         })
       } catch (err) {
         // Expected (not an error worth surfacing) until backendUrl above
@@ -165,8 +179,15 @@ export default function ApiIntegrations() {
         fedapayPublicKey: config.fedaPayPublicKey,
         fedapaySecretKey: config.fedaPaySecretKey,
         fedapayWebhookSecret: config.fedaPayWebhookSecret,
+        cinetpaySiteId: config.cinetpaySiteId,
+        cinetpayApikey: config.cinetpayApikey,
+        cinetpaySecretKey: config.cinetpaySecretKey,
         whatsappToken: config.whatsappToken,
-        whatsappPhoneNumberId: config.whatsappPhoneNumberId
+        whatsappPhoneNumberId: config.whatsappPhoneNumberId,
+        telcoProviderName: config.telcoProviderName,
+        telcoApiKey: config.telcoApiKey,
+        telcoMerchantId: config.telcoMerchantId,
+        telcoWebhookSecret: config.telcoWebhookSecret
       })
       setMsg('Configuration sauvegardée avec succès !')
     } catch (err) {
@@ -278,6 +299,134 @@ export default function ApiIntegrations() {
               </div>
             </div>
           </div>
+
+            <div className="mt-8 pt-6 border-t border-border">
+              <h4 className="text-sm font-semibold text-ink flex items-center gap-2 mb-4">
+                <Icon name="account_balance_wallet" className="text-primary-600" />
+                CinetPay (Passerelle Secondaire)
+              </h4>
+              <p className="text-sm text-ink-muted mb-4">
+                Configurez CinetPay si vous souhaitez accepter des paiements depuis des pays non couverts par FedaPay (ex: Cameroun, Mali).
+              </p>
+              
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-xs font-medium text-ink-muted">Site ID</label>
+                  <input
+                    type="text"
+                    name="cinetpaySiteId"
+                    value={config.cinetpaySiteId}
+                    onChange={handleChange}
+                    className="mt-1 w-full rounded-card border-border bg-surface px-3 py-1.5 text-sm"
+                    placeholder="Ex: 123456"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-ink-muted">API Key</label>
+                  <input
+                    type="text"
+                    name="cinetpayApikey"
+                    value={config.cinetpayApikey}
+                    onChange={handleChange}
+                    className="mt-1 w-full rounded-card border-border bg-surface px-3 py-1.5 text-sm"
+                    placeholder="Ex: 1234567890abcdef..."
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-ink-muted">Secret Key</label>
+                  <input
+                    type="password"
+                    name="cinetpaySecretKey"
+                    value={config.cinetpaySecretKey}
+                    onChange={handleChange}
+                    className="mt-1 w-full rounded-card border-border bg-surface px-3 py-1.5 text-sm"
+                    placeholder="*******************"
+                  />
+                </div>
+                
+                <div className="mt-4 rounded-lg bg-surface-raised p-4 border border-border">
+                  <label className="block text-xs font-bold text-ink mb-1">URL Webhook CinetPay (Notify URL)</label>
+                  <p className="text-xs text-ink-muted mb-2">Copiez cette URL dans les paramètres Notify URL de votre compte CinetPay :</p>
+                  <input
+                    type="text"
+                    readOnly
+                    value={backendUrlInput ? `${backendUrlInput.replace(/\/+$/, '')}/api/finance/webhooks/cinetpay/` : "Connectez d'abord votre installation ci-dessus"}
+                    className="w-full rounded bg-surface border border-border px-3 py-1.5 text-sm font-mono text-ink-muted"
+                  />
+                </div>
+              </div>
+            </div>
+
+
+
+            <div className="mt-8 pt-6 border-t border-border">
+              <h4 className="text-sm font-semibold text-ink flex items-center gap-2 mb-4">
+                <Icon name="cell_tower" className="text-primary-600" />
+                Opérateurs Télécom Directs (CEMAC & Îles)
+              </h4>
+              <p className="text-sm text-ink-muted mb-4">
+                Pour les pays non couverts par les agrégateurs classiques (ex: Centrafrique, Gabon, Comores), configurez directement l'API de votre opérateur local (Airtel, Moov, Orange, etc.).
+              </p>
+              
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-xs font-medium text-ink-muted">Nom de l'opérateur</label>
+                  <input
+                    type="text"
+                    name="telcoProviderName"
+                    value={config.telcoProviderName}
+                    onChange={handleChange}
+                    className="mt-1 w-full rounded-card border-border bg-surface px-3 py-1.5 text-sm"
+                    placeholder="Ex: Airtel Gabon"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-ink-muted">ID Marchand (Merchant ID)</label>
+                  <input
+                    type="text"
+                    name="telcoMerchantId"
+                    value={config.telcoMerchantId}
+                    onChange={handleChange}
+                    className="mt-1 w-full rounded-card border-border bg-surface px-3 py-1.5 text-sm"
+                    placeholder="Ex: 50505"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-ink-muted">Clé API (API Key)</label>
+                  <input
+                    type="text"
+                    name="telcoApiKey"
+                    value={config.telcoApiKey}
+                    onChange={handleChange}
+                    className="mt-1 w-full rounded-card border-border bg-surface px-3 py-1.5 text-sm"
+                    placeholder="*******************"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-ink-muted">Secret Webhook</label>
+                  <input
+                    type="password"
+                    name="telcoWebhookSecret"
+                    value={config.telcoWebhookSecret}
+                    onChange={handleChange}
+                    className="mt-1 w-full rounded-card border-border bg-surface px-3 py-1.5 text-sm"
+                    placeholder="*******************"
+                  />
+                </div>
+                
+                <div className="mt-4 rounded-lg bg-surface-raised p-4 border border-border">
+                  <label className="block text-xs font-bold text-ink mb-1">URL Webhook Opérateur</label>
+                  <p className="text-xs text-ink-muted mb-2">Configurez cette URL chez votre opérateur pour recevoir les statuts de paiement :</p>
+                  <input
+                    type="text"
+                    readOnly
+                    value={backendUrlInput ? `${backendUrlInput.replace(/\/+$/, '')}/api/finance/webhooks/telco/` : "Connectez d'abord votre installation ci-dessus"}
+                    className="w-full rounded bg-surface border border-border px-3 py-1.5 text-sm font-mono text-ink-muted"
+                  />
+                </div>
+              </div>
+            </div>
+
 
           <div className="bg-surface p-4 rounded-card ring-1 ring-border">
             <h3 className="flex items-center gap-1.5 font-bold text-ink mb-4">

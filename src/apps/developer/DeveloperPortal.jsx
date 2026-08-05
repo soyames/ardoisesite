@@ -7,6 +7,7 @@ import { OHADA_COUNTRIES } from '../../shared/constants/locations.js'
 import { Card, CardHeader, CardBody } from '../../shared/ui/Card.jsx'
 import Button from '../../shared/ui/Button.jsx'
 import Icon from '../../shared/ui/Icon.jsx'
+import DeveloperAcademy from './DeveloperAcademy.jsx'
 
 const SCOPES = [
   { value: 'marketplace:read', label: 'Marketplace (lecture)', description: 'Ecoles, tuteurs, offres d\'emploi publiees' },
@@ -401,6 +402,8 @@ export default function DeveloperPortal() {
             </form>
           </CardBody>
         </Card>
+
+        <DeveloperAcademy partnerProfile={partnerProfile} user={user} />
       </div>
     </div>
   )

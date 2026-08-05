@@ -113,6 +113,7 @@
           {
             "group": "Intégrations & API",
             "pages": [
+              "plateforme/paiements",
               "plateforme/api",
               "plateforme/mcp"
             ]
