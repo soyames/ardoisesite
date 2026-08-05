@@ -59,7 +59,6 @@ export default function TeacherDetail() {
       // localStorage from a previous session. Needs a real marketplace-
       // native ratings store (Firestore, matching this page's actual data
       // model) before re-enabling.
-    }).catch(() => { if (!cancelled) setTeacher(null) })
     return () => { cancelled = true }
   }, [id])
 
