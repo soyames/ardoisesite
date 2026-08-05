@@ -32,23 +32,26 @@ export default function TutoringBookingFlow() {
 
   useEffect(() => {
     let cancelled = false
-    getDoc(doc(db, 'users', id)).then((snap) => {
-      if (cancelled) return
-      if (!snap.exists() || snap.data().role !== 'teacher') {
-        setTeacher(null)
-        return
-      }
-      const data = snap.data()
-      const loaded = {
-        id: snap.id,
-        name: `${data.firstName || ''} ${data.lastName || ''}`.trim() || data.email,
-        subject: data.subject || '',
-        image: data.image || null,
-        defaultPrice: data.price || 0,
-      }
-      setTeacher(loaded)
-      setProposedPrice(loaded.defaultPrice || '')
-    }).catch(() => { if (!cancelled) setTeacher(null) })
+    fetch(`https://api.ardoiseeduc.com/api/marketplace/public/teachers/${id}`)
+      .then(res => res.ok ? res.json() : Promise.reject(res))
+      .then(json => {
+        if (cancelled) return
+        if (json.data) {
+          const data = json.data
+          const loaded = {
+            id: data.id,
+            name: `${data.firstName || ''} ${data.lastName || ''}`.trim() || data.email,
+            subject: data.subject || '',
+            image: data.image || null,
+            defaultPrice: data.price || 0,
+          }
+          setTeacher(loaded)
+          setProposedPrice(loaded.defaultPrice || '')
+        } else {
+          setTeacher(null)
+        }
+      })
+      .catch(() => { if (!cancelled) setTeacher(null) })
     return () => { cancelled = true }
   }, [id])
 

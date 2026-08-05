@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
-import { collection, onSnapshot, query, where } from 'firebase/firestore'
 import { db } from '../../shared/api/firebase.js'
 import EmptyState from '../../shared/ui/EmptyState.jsx'
 import Spinner from '../../shared/ui/Spinner.jsx'
@@ -33,28 +32,35 @@ export default function TeacherList() {
   })
 
   useEffect(() => {
-    const q = query(collection(db, 'users'), where('role', '==', 'teacher'))
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const rows = []
-      snapshot.forEach((d) => {
-        const data = d.data()
-        rows.push({
-          id: d.id,
-          name: `${data.firstName || ''} ${data.lastName || ''}`.trim() || data.email,
-          subject: data.subject || '',
-          city: data.city || '',
-          country: data.country || '',
-          price: data.price != null ? `${data.price} F / mois` : null,
-          description: data.bio || '',
-          image: data.image || null,
-          isDemo: data.isDemo || false,
-          boostedUntil: data.boostedUntil || null,
-        })
-      })
-      setTeachers(rows)
-      setLoading(false)
-    }, () => setLoading(false))
-    return () => unsubscribe()
+    let mounted = true
+    const fetchTeachers = async () => {
+      try {
+        const res = await fetch('https://api.ardoiseeduc.com/api/marketplace/public/teachers')
+        if (!res.ok) throw new Error('Failed to fetch teachers')
+        const json = await res.json()
+        if (mounted) {
+          const rows = (json.data || []).map(data => ({
+            id: data.id,
+            name: `${data.firstName || ''} ${data.lastName || ''}`.trim() || data.email,
+            subject: data.subject || '',
+            city: data.city || '',
+            country: data.country || '',
+            price: data.price != null ? `${data.price} F / mois` : null,
+            description: data.bio || '',
+            image: data.image || null,
+            isDemo: data.isDemo || false,
+            boostedUntil: data.boostedUntil || null,
+          }))
+          setTeachers(rows)
+          setLoading(false)
+        }
+      } catch (err) {
+        console.error('Failed to load teachers:', err)
+        if (mounted) setLoading(false)
+      }
+    }
+    fetchTeachers()
+    return () => { mounted = false }
   }, [])
 
   const cityCounts = useMemo(() => {

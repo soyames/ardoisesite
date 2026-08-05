@@ -28,23 +28,27 @@ export default function TeacherDetail() {
 
   useEffect(() => {
     let cancelled = false
-    getDoc(doc(db, 'users', id)).then((snap) => {
-      if (cancelled) return
-      if (!snap.exists() || snap.data().role !== 'teacher') {
-        setTeacher(null)
-        return
-      }
-      const data = snap.data()
-      setTeacher({
-        id: snap.id,
-        name: `${data.firstName || ''} ${data.lastName || ''}`.trim() || data.email,
-        subject: data.subject || '',
-        city: data.city || '',
-        price: data.price || null,
-        description: data.bio || '',
-        image: data.image || null,
-        isDemo: data.isDemo || false,
+    fetch(`https://api.ardoiseeduc.com/api/marketplace/public/teachers/${id}`)
+      .then(res => res.ok ? res.json() : Promise.reject(res))
+      .then(json => {
+        if (cancelled) return
+        if (json.data) {
+          const data = json.data
+          setTeacher({
+            id: data.id,
+            name: `${data.firstName || ''} ${data.lastName || ''}`.trim() || data.email,
+            subject: data.subject || '',
+            city: data.city || '',
+            price: data.price || null,
+            description: data.bio || '',
+            image: data.image || null,
+            isDemo: data.isDemo || false,
+          })
+        } else {
+          setTeacher(null)
+        }
       })
+      .catch(() => { if (!cancelled) setTeacher(null) })
 
       // Deliberately not fetching /api/hr/teacher-ratings/ here - that's a
       // Django apps.hr endpoint scoped to one school's self-hosted backend,

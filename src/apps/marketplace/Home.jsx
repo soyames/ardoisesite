@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { collection, onSnapshot, query, where } from 'firebase/firestore'
 import { db } from '../../shared/api/firebase.js'
 import Badge from '../../shared/ui/Badge.jsx'
 import CountryMapWrapper from '../../shared/ui/CountryMapWrapper.jsx'
@@ -32,32 +31,39 @@ export default function Home() {
   }, [activeCountry])
 
   useEffect(() => {
-    const unsubscribe = onSnapshot(collection(db, 'schools'), (snapshot) => {
-      const rows = []
-      snapshot.forEach((d) => rows.push({ id: d.id, ...d.data() }))
-      setSchools(rows)
-    })
-    return () => unsubscribe()
-  }, [])
-
-  useEffect(() => {
-    const q = query(collection(db, 'users'), where('role', '==', 'teacher'))
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const rows = []
-      snapshot.forEach((d) => {
-        const data = d.data()
-        rows.push({
-          id: d.id,
-          name: `${data.firstName || ''} ${data.lastName || ''}`.trim() || data.email,
-          subject: data.subject || '',
-          city: data.city || '',
-          price: data.price != null ? `${data.price} F` : null,
-          image: data.image || null,
-        })
-      })
-      setTeachers(rows)
-    })
-    return () => unsubscribe()
+    let mounted = true
+    const fetchMarketplace = async () => {
+      try {
+        const [schoolsRes, teachersRes] = await Promise.all([
+          fetch('https://api.ardoiseeduc.com/api/marketplace/public/schools'),
+          fetch('https://api.ardoiseeduc.com/api/marketplace/public/teachers')
+        ])
+        
+        if (schoolsRes.ok) {
+          const schoolsJson = await schoolsRes.json()
+          if (mounted) setSchools(schoolsJson.data || [])
+        }
+        
+        if (teachersRes.ok) {
+          const teachersJson = await teachersRes.json()
+          if (mounted) {
+            const rows = (teachersJson.data || []).map(data => ({
+              id: data.id,
+              name: `${data.firstName || ''} ${data.lastName || ''}`.trim() || data.email,
+              subject: data.subject || '',
+              city: data.city || '',
+              price: data.price != null ? `${data.price} F` : null,
+              image: data.image || null,
+            }))
+            setTeachers(rows)
+          }
+        }
+      } catch (err) {
+        console.error('Failed to load marketplace data:', err)
+      }
+    }
+    fetchMarketplace()
+    return () => { mounted = false }
   }, [])
 
   const activeSchools = useMemo(() => {

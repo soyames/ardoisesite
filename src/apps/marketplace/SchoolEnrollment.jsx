@@ -34,42 +34,47 @@ export default function SchoolEnrollment() {
 
   useEffect(() => {
     let cancelled = false
-    getDoc(doc(db, 'schools', id)).then((snap) => {
-      if (cancelled) return
-      if (snap.exists()) {
-        const data = snap.data()
-        setSchool({ id: snap.id, ...data })
-        if (data.classrooms && data.classrooms.length > 0) {
-          // Honor the class the parent already picked on the school's
-          // public profile (SchoolDetail.jsx's "Classes et cycles"
-          // section links here with ?classId=...) - only if it's still
-          // a real, non-full class on this school, otherwise fall back
-          // to auto-selecting like before.
-          const preselected = preselectedClassId
-            ? data.classrooms.find(c => c.id === preselectedClassId && (c.capacity || 50) > (c.acceptedCount || 0))
-            : null
-          if (preselected) {
-            setChildClassId(preselected.id)
-          } else {
-            // Auto-select first non-full class if possible
-            const firstAvailable = data.classrooms.find(c => (c.capacity || 50) > (c.acceptedCount || 0))
-            if (firstAvailable) {
-              setChildClassId(firstAvailable.id)
+    fetch(`https://api.ardoiseeduc.com/api/marketplace/public/schools/${id}`)
+      .then(res => res.ok ? res.json() : Promise.reject(res))
+      .then(json => {
+        if (cancelled) return
+        if (json.data) {
+          const data = json.data
+          setSchool({ id: data.id, ...data })
+          if (data.classrooms && data.classrooms.length > 0) {
+            // Honor the class the parent already picked on the school's
+            // public profile (SchoolDetail.jsx's "Classes et cycles"
+            // section links here with ?classId=...) - only if it's still
+            // a real, non-full class on this school, otherwise fall back
+            // to auto-selecting like before.
+            const preselected = preselectedClassId
+              ? data.classrooms.find(c => c.id === preselectedClassId && (c.capacity || 50) > (c.acceptedCount || 0))
+              : null
+            if (preselected) {
+              setChildClassId(preselected.id)
             } else {
-              setChildClassId(data.classrooms[0].id)
+              // Auto-select first non-full class if possible
+              const firstAvailable = data.classrooms.find(c => (c.capacity || 50) > (c.acceptedCount || 0))
+              if (firstAvailable) {
+                setChildClassId(firstAvailable.id)
+              } else {
+                setChildClassId(data.classrooms[0].id)
+              }
             }
+          } else {
+            // Fallback for E2E testing
+            data.classrooms = [{ id: '1', name: 'CP', registrationFee: 10000 }]
+            setChildClassId('1')
           }
         } else {
-          // Fallback for E2E testing
-          data.classrooms = [{ id: '1', name: 'CP', registrationFee: 10000 }]
-          setChildClassId('1')
+          setSchool(null)
         }
-      } else {
-        setSchool(null)
-      }
-    }).catch(() => { if (!cancelled) setSchool(null) })
+      })
+      .catch(() => {
+        if (!cancelled) setSchool(null)
+      })
     return () => { cancelled = true }
-  }, [id])
+  }, [id, preselectedClassId])
 
   if (school === undefined) {
     return <div className="flex justify-center py-32"><Spinner /></div>

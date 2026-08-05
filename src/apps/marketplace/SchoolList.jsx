@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
-import { collection, onSnapshot } from 'firebase/firestore'
 import { db } from '../../shared/api/firebase.js'
 import EmptyState from '../../shared/ui/EmptyState.jsx'
 import Spinner from '../../shared/ui/Spinner.jsx'
@@ -37,13 +36,23 @@ export default function SchoolList() {
     // Only *processing* enrollment/recruitment leads is paywalled -
     // see apps/core/api_views.py's MARKETPLACE_ENROLLMENT_PROCESSING_FEATURE_CODE
     // / MARKETPLACE_RECRUITMENT_PROCESSING_FEATURE_CODE on the Django side.
-    const unsubscribe = onSnapshot(collection(db, 'schools'), (snapshot) => {
-      const rows = []
-      snapshot.forEach((d) => rows.push({ id: d.id, ...d.data() }))
-      setSchools(rows)
-      setLoading(false)
-    }, () => setLoading(false))
-    return () => unsubscribe()
+    let mounted = true
+    const fetchSchools = async () => {
+      try {
+        const res = await fetch('https://api.ardoiseeduc.com/api/marketplace/public/schools')
+        if (!res.ok) throw new Error('Failed to fetch schools')
+        const json = await res.json()
+        if (mounted) {
+          setSchools(json.data || [])
+          setLoading(false)
+        }
+      } catch (err) {
+        console.error('Failed to load schools:', err)
+        if (mounted) setLoading(false)
+      }
+    }
+    fetchSchools()
+    return () => { mounted = false }
   }, [])
 
   const cityCounts = useMemo(() => {

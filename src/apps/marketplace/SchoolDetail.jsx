@@ -32,20 +32,12 @@ export default function SchoolDetail() {
 
   useEffect(() => {
     let cancelled = false
-    getDoc(doc(db, 'schools', id)).then((snap) => {
-      if (cancelled) return
-      setSchool(snap.exists() ? { id: snap.id, ...snap.data() } : null)
-
-      // Deliberately not fetching /api/core/school-ratings/ here - two
-      // separate bugs stacked on this call: (1) getApiBaseUrl() has no way
-      // to know which school's self-hosted backend to call from this
-      // public marketplace page, it just falls back to the platform
-      // Worker or a stale unrelated school's URL cached in localStorage;
-      // (2) even calling the right backend, SchoolRatingFetchView looks
-      // schools up by the founder's Firebase UID, not the Firestore school
-      // doc id this page passes. Needs both a resolved-per-school backend
-      // call and a matching identifier before re-enabling.
-    }).catch(() => { if (!cancelled) setSchool(null) })
+    fetch(`https://api.ardoiseeduc.com/api/marketplace/public/schools/${id}`)
+      .then(res => res.ok ? res.json() : Promise.reject(res))
+      .then(json => {
+        if (!cancelled) setSchool(json.data)
+      })
+      .catch(() => { if (!cancelled) setSchool(null) })
     return () => { cancelled = true }
   }, [id])
 

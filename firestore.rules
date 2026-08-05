@@ -17,7 +17,10 @@ service cloud.firestore {
     // c'est le bug corrigé ici : l'ancienne règle exigeait request.auth
     // != null même pour une simple lecture publique.
     match /schools/{schoolId} {
-      allow read: if true;
+      allow read: if isSignedIn() && (
+        (getUserData().schoolId == schoolId) ||
+        (getUserData().role in ['superadmin', 'support_agent', 'school_onboarding', 'dev_onboarding', 'billing_agent', 'marketing_agent'])
+      );
 
       // La création est autorisée lors de l'inscription -- mais les
       // memes champs d'abonnement interdits en update() ci-dessous
@@ -142,7 +145,6 @@ service cloud.firestore {
       // permission-denied on every document that wasn't their own, a
       // public teacher profile, or their own school's founder scope.
       allow read: if (isSignedIn() && request.auth.uid == userId)
-                  || resource.data.role == 'teacher'
                   || (isSignedIn() && resource.data.role == 'marketplace_student' && resource.data.parentId == request.auth.uid)
                   || (isSignedIn() && getUserData().role == 'founder' && resource.data.schoolId == getUserData().schoolId)
                   || (isSignedIn() && getUserData().role in ['superadmin', 'support_agent', 'school_onboarding', 'dev_onboarding', 'billing_agent', 'marketing_agent']);
