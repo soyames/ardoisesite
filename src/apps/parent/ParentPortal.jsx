@@ -625,7 +625,13 @@ function ChildDetail({ child, parentId, parent }) {
               {child.currentEnrollment?.classroomName} · {child.currentEnrollment?.academicYearLabel} · Matricule {child.matricule}
             </p>
           </div>
-          <Badge tone="neutral">{child.relation}</Badge>
+          <div className="flex gap-2 items-center">
+            <Link to={`/live-room/student-${child.id}`} className="rounded-control bg-danger-50 px-3 py-1.5 text-xs font-semibold text-danger-700 hover:bg-danger-100 transition ring-1 ring-inset ring-danger-200 flex items-center gap-1" title="Rejoindre l'appel d'urgence avec l'école">
+              <span className="material-symbols-outlined text-[16px]">video_call</span>
+              Appel d'urgence
+            </Link>
+            <Badge tone="neutral">{child.relation}</Badge>
+          </div>
         </CardBody>
       </Card>
 

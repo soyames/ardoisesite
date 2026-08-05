@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { api, ApiError } from '../../shared/api/client.js'
 import { useApiGet } from '../../shared/hooks/useApi.js'
 import { useAuth } from '../../shared/auth/AuthContext.jsx'
@@ -347,6 +348,14 @@ function DisciplineTab() {
               />
               <Button size="sm" variant="danger" onClick={() => reject(d.id)} disabled={busy === d.id}>Rejeter</Button>
               <Button size="sm" onClick={() => approve(d.id)} disabled={busy === d.id}>Approuver</Button>
+              <Link
+                to={`/live-room/student-${d.studentId}`}
+                className="flex items-center gap-1 rounded-control bg-danger-50 px-3 py-1.5 text-xs font-semibold text-danger-700 hover:bg-danger-100 transition ring-1 ring-inset ring-danger-200"
+                title="Appel d'urgence avec le parent"
+              >
+                <span className="material-symbols-outlined text-[16px]">video_call</span>
+                Visio Urgence
+              </Link>
             </div>
           </CardBody>
         </Card>
