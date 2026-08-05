@@ -20,8 +20,8 @@ export default function Home() {
 
   const activeCountryName = OHADA_COUNTRIES.find((c) => c.code === activeCountry)?.name || activeCountry
   useSeo({
-    title: `Écoles et tuteurs à ${activeCountryName}`,
-    description: `Trouvez les meilleures écoles et tuteurs à domicile à ${activeCountryName}. Annuaire, classements, mise en relation directe - Ardoise, la plateforme de l'espace OHADA.`,
+    title: `Écoles et tuteurs dans l'espace OHADA (17 pays) | Ardoise`,
+    description: `Découvrez les meilleures écoles et tuteurs à domicile dans les 17 pays de l'espace SYSOHADA. Annuaire, classements, mise en relation directe - Ardoise, la plateforme éducative.`,
   })
 
   // Clear selections when country changes
