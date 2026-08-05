@@ -41,7 +41,7 @@ export default function PublicLayout() {
           </Link>
 
           {/* Desktop Nav */}
-          {!isSaas && (
+          {!isSaas ? (
             <nav className="hidden md:flex gap-6">
               <Link to="/schools" className="text-sm font-semibold text-ink-muted transition hover:text-primary-600">
                 Écoles
@@ -55,6 +55,9 @@ export default function PublicLayout() {
               <Link to="/how-it-works" className="text-sm font-semibold text-ink-muted transition hover:text-primary-600">
                 Comment ça marche
               </Link>
+            </nav>
+          ) : (
+            <nav className="hidden md:flex gap-6">
               <Link to="/partenaires" className="text-sm font-semibold text-ink-muted transition hover:text-primary-600">
                 Partenaires certifiés
               </Link>
@@ -164,13 +167,17 @@ export default function PublicLayout() {
           )}
 
           <nav className="flex flex-col gap-4 pt-2">
-            {!isSaas && (
+            {!isSaas ? (
               <>
                 <Link to="/schools" className="text-base font-semibold text-ink" onClick={() => setMobileMenuOpen(false)}>Écoles</Link>
                 <Link to="/teachers" className="text-base font-semibold text-ink" onClick={() => setMobileMenuOpen(false)}>Tuteurs à domicile</Link>
-                <Link to="/partenaires" className="text-base font-semibold text-ink" onClick={() => setMobileMenuOpen(false)}>Partenaires certifiés</Link>
                 <Link to="/jobs" className="text-base font-semibold text-ink" onClick={() => setMobileMenuOpen(false)}>Recrutement</Link>
                 <Link to="/how-it-works" className="text-base font-semibold text-ink" onClick={() => setMobileMenuOpen(false)}>Comment ça marche</Link>
+                <hr className="border-border" />
+              </>
+            ) : (
+              <>
+                <Link to="/partenaires" className="text-base font-semibold text-ink" onClick={() => setMobileMenuOpen(false)}>Partenaires certifiés</Link>
                 <hr className="border-border" />
               </>
             )}
@@ -209,11 +216,15 @@ export default function PublicLayout() {
             <div>
               <h3 className="text-xs font-semibold uppercase tracking-wide text-ink">Plateforme</h3>
               <ul className="mt-4 space-y-3">
-                <li><Link to="/schools" className="text-sm text-ink-muted hover:text-ink">Écoles</Link></li>
-                <li><Link to="/teachers" className="text-sm text-ink-muted hover:text-ink">Tuteurs à domicile</Link></li>
-                <li><Link to="/partenaires" className="text-sm text-ink-muted hover:text-ink">Partenaires certifiés</Link></li>
-                <li><Link to="/jobs" className="text-sm text-ink-muted hover:text-ink">Recrutement</Link></li>
-                <li><Link to="/how-it-works" className="text-sm text-ink-muted hover:text-ink">Comment ça marche</Link></li>
+                {!isSaas && (
+                  <>
+                    <li><Link to="/schools" className="text-sm text-ink-muted hover:text-ink">Écoles</Link></li>
+                    <li><Link to="/teachers" className="text-sm text-ink-muted hover:text-ink">Tuteurs à domicile</Link></li>
+                    <li><Link to="/jobs" className="text-sm text-ink-muted hover:text-ink">Recrutement</Link></li>
+                    <li><Link to="/how-it-works" className="text-sm text-ink-muted hover:text-ink">Comment ça marche</Link></li>
+                  </>
+                )}
+                {isSaas && <li><Link to="/partenaires" className="text-sm text-ink-muted hover:text-ink">Partenaires certifiés</Link></li>}
                 <li><Link to="/install" className="text-sm text-ink-muted hover:text-ink">Pour les Écoles (Installation)</Link></li>
               </ul>
             </div>

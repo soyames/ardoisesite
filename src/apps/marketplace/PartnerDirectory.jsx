@@ -54,6 +54,17 @@ export default function PartnerDirectory() {
           Ces développeurs indépendants sont vérifiés par Ardoise pour l'installation et la maintenance de votre ERP.
           Contactez-en un directement, puis accordez-lui un accès support depuis l'onglet "Activation & Installation" de votre école.
         </p>
+
+        <div className="mt-6 bg-surface p-4 rounded-card border border-primary-100 flex gap-3 text-sm text-ink-muted">
+          <svg className="h-5 w-5 text-primary-600 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z" />
+          </svg>
+          <p>
+            <strong>Clause de non-responsabilité :</strong> Ardoise valide uniquement les compétences techniques des partenaires via l'Ardoise Academy. 
+            Les partenaires agissent en tant qu'entités indépendantes. Ardoise ne peut être tenue responsable de leurs actions, 
+            des contrats conclus avec eux, ou de la qualité de leurs prestations.
+          </p>
+        </div>
       </div>
 
       <div className="mb-6 flex flex-wrap gap-2">

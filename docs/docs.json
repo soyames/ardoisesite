@@ -115,7 +115,8 @@
             "pages": [
               "plateforme/paiements",
               "plateforme/api",
-              "plateforme/mcp"
+              "plateforme/mcp",
+              "plateforme/visioconference"
             ]
           },
           {

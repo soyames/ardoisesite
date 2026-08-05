@@ -1,0 +1,29 @@
+---
+title: "Visioconférence (Video Call)"
+description: "Intégration des cours en ligne et tutorat via visioconférence sur Ardoise."
+---
+
+Ardoise intègre une solution de visioconférence nativement conçue pour faciliter l'enseignement à distance, le tutorat indépendant et les réunions parents-professeurs. 
+
+Cette intégration permet aux établissements d'offrir des cours virtuels fluides sans obliger les utilisateurs à installer des applications tierces (comme Zoom, Teams ou Google Meet).
+
+## Fonctionnalités clés
+
+- **Cours virtuels interactifs** : Les enseignants peuvent créer et lancer des salles de classe virtuelles directement depuis leur portail, avec partage d'écran, tableau blanc interactif et levée de main.
+- **Tutorat via la Marketplace** : Les élèves et parents qui réservent un tuteur sur la Marketplace Ardoise se voient automatiquement attribuer une salle vidéo sécurisée pour la session.
+- **Enregistrement des cours** : Les administrateurs et professeurs peuvent choisir d'enregistrer la session pour que les élèves absents puissent la rattraper ultérieurement (stockage automatique sur l'instance de l'école).
+- **Faible bande passante** : La solution est optimisée pour les contextes africains, fonctionnant même sur des connexions réseau instables.
+
+## Architecture & Confidentialité
+
+Contrairement aux solutions grand public, l'intégration de visioconférence d'Ardoise respecte notre promesse de confidentialité absolue :
+1. **Accès sécurisé** : L'accès aux salles est géré par la plateforme ; seuls les élèves inscrits à la classe peuvent y accéder.
+2. **Aucune donnée partagée** : Les métadonnées des appels restent confinées dans l'instance de l'établissement (via l'Edge API Cloudflare). 
+
+## Comment l'utiliser ?
+
+### Pour les écoles
+L'administrateur de l'école doit activer le module **Classes virtuelles** dans les paramètres ERP. Ensuite, les enseignants verront un bouton "Lancer la visio" à côté de chaque cours dans leur emploi du temps.
+
+### Pour les tuteurs indépendants
+Le lien de visioconférence est généré automatiquement dès qu'un créneau est réservé et payé. Il s'affiche sur le portail de l'élève et du tuteur 15 minutes avant le début de la session.
