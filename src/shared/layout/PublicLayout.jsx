@@ -52,9 +52,6 @@ export default function PublicLayout() {
               <Link to="/jobs" className="text-sm font-semibold text-ink-muted transition hover:text-primary-600">
                 Recrutement
               </Link>
-              <Link to="/how-it-works" className="text-sm font-semibold text-ink-muted transition hover:text-primary-600">
-                Comment ça marche
-              </Link>
             </nav>
           ) : (
             <nav className="hidden md:flex gap-6">
@@ -172,7 +169,6 @@ export default function PublicLayout() {
                 <Link to="/schools" className="text-base font-semibold text-ink" onClick={() => setMobileMenuOpen(false)}>Écoles</Link>
                 <Link to="/teachers" className="text-base font-semibold text-ink" onClick={() => setMobileMenuOpen(false)}>Tuteurs à domicile</Link>
                 <Link to="/jobs" className="text-base font-semibold text-ink" onClick={() => setMobileMenuOpen(false)}>Recrutement</Link>
-                <Link to="/how-it-works" className="text-base font-semibold text-ink" onClick={() => setMobileMenuOpen(false)}>Comment ça marche</Link>
                 <hr className="border-border" />
               </>
             ) : (
@@ -221,7 +217,6 @@ export default function PublicLayout() {
                     <li><Link to="/schools" className="text-sm text-ink-muted hover:text-ink">Écoles</Link></li>
                     <li><Link to="/teachers" className="text-sm text-ink-muted hover:text-ink">Tuteurs à domicile</Link></li>
                     <li><Link to="/jobs" className="text-sm text-ink-muted hover:text-ink">Recrutement</Link></li>
-                    <li><Link to="/how-it-works" className="text-sm text-ink-muted hover:text-ink">Comment ça marche</Link></li>
                   </>
                 )}
                 {isSaas && <li><Link to="/partenaires" className="text-sm text-ink-muted hover:text-ink">Partenaires certifiés</Link></li>}
