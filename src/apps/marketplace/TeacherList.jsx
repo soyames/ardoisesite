@@ -35,7 +35,8 @@ export default function TeacherList() {
     let mounted = true
     const fetchTeachers = async () => {
       try {
-        const res = await fetch('https://api.ardoiseeduc.com/api/marketplace/public/teachers')
+        const url = 'https://api.ardoiseeduc.com/api/marketplace/public/teachers?country=' + encodeURIComponent(country) + '&limit=200'
+        const res = await fetch(url)
         if (!res.ok) throw new Error('Failed to fetch teachers')
         const json = await res.json()
         if (mounted) {

@@ -39,7 +39,8 @@ export default function SchoolList() {
     let mounted = true
     const fetchSchools = async () => {
       try {
-        const res = await fetch('https://api.ardoiseeduc.com/api/marketplace/public/schools')
+        const url = 'https://api.ardoiseeduc.com/api/marketplace/public/schools?country=' + encodeURIComponent(country) + '&limit=200'
+        const res = await fetch(url)
         if (!res.ok) throw new Error('Failed to fetch schools')
         const json = await res.json()
         if (mounted) {
