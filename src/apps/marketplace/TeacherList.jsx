@@ -73,16 +73,15 @@ export default function TeacherList() {
     return counts
   }, [teachers, communeDepartmentMap])
 
-  // See SchoolList.jsx's identical comment: matched on the teacher's
-  // own `country` field, not on whether `city` happens to be a key in
-  // communeDepartmentMap (some countries' map datasets are coarser
-  // than real city names, which silently hid every teacher there).
-  const countryName = OHADA_COUNTRIES.find((c) => c.code === country)?.name
+  // Match against both country name and code - same fix as SchoolList.jsx.
+  const countryObj = OHADA_COUNTRIES.find((c) => c.code === country)
 
   const isBoosted = (teacher) => !!teacher.boostedUntil && new Date(teacher.boostedUntil).getTime() > Date.now()
 
   const filteredTeachers = teachers.filter(teacher => {
-    const matchesCountry = teacher.country === countryName
+    const matchesCountry = countryObj
+      ? (teacher.country === countryObj.name || teacher.country === countryObj.code)
+      : false
     const matchesSearch = teacher.name.toLowerCase().includes(search.toLowerCase())
     const matchesCity = cityFilter === 'Toutes' || teacher.city === cityFilter
     const matchesSubject = subjectFilter === 'Toutes' || teacher.subject === subjectFilter
@@ -236,7 +235,7 @@ export default function TeacherList() {
                   icon="person"
                   title="Aucun tuteur ne correspond à vos critères"
                   description={
-                    !teachers.some((t) => t.country === countryName)
+                    !teachers.some((t) => countryObj && (t.country === countryObj.name || t.country === countryObj.code))
                       ? "Aucun tuteur enregistré dans ce pays pour le moment."
                       : "Essayez une autre région, une autre ville, ou un autre terme de recherche."
                   }
